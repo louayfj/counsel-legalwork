@@ -1240,26 +1240,43 @@ const desktopCommandHandlers = {
       return getComputerUseMcpCommand();
   },
   "checkComputerUsePermissions": async (event, ...args) => {
-      // Spawn --check → fresh TCC read → always accurate.
-      return checkComputerUsePermissions();
+      const result = await checkComputerUsePermissions();
+      // Also check the main Electron process (Axleo Legal Work.app) via systemPreferences.
+      // On macOS, users may grant Accessibility to the main app rather than the helper;
+      // this lets that grant satisfy the accessibility check so the UI doesn't stay stuck.
+      const mainAppAX = process.platform === "darwin"
+        ? systemPreferences.isTrustedAccessibilityClient(false)
+        : false;
+      const accessibility = result.accessibility || mainAppAX;
+      return { ...result, accessibility, ok: accessibility && result.screenRecording };
   },
   "listRunningApps": async (event, ...args) => {
       // Running regular macOS apps for composer @App mentions.
       return listRunningApps();
   },
   "openComputerUsePermissionSetup": async (event, ...args) => {
-      // Open the GUI app. Returns immediately — React shows "verify" CTA.
       await openComputerUseSetupApp();
-      // Return a fresh check so the UI shows the current state.
-      return checkComputerUsePermissions();
+      // Also request accessibility for the main Electron process so the system dialog
+      // appears immediately if the user hasn't granted either app yet.
+      if (process.platform === "darwin") systemPreferences.isTrustedAccessibilityClient(true);
+      const result = await checkComputerUsePermissions();
+      const mainAppAX = process.platform === "darwin" ? systemPreferences.isTrustedAccessibilityClient(false) : false;
+      const accessibility = result.accessibility || mainAppAX;
+      return { ...result, accessibility, ok: accessibility && result.screenRecording };
   },
   "openComputerUsePermissionSettings": async (event, ...args) => {
-      // Legacy: open the setup app (same as above).
       await openComputerUseSetupApp();
-      return checkComputerUsePermissions();
+      if (process.platform === "darwin") systemPreferences.isTrustedAccessibilityClient(true);
+      const result = await checkComputerUsePermissions();
+      const mainAppAX = process.platform === "darwin" ? systemPreferences.isTrustedAccessibilityClient(false) : false;
+      const accessibility = result.accessibility || mainAppAX;
+      return { ...result, accessibility, ok: accessibility && result.screenRecording };
   },
   "resetComputerUsePermissions": async (event, ...args) => {
-      return resetComputerUsePermissions();
+      const result = await resetComputerUsePermissions();
+      const mainAppAX = process.platform === "darwin" ? systemPreferences.isTrustedAccessibilityClient(false) : false;
+      const accessibility = result.accessibility || mainAppAX;
+      return { ...result, accessibility, ok: accessibility && result.screenRecording };
   },
   "getLegalworkUiMcpEnvironment": async (event, ...args) => {
       return {

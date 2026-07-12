@@ -142,11 +142,14 @@ async function listRunningApps() {
 }
 
 async function openComputerUseSetupApp() {
-  // Open the same executable path used by --check and MCP. macOS TCC can treat
-  // a bundle-opened .app and its raw executable as different permission targets.
-  const bin = resolveComputerUseExecutable();
-  if (!bin) throw new Error("Helper binary not found. Run pnpm dev to build it.");
-  const child = spawn(bin, [], { detached: true, stdio: "ignore" });
+  // Must launch via 'open' (LaunchServices) — not spawn(bin) directly.
+  // macOS silently drops AXIsProcessTrustedWithOptions(prompt:true) calls from
+  // processes that were spawned by another app rather than launched through
+  // LaunchServices. Without LaunchServices, the Accessibility dialog never
+  // appears and "Axleo Computer Use" is never added to the TCC database.
+  const appPath = computerUseHelperAppPath();
+  if (!appPath) throw new Error("Axleo Computer Use helper app not found. Reinstall Axleo Legal Work.");
+  const child = spawn("open", [appPath], { detached: true, stdio: "ignore" });
   child.unref();
 }
 
