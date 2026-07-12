@@ -2,7 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
 
-const computerUseHelperAppName = "LegalWork Computer Use.app";
+const computerUseHelperAppName = "Axleo Computer Use.app";
 
 const sidecarBases = [
   "opencode",
@@ -47,6 +47,19 @@ function resolveMacAppPath(context) {
   return fallback ? path.join(context.appOutDir, fallback) : null;
 }
 
+function cleanCodeSignMetadata(targetPath) {
+  // -n deletes AppleDouble files without merging resource forks in (-m would add them)
+  spawnSync("dot_clean", ["-n", targetPath], { stdio: "ignore" });
+  spawnSync("xattr", ["-crs", targetPath], { stdio: "ignore" });
+  // ditto strips com.apple.provenance and other protected xattrs that xattr -cr can't touch
+  const tmp = targetPath + ".__clean__";
+  const result = spawnSync("ditto", ["--norsrc", "--noextattr", "--noqtn", targetPath, tmp], { stdio: "ignore" });
+  if (result.status === 0 && require("node:fs").existsSync(tmp)) {
+    require("node:fs").rmSync(targetPath, { recursive: true, force: true });
+    require("node:fs").renameSync(tmp, targetPath);
+  }
+}
+
 function signComputerUseHelper(context) {
   const appPath = resolveMacAppPath(context);
   if (!appPath) return;
@@ -56,6 +69,7 @@ function signComputerUseHelper(context) {
     throw new Error(`Missing Computer Use helper app at ${helperPath}`);
   }
 
+  cleanCodeSignMetadata(helperPath);
   const identity = process.env.LEGALWORK_COMPUTER_USE_CODESIGN_IDENTITY
     || process.env.CSC_NAME
     || process.env.APPLE_CODESIGN_IDENTITY
@@ -122,7 +136,16 @@ async function afterPack(context) {
   }
 
   signComputerUseHelper(context);
+
+  // Strip resource forks from the entire app bundle so electron-builder's
+  // own signing step doesn't fail with "resource fork not allowed".
+  const macAppPath = resolveMacAppPath(context);
+  if (macAppPath) {
+    spawnSync("dot_clean", ["-n", macAppPath], { stdio: "ignore" });
+    spawnSync("xattr", ["-crs", macAppPath], { stdio: "ignore" });
+  }
 }
 
 module.exports = afterPack;
 module.exports.default = afterPack;
+module.exports.cleanCodeSignMetadata = cleanCodeSignMetadata;

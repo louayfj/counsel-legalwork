@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * docx-agent — headless Word reading + editing for the firm's agent.
+ * docx-agent — headless Word reading + editing for the Axleo agent.
  *
  * Self-contained: it imports the vendored ./vendor/docx-engine.mjs (an esbuild
  * bundle of @eigenpal/docx-editor-agents, Apache-2.0 — the same engine behind the
@@ -23,10 +23,10 @@
  *   accept-all / reject-all <file.docx> [--out <file>] [--in-place]
  *       Accept (adopt) or reject ALL tracked changes, then write the clean result.
  *
- * IMPORTANT capability note: comment/redline edits (`apply`) address only TOP-LEVEL
- * paragraphs by index. Many legal contracts lay every clause inside a table; the
+ * IMPORTANT capability note: comment/tracked-change edits (`apply`) address only TOP-LEVEL
+ * paragraphs by index. Many finance agreements and disclosure documents lay important wording inside a table; the
  * headless engine can READ that table text (see `tables`) and accept/reject changes
- * document-wide, but it cannot redline a clause that lives inside a table — open the
+ * document-wide, but it cannot apply tracked changes to a clause that lives inside a table — open the
  * document in the in-app viewer to edit those clauses directly. `inspect` flags this.
  */
 

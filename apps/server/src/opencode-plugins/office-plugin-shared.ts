@@ -192,7 +192,7 @@ export async function describeOtherOpenApps(currentHost: string): Promise<string
       return `${HOST_LABELS[entry.host]} (${HOST_TOOL_PREFIX[entry.host]} tools${name ? `, "${name}"` : ""})`;
     })
     .join(", ");
-  return `\n\nIMPORTANT: other Office apps are open next to this chat and you can use their tools in the SAME conversation: ${list}. Do not restrict yourself to one app — choose tools by which document a request is about. It is expected and correct to read from one app and edit another in a single task (e.g. read a figure from the workbook, then redline the Word document).`;
+  return `\n\nIMPORTANT: other Office apps are open next to this chat and you can use their tools in the SAME conversation: ${list}. Do not restrict yourself to one app — choose tools by which document a request is about. It is expected and correct to read from one app and edit another in a single task (e.g. read a figure from the workbook, then update the Word document with tracked changes).`;
 }
 
 export function describeOpenDocument(documentUrl: string | null): string {

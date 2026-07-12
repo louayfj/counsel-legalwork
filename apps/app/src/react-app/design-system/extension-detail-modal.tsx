@@ -96,7 +96,7 @@ const kindLabel: Record<ExtensionKind, string> = {
   plugin: "Plugin",
   skill: "Skill",
   "ui-control": "UI Control",
-  extension: "LegalWork Extension",
+  extension: "Axleo Extension",
 };
 
 const kindDesc: Record<ExtensionKind, string> = {
@@ -104,7 +104,7 @@ const kindDesc: Record<ExtensionKind, string> = {
   plugin: "Extends LegalWork with additional capabilities managed by your organization.",
   skill: "A reusable workflow that your agent can execute on demand.",
   "ui-control": "Lets another MCP client inspect and drive this LegalWork desktop UI through a local stdio wrapper.",
-  extension: "A LegalWork extension that adds tools, providers, or integrations to your workspace.",
+  extension: "An Axleo extension that adds tools, providers, or integrations to your workspace.",
 };
 
 const uiControlClientConfig = `{

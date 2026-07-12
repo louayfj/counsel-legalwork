@@ -1,23 +1,20 @@
 ---
 name: tabular-review
 description: >-
-  Firm-owned tabular document review — the open-model replacement for Harvey/Legora
-  "review grids". Extract a defined set of fields (columns) across a set of documents
+  Axleo tabular compliance document review. Extract a defined set of fields (columns) across a set of documents
   (rows) and produce an interactive, source-cited review table. Use whenever the user
-  wants to review/compare/extract across MANY documents at once: due-diligence pulls,
-  NDA/contract abstraction, lease abstraction, "make a table of X across these files",
-  "review these contracts for Y", "build a review grid", or "extract these terms from
+  wants to review/compare/extract across MANY documents at once: FCA disclosure checks,
+  complaint packs, ad substantiation, vulnerable-customer reviews, "make a table of X
+  across these files", "build a compliance review grid", or "extract these fields from
   every document".
 ---
 
 # Tabular Review
 
-This skill is how this firm runs **tabular document review** — the workflow Harvey and
-Legora call a "review grid": documents are **rows**, the fields you care about are
+This skill is how Axleo runs **tabular compliance document review**: documents are **rows**, the fields you care about are
 **columns**, and every cell is an independent, source-cited extraction. Unlike the
-SaaS versions, this runs on the firm's own models and infrastructure, the column logic
-lives in firm-owned **doctype skills**, and the output is a self-contained artifact the
-firm keeps.
+generic document-review SaaS, this runs on the user's chosen models and local infrastructure, the column logic
+lives in Axleo-owned **doctype skills**, and the output is a self-contained artifact Axleo keeps.
 
 You are the **orchestrator**. You do not read the documents yourself. You define the
 grid, fan out one `document-extractor` subagent per document, then assemble the results
@@ -26,9 +23,9 @@ into one HTML artifact.
 ## The shape of the job
 
 ```
-                 Parties     Term      Governing law   Assignment ...   ← columns (fields)
-  acme_nda.pdf   [cell]      [cell]    [cell]          [cell]
-  beta_msa.pdf   [cell]      [cell]    [cell]          [cell]      ← rows (documents)
+                 CONC issue   Disclosure gap   Evidence   Risk ...   ← columns (fields)
+  finance-a.pdf   [cell]      [cell]           [cell]     [cell]
+  complaint-b.pdf [cell]      [cell]           [cell]     [cell]      ← rows (documents)
   ...
 ```
 
@@ -44,21 +41,21 @@ sentence highlighted. Every value is grounded in a quote from that document or i
 ### 1. Resolve the document set (rows)
 
 Find the files to review. They may be attached, referenced by `@path`, named in the
-prompt, or sitting in a folder ("review the NDAs in `./ndas`"). Use `glob`/`list` to
+prompt, or sitting in a folder ("review the finance disclosures in `./finance-packs`"). Use `glob`/`list` to
 expand folders. Confirm the list with the user if it's ambiguous or large (>~20).
 
 Sniff the **document type** of each file (from filename and, if cheap, a first-page
 peek). You'll use this both to pick columns and to tell each extractor what it's looking
-at. A set can be mixed (some NDAs, some leases) — that's fine; group by type.
+at. A set can be mixed (some agreements, complaints, adverts, and disclosures) — that's fine; group by type.
 
 ### 2. Resolve the columns (fields) — THIS IS THE BRANCH POINT
 
 Columns can come from three places, in priority order:
 
-1. **The user already specified them.** ("Extract party names, term, and governing
-   law.") Use those verbatim; only add a column if you ask first.
+1. **The user already specified them.** ("Extract disclosure gaps, relevant CONC rules,
+   evidence, and risk rating.") Use those verbatim; only add a column if you ask first.
 2. **A loaded doctype skill.** Look for a skill named `doctype-<type>` (e.g.
-   `doctype-nda`, `doctype-commercial-lease`). If one matches the documents, **load it
+   `doctype-finance-disclosure`, `doctype-complaint-pack`). If one matches the documents, **load it
    with the `skill` tool** and use its recommended columns as the default set. List
    available skills first if unsure what exists.
 3. **Neither → ASK THE USER. Do not invent a column set silently.** Detect the doc
@@ -66,10 +63,10 @@ Columns can come from three places, in priority order:
    using the suggestion library below. Make it a one-tap decision: offer the suggested
    columns and let them add/remove. Example:
 
-   > These look like **mutual NDAs**. What should I pull into the review table? A common
-   > starting set for NDAs: **Parties · Effective date · Term · Purpose · Definition of
-   > Confidential Information · Exclusions · Permitted disclosures · Return/destruction ·
-   > Governing law · Term of confidentiality**. Want this set, a subset, or your own
+   > These look like **motor finance disclosure packs**. What should I pull into the
+   > review table? A common starting set: **Product type · Lender · Dealer/broker role ·
+   > Pre-contract disclosure present · Commission disclosure · APR/total payable ·
+   > Customer signature/date · Missing evidence · Risk rating**. Want this set, a subset, or your own
    > columns?
 
    If the documents are mixed types, suggest the union and note which columns apply to
@@ -96,7 +93,7 @@ Give each extractor exactly this:
 
 ```
 FILE: <path to the one document>
-DOC_TYPE: <NDA | Commercial Lease | ... | unknown>
+DOC_TYPE: <Finance Agreement | Complaint Record | Advertisement | ... | unknown>
 COLUMNS:
   1. key: parties
      question: Who are the parties to this agreement (full legal names)?
@@ -189,45 +186,38 @@ table is for scanning; your summary is for triage.
 Starter columns by document type. Offer these as the proposed set, then let the user
 edit. Prefer a loaded `doctype-*` skill over this list when one exists.
 
-- **NDA / confidentiality agreement** — Parties · Mutual or one-way · Effective date ·
-  Term · Purpose · Definition of Confidential Information · Exclusions · Permitted
-  disclosures · Return/destruction · Term of confidentiality · Governing law · Injunctive
-  relief.
-- **Services / MSA / SOW** — Parties · Effective date · Term & renewal · Services/scope ·
-  Fees & payment terms · Termination rights · Liability cap · Indemnification · IP
-  ownership · Warranties · Governing law.
-- **Employment agreement** — Employee · Employer · Start date · Title/role · Compensation ·
-  At-will vs term · Non-compete · Non-solicit · Confidentiality · Severance · Governing law.
-- **Commercial lease** — Landlord · Tenant · Premises · Commencement date · Term ·
-  Base rent · Escalations · Renewal options · Security deposit · Permitted use ·
-  Assignment/sublease · Maintenance (CAM) · Governing law.
-- **Purchase / M&A agreement (SPA/APA)** — Buyer · Seller · Target/assets · Purchase
-  price · Closing date · Conditions to closing · Reps & warranties survival ·
-  Indemnification cap/basket · Non-compete · Governing law.
-- **Loan / credit agreement** — Borrower · Lender · Principal · Interest rate · Maturity ·
-  Repayment schedule · Collateral/security · Financial covenants · Events of default ·
-  Governing law.
-- **Unknown / mixed** — Document type · Parties · Effective date · Term · Key obligations ·
-  Termination · Governing law · Notable risks. (Then refine with the user.)
+- **Motor finance disclosure pack** — Product type · Lender · Dealer/broker role ·
+  Pre-contract disclosure present · Commission disclosure · APR/total payable ·
+  Customer signature/date · Missing evidence · Risk rating.
+- **Complaint pack** — Customer issue · Product · Date received · Vulnerability flags ·
+  Evidence available · Missing evidence · Proposed outcome · Deadline/risk.
+- **Advert / marketing copy** — Channel · Vehicle/product · Price claim · Finance claim ·
+  Qualification/disclaimer · Substantiation · CAP/FCA risk · Safer wording.
+- **Consumer Duty / fair value** — Product/service · Target market · Price/fees ·
+  Customer benefit · MI evidence · Foreseeable harm · Vulnerable-customer impact · Gaps.
+- **Motor finance commission/redress** — Agreement date · Lender · Dealer/broker ·
+  Commission evidence · DCA indicator · Complaint status · Missing evidence · Scope view.
+- **Unknown / mixed** — Document type · Customer/product · Key issue · Evidence found ·
+  Missing evidence · Relevant rule/source · Notable risks. (Then refine with the user.)
 
 ---
 
 ## The doctype-skill convention
 
 A **doctype skill** is a normal skill named `doctype-<type>` whose job is to define the
-review columns (and where to look) for one kind of document. When the firm reviews a new
+review columns (and where to look) for one kind of document. When Axleo reviews a new
 document type often, capture its column logic as a `doctype-*` skill so this orchestrator
 can load it automatically instead of asking every time. Each one should provide a
 `## Columns` section: a list of `key`, `label`, `question`, and a `where to look` hint.
-Example packs (`doctype-nda`, `doctype-commercial-lease`, …) live in the **LegalWork
-Hub** — a firm installs the ones it needs from Settings → Extensions → Skills. If none
+Example packs (`doctype-finance-disclosure`, `doctype-complaint-pack`, …) live in the **LegalWork
+Hub** — Axleo installs the ones it needs from Settings → Extensions → Skills. If none
 is installed, the suggestion library above is the fallback.
 
 ## Notes & guardrails
 
-- **Open models, firm-owned.** Don't hardcode a model — extractors inherit the firm's
-  configured model. The value here is that the column logic and corrections stay in the
-  firm's skills and artifacts.
+- **Open models, Axleo-owned logic.** Don't hardcode a model — extractors inherit the
+  configured model. The value here is that the column logic and corrections stay in
+  Axleo skills and artifacts.
 - **Never fabricate a cell.** A blank, source-cited grid beats a confident wrong one.
   This is the one bar that matters; everything else is convenience.
 - **Account for every file.** Each input document is exactly one row, even on error.

@@ -1,10 +1,9 @@
 /** @jsxImportSource react */
 import * as React from "react";
-import legalworkMarkDark from "@/assets/legalwork-mark-dark.svg";
+const legalworkMarkDark = `${import.meta.env.BASE_URL}brand/logo/counsel-by-axleo-black.svg`;
 import {
   Archive,
   ArchiveRestore,
-  Sprout,
   ChevronRight,
   FolderPlus,
   Loader2,
@@ -456,11 +455,10 @@ export type AppSidebarProps = {
   onRevealWorkspace: (workspaceId: string) => void;
   onForgetWorkspace: (workspaceId: string) => void;
   onOpenCreateWorkspace: () => void;
-  onShowLearnings?: () => void;
   onShowWorkflows?: () => void;
   onShowExtensions?: () => void;
   /** Which main-pane nav tab is currently shown (shades it like hover). */
-  activeNav?: "learnings" | "workflows" | "extensions" | null;
+  activeNav?: "workflows" | "extensions" | null;
   onReorderWorkspaces?: (workspaceIds: string[]) => void;
   onStartResize?: React.PointerEventHandler<HTMLButtonElement>;
 };
@@ -583,8 +581,10 @@ export function AppSidebar(props: AppSidebarProps) {
 
   const customSidebarBrandName = shellConfig.sidebarBrandName.trim();
   const customSidebarBrandLogo = shellConfig.sidebarBrandLogoDataUrl.trim();
+  const isDefaultSidebarBrandLogo = customSidebarBrandLogo.length === 0;
   const sidebarBrandLogoSrc = customSidebarBrandLogo || legalworkMarkDark;
-  const showSidebarBrandName = customSidebarBrandName.length > 0 || !customSidebarBrandLogo;
+  // Only show text brand name when using a custom logo (the default logo already has "counsel by axleo" text baked in)
+  const showSidebarBrandName = customSidebarBrandName.length > 0 && !isDefaultSidebarBrandLogo;
   const sidebarBrandName = showSidebarBrandName
     ? (customSidebarBrandName || DEFAULT_SHELL_CONFIG.sidebarBrandName)
     : "";
@@ -628,16 +628,26 @@ export function AppSidebar(props: AppSidebarProps) {
         <div className="flex flex-[2] min-h-0 flex-col">
         <div className="px-2 pb-1 mac:titlebar-no-drag">
           <div className={cn("flex gap-2 px-3", showSidebarBrandName ? "items-center py-1" : "items-center py-0") }>
-            <img
-              src={sidebarBrandLogoSrc}
-              alt={`${sidebarBrandAlt} logo`}
-              className={cn(
-                "object-contain",
-                showSidebarBrandName
-                  ? "h-8 w-8 shrink-0 rounded-md"
-                  : "h-16 w-full min-w-0 max-w-full rounded-sm object-left",
-              )}
-            />
+            {!showSidebarBrandName && isDefaultSidebarBrandLogo ? (
+              <div className="relative h-9 w-[7.5rem] max-w-full shrink-0 overflow-hidden rounded-sm">
+                <img
+                  src={sidebarBrandLogoSrc}
+                  alt={`${sidebarBrandAlt} logo`}
+                  className="absolute -left-[8px] -top-[36px] size-32 max-w-none"
+                />
+              </div>
+            ) : (
+              <img
+                src={sidebarBrandLogoSrc}
+                alt={`${sidebarBrandAlt} logo`}
+                className={cn(
+                  "object-contain",
+                  showSidebarBrandName
+                    ? "h-6 w-6 shrink-0 rounded-md"
+                    : "h-8 w-auto max-w-full rounded-sm object-left",
+                )}
+              />
+            )}
             {showSidebarBrandName ? (
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium leading-tight">{sidebarBrandName}</div>
@@ -647,24 +657,14 @@ export function AppSidebar(props: AppSidebarProps) {
         </div>
         <SidebarMenu className={cn("gap-0.5 px-2 mac:titlebar-no-drag", showSidebarBrandName ? "pt-4" : "pt-3")}>
           <SidebarMenuItem>
-            <SidebarMenuButton className="gap-4 text-sidebar-foreground/80 [&_svg]:size-[18px]" onClick={props.onOpenCreateWorkspace}>
+            <SidebarMenuButton className="h-9 gap-4 text-sidebar-foreground/80 [&_svg]:size-[18px]" onClick={props.onOpenCreateWorkspace}>
               <PenLine className="size-[18px]" strokeWidth={1.5} />
               <span>New Task</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="gap-4 text-sidebar-foreground/80 [&_svg]:size-[19px]"
-              isActive={props.activeNav === "learnings"}
-              onClick={() => props.onShowLearnings?.()}
-            >
-              <Sprout className="size-[19px]" strokeWidth={1.5} />
-              <span>Learning</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              className="gap-4 text-sidebar-foreground/80 [&_svg]:size-[18px]"
+              className="h-9 gap-4 text-sidebar-foreground/80 [&_svg]:size-[18px]"
               isActive={props.activeNav === "workflows"}
               onClick={() => (props.onShowWorkflows ? props.onShowWorkflows() : goSettings("general"))}
             >
@@ -674,7 +674,7 @@ export function AppSidebar(props: AppSidebarProps) {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="gap-4 text-sidebar-foreground/80 [&_svg]:size-[18px]"
+              className="h-9 gap-4 text-sidebar-foreground/80 [&_svg]:size-[18px]"
               isActive={props.activeNav === "extensions"}
               onClick={() => (props.onShowExtensions ? props.onShowExtensions() : goSettings("extensions/mcp"))}
             >

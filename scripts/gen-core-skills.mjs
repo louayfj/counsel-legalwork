@@ -39,6 +39,17 @@ const FILES = [
   { source: "commands/annotate.md", path: ".opencode/commands/annotate.md" },
   { source: "commands/fill-form.md", path: ".opencode/commands/fill-form.md" },
   { source: "commands/sign.md", path: ".opencode/commands/sign.md" },
+  // Axleo internal legal/commercial workflows.
+  { source: "skills/axleo-contract-reviewer/SKILL.md", path: ".opencode/skills/axleo-contract-reviewer/SKILL.md" },
+  { source: "skills/axleo-dpa-privacy-review/SKILL.md", path: ".opencode/skills/axleo-dpa-privacy-review/SKILL.md" },
+  { source: "skills/axleo-commercial-drafter/SKILL.md", path: ".opencode/skills/axleo-commercial-drafter/SKILL.md" },
+  // Axleo automotive retail compliance workflows.
+  { source: "skills/fca-disclosure-checker/SKILL.md", path: ".opencode/skills/fca-disclosure-checker/SKILL.md" },
+  { source: "skills/consumer-duty-fair-value/SKILL.md", path: ".opencode/skills/consumer-duty-fair-value/SKILL.md" },
+  { source: "skills/complaint-response-drafter/SKILL.md", path: ".opencode/skills/complaint-response-drafter/SKILL.md" },
+  { source: "skills/vulnerable-customer-flagging/SKILL.md", path: ".opencode/skills/vulnerable-customer-flagging/SKILL.md" },
+  { source: "skills/motor-finance-redress-checker/SKILL.md", path: ".opencode/skills/motor-finance-redress-checker/SKILL.md" },
+  { source: "skills/ad-compliance-checker/SKILL.md", path: ".opencode/skills/ad-compliance-checker/SKILL.md" },
 ];
 
 const entries = FILES.map((file) => {

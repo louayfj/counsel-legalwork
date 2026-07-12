@@ -97,10 +97,9 @@ export type SessionPageHistoryControls = {
 };
 
 export type SessionPageSidebarProps = {
-  onShowLearnings?: () => void;
   onShowWorkflows?: () => void;
   onShowExtensions?: () => void;
-  activeNav?: "learnings" | "workflows" | "extensions" | null;
+  activeNav?: "workflows" | "extensions" | null;
   workspaceSessionGroups: WorkspaceSessionGroup[];
   selectedWorkspaceId: string;
   selectedSessionId: string | null;
@@ -183,7 +182,7 @@ export type SessionPageProps = {
   onAccessibleTargetsChange?: (targets: OpenTarget[]) => void;
   /** Settings content rendered inside the right pane when the settings rail icon is active. */
   settingsSlot?: React.ReactNode;
-  /** When set, replaces the session main pane (keeps the sidebar). Used for the Learnings screen. */
+  /** When set, replaces the session main pane while keeping the sidebar. */
   mainView?: React.ReactNode;
   terminalOpen?: boolean;
   onTerminalOpenChange?: (open: boolean) => void;
@@ -893,7 +892,6 @@ export function SessionPage(props: SessionPageProps) {
           onRevealWorkspace={props.sidebar.onRevealWorkspace}
           onForgetWorkspace={props.sidebar.onForgetWorkspace}
           onOpenCreateWorkspace={props.sidebar.onOpenCreateWorkspace}
-          onShowLearnings={props.sidebar.onShowLearnings}
           onShowWorkflows={props.sidebar.onShowWorkflows}
           onShowExtensions={props.sidebar.onShowExtensions}
           activeNav={props.sidebar.activeNav}
@@ -901,7 +899,7 @@ export function SessionPage(props: SessionPageProps) {
           onStartResize={startLeftSidebarResize}
         />
         {props.mainView ? (
-          // Top-level pages (Learnings / Skills / Integrations): keep the app chrome the
+          // Top-level pages (Workflows / Integrations): keep the app chrome the
           // chat has — the draggable top header and the bottom StatusBar (with the
           // settings gear) — and swap only the center content.
           <SidebarInset className="min-h-0 overflow-hidden bg-background mac:bg-background/80 mac:[&_header]:transition-[padding-left] mac:[&_header]:duration-200 mac:[&_header]:ease-linear mac:peer-data-[state=collapsed]:[&_header]:pl-28 mac:max-md:[&_header]:pl-28">
@@ -1223,14 +1221,14 @@ export function SessionPage(props: SessionPageProps) {
                             onClick={() => {
                               props.sidebar.onCreateTaskWithPrompt?.(
                                 props.selectedWorkspaceId,
-                                "Review the contracts in this folder and build a review grid — one row per document, with columns for the parties, effective date, term, governing law, and assignment/change-of-control. Put a short value in each cell with a citation to the source document, and flag anything missing or unusual.",
+                                "Review the motor finance files in this folder and build a compliance grid — one row per document, with columns for disclosure evidence, CONC references, Consumer Duty risks, customer communications, and missing documents. Cite each source and flag anything requiring human review.",
                               );
                             }}
                           >
                             <Columns2 className="mt-0.5 size-5 shrink-0 text-dls-secondary" />
                             <div>
-                              <div className="text-[13px] font-medium text-dls-text">Build a review grid</div>
-                              <div className="mt-0.5 text-[11px] text-dls-secondary">Extract key terms across many documents</div>
+                              <div className="text-[13px] font-medium text-dls-text">Build a compliance grid</div>
+                              <div className="mt-0.5 text-[11px] text-dls-secondary">Check evidence across many documents</div>
                             </div>
                           </button>
                           <button
@@ -1239,14 +1237,14 @@ export function SessionPage(props: SessionPageProps) {
                             onClick={() => {
                               props.sidebar.onCreateTaskWithPrompt?.(
                                 props.selectedWorkspaceId,
-                                "Redline this contract: propose your changes as tracked redlines and give me a short rationale for each. If we have a standard template or playbook, mark it up against that.",
+                                "Review this customer-facing finance document: propose tracked changes for unclear, incomplete, or risky wording, cite the relevant FCA or consumer-law source, and flag anything that needs human compliance review.",
                               );
                             }}
                           >
                             <SquarePen className="mt-0.5 size-5 shrink-0 text-dls-secondary" />
                             <div>
-                              <div className="text-[13px] font-medium text-dls-text">Redline a contract</div>
-                              <div className="mt-0.5 text-[11px] text-dls-secondary">Propose tracked changes with rationale</div>
+                              <div className="text-[13px] font-medium text-dls-text">Review a finance document</div>
+                              <div className="mt-0.5 text-[11px] text-dls-secondary">Propose tracked changes with citations</div>
                             </div>
                           </button>
                           <button
@@ -1255,14 +1253,14 @@ export function SessionPage(props: SessionPageProps) {
                             onClick={() => {
                               props.sidebar.onCreateTaskWithPrompt?.(
                                 props.selectedWorkspaceId,
-                                "Summarize the contracts in this folder. For each one, note what it is in a sentence, then give me an overall summary of what this set covers and anything that stands out — citing the source file for the important points.",
+                                "Summarize the compliance documents in this folder. For each one, identify what it is, the FCA or consumer-law issue it relates to, the source citations, and anything that appears missing, stale, or high risk.",
                               );
                             }}
                           >
                             <ScrollText className="mt-0.5 size-5 shrink-0 text-dls-secondary" />
                             <div>
-                              <div className="text-[13px] font-medium text-dls-text">Summarize documents</div>
-                              <div className="mt-0.5 text-[11px] text-dls-secondary">Get an overview of every file</div>
+                              <div className="text-[13px] font-medium text-dls-text">Summarize compliance files</div>
+                              <div className="mt-0.5 text-[11px] text-dls-secondary">Get a cited overview of every file</div>
                             </div>
                           </button>
                           <button

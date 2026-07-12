@@ -2,17 +2,19 @@
 // permission checks (spawn --check for a fresh TCC read), running-app
 // listing for @App mentions, and opening the permission-setup GUI.
 // Extracted from main.mjs; consumed only by the desktop IPC registry.
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { app, shell } from "electron";
+import { app } from "electron";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const COMPUTER_USE_HELPER_APP_NAME = "LegalWork Computer Use.app";
+const COMPUTER_USE_HELPER_APP_NAME = "Axleo Computer Use.app";
 const COMPUTER_USE_HELPER_EXECUTABLE = "ComputerUse";
+const COMPUTER_USE_HELPER_BUNDLE_ID = "com.axleosystems.legalwork.computer-use";
+const LEGACY_COMPUTER_USE_HELPER_BUNDLE_ID = "com.eigenweltlabs.legalwork.computer-use";
 
 function computerUseHelperExecutablePath() {
   const appPath = computerUseHelperAppPath();
@@ -41,7 +43,7 @@ function getComputerUseMcpCommand() {
   if (helperExecutable) return [helperExecutable, "mcp"];
 
   if (app.isPackaged) {
-    throw new Error("LegalWork Computer Use is missing from this LegalWork build.");
+    throw new Error("Axleo Computer Use is missing from this Axleo Legal Work build.");
   }
 
   if (process.env.LEGALWORK_DEV_MODE === "1") {
@@ -140,20 +142,25 @@ async function listRunningApps() {
 }
 
 async function openComputerUseSetupApp() {
-  // Open the GUI. Use the .app bundle if available so macOS shows it as
-  // a real app with its own dock icon and permission identity.
-  const appPath = computerUseHelperAppPath();
-  if (appPath) {
-    const result = await shell.openPath(appPath);
-    if (result) console.error("[ComputerUse] shell.openPath error:", result);
-    return;
-  }
-
-  // Fallback: spawn the raw binary (opens the same GUI).
+  // Open the same executable path used by --check and MCP. macOS TCC can treat
+  // a bundle-opened .app and its raw executable as different permission targets.
   const bin = resolveComputerUseExecutable();
   if (!bin) throw new Error("Helper binary not found. Run pnpm dev to build it.");
   const child = spawn(bin, [], { detached: true, stdio: "ignore" });
   child.unref();
+}
+
+async function resetComputerUsePermissions() {
+  if (process.platform !== "darwin") {
+    return { ok: false, accessibility: false, screenRecording: false, error: "Computer Use permissions are macOS only." };
+  }
+
+  for (const bundleId of [COMPUTER_USE_HELPER_BUNDLE_ID, LEGACY_COMPUTER_USE_HELPER_BUNDLE_ID]) {
+    spawnSync("tccutil", ["reset", "Accessibility", bundleId], { stdio: "ignore" });
+    spawnSync("tccutil", ["reset", "ScreenCapture", bundleId], { stdio: "ignore" });
+  }
+
+  return checkComputerUsePermissions();
 }
 
 export {
@@ -161,4 +168,5 @@ export {
   getComputerUseMcpCommand,
   listRunningApps,
   openComputerUseSetupApp,
+  resetComputerUsePermissions,
 };

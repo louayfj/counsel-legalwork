@@ -880,7 +880,7 @@ function McpViewHeader(props: { connectedCount: number }) {
 
 // A connector needs the setup form before connecting when its URL still has
 // {placeholder} segments (instance/tenant/site) or the vendor has no OAuth
-// dynamic client registration (firm must supply its own clientId/secret).
+// dynamic client registration (organization must supply its own clientId/secret).
 function entryNeedsSetup(entry: McpDirectoryInfo): boolean {
   return (
     (typeof entry.url === "string" && /\{[^}]+\}/.test(entry.url)) ||

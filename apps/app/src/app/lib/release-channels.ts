@@ -20,11 +20,11 @@ import type { ReleaseChannel } from "../types";
 
 /** Stable channel's Tauri updater manifest URL. */
 export const STABLE_UPDATER_ENDPOINT =
-  "https://github.com/eigenweltlabs/legalwork/releases/latest/download/latest.json";
+  "https://github.com/louayfj/axleo-legal-work/releases/latest/download/latest.json";
 
 /** Alpha channel's Tauri updater manifest URL (macOS-only, rolling). */
 export const ALPHA_UPDATER_ENDPOINT =
-  "https://github.com/eigenweltlabs/legalwork/releases/download/alpha-macos-latest/latest.json";
+  "https://github.com/louayfj/axleo-legal-work/releases/download/alpha-macos-latest/latest.json";
 
 /** Rolling GitHub release tag that alpha macOS artifacts are published to. */
 export const ALPHA_MACOS_RELEASE_TAG = "alpha-macos-latest";

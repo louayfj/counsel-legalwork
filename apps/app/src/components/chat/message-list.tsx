@@ -11,7 +11,6 @@ import {
   Split,
   Undo2,
 } from "lucide-react"
-import { PaperGrainGradient } from "@legalwork/ui/react"
 import {
   DynamicToolUIPart,
   isFileUIPart,
@@ -33,6 +32,7 @@ import { LspTool } from "@/components/tools/lsp"
 import { QuestionTool } from "@/components/tools/question"
 import { SkillTool } from "@/components/tools/skill"
 import { TodoWriteTool } from "@/components/tools/todowrite"
+import { PerplexityTool } from "@/components/tools/perplexity"
 import { WebfetchTool } from "@/components/tools/webfetch"
 import { WebsearchTool } from "@/components/tools/websearch"
 import { useMessageList, useSessionErrorMessage } from "@/components/chat/message-list-provider"
@@ -84,6 +84,8 @@ import { cn } from "@/lib/utils"
 import { useOpenTargets } from "@/lib/target-provider"
 import { resolveFilePartOpenTarget } from "@/react-app/domains/session/artifacts/open-target"
 import { groupMessages, isMessageGroup, getLastTextPart, getAssistantRenderGroups, getFileTitle, getMediaBadge, getMessageCreated, formatMessageTimestamp, type UIMessageWithIndex, getMessagesText } from "./utils"
+
+const LEO_AVATAR_SRC = `${import.meta.env.BASE_URL}brand/avatar/leo-profilepic.png`
 
 function MessageTimestamp({ message, className }: { message: UIMessage; className?: string }) {
   const created = getMessageCreated(message)
@@ -189,6 +191,10 @@ const ToolMessageInner = ({ part }: ToolMessageProps) => {
 
   if (isEnvVarRequestToolPart(part)) {
     return <EnvVarRequestTool part={part} />
+  }
+
+  if (part.type === "dynamic-tool" && part.toolName?.toLowerCase().includes("perplexity")) {
+    return <PerplexityTool part={part} />
   }
 
   return <Tool toolPart={part} />
@@ -577,18 +583,11 @@ const LoadingMessage = React.memo(({ label }: { label?: string }) => (
   <Message className="mx-auto flex w-full max-w-3xl flex-col items-start gap-2 px-2 md:px-10">
     <div className="group flex w-full flex-col gap-0">
       <div className="flex items-center gap-1.5 px-1 py-1 text-sm text-muted-foreground">
-        <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden" }}>
-          <PaperGrainGradient
-            speed={12}
-            softness={0.1}
-            intensity={1}
-            noise={0.05}
-            shape="sphere"
-            colors={["#818cf8", "#fb7185", "#fbbf24", "#34d399"]}
-            colorBack="#ffffff00"
-            style={{ backgroundColor: "#818cf8", width: "100%", height: "100%", borderRadius: "50%" }}
-          />
-        </div>
+        <img
+          src={LEO_AVATAR_SRC}
+          alt="Leo"
+          className="size-5 rounded-full border border-border object-cover"
+        />
         <span>{label ?? "Thinking…"}</span>
       </div>
     </div>

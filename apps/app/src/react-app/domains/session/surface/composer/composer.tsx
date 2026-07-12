@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Agent } from "@opencode-ai/sdk/v2/client";
-import { AppWindowMac, ArrowUp, ChevronDown, ChevronRight, FileText, ListPlus, Paperclip, Plug, Settings, Sparkles, Square, Terminal, X, Zap } from "lucide-react";
+import { AppWindowMac, ArrowUp, ChevronDown, ChevronRight, FileText, GitCompareArrows, ListPlus, Paperclip, Plug, Settings, Square, Terminal, X, Zap } from "lucide-react";
 import fuzzysort from "fuzzysort";
 import { toast } from "@/components/ui/sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -1092,7 +1092,7 @@ export function ReactSessionComposer(props: ComposerProps) {
         {/* Main composer panel */}
         <div
           className={`relative overflow-visible rounded-[24px] border bg-dls-surface transition-all ${
-            props.fusionEnabled ? "fusion-rainbow-border border-transparent" : "border-dls-border"
+            props.fusionEnabled ? "border-dls-accent/45 shadow-[0_0_0_1px_color-mix(in_oklch,var(--dls-accent)_28%,transparent)]" : "border-dls-border"
           } ${panelRoundedClass}`}
         >
           {props.topAccessory ? <div className="relative z-10">{props.topAccessory}</div> : null}
@@ -1244,6 +1244,7 @@ export function ReactSessionComposer(props: ComposerProps) {
                   }}
                   type="file"
                   multiple
+                  accept=".pdf,.md,.doc,.docx,.xls,.xlsx,image/*"
                   className="hidden"
                   onChange={(event) => {
                     const files = Array.from(event.currentTarget.files ?? []);
@@ -1503,12 +1504,12 @@ export function ReactSessionComposer(props: ComposerProps) {
                       aria-pressed={props.fusionEnabled}
                       className={`inline-flex h-9 max-h-9 items-center gap-1.5 rounded-md px-2.5 text-sm transition-colors disabled:pointer-events-none disabled:opacity-60 ${
                         props.fusionEnabled
-                          ? "fusion-rainbow-text font-medium"
+                          ? "bg-gray-3 font-medium text-dls-text"
                           : "text-gray-10 hover:bg-gray-3 hover:text-gray-12"
                       }`}
                       title={props.fusionEnabled ? t("fusion.toggle_off") : t("fusion.toggle_on")}
                     >
-                      <Sparkles size={14} />
+                      <GitCompareArrows size={14} strokeWidth={1.7} />
                       <span>{t("fusion.toggle_label")}</span>
                     </button>
                     {fusionNewTooltipOpen ? (

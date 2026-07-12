@@ -9,16 +9,25 @@ import {
 } from "@/components/descriptive-button"
 import { useMessageList } from "@/components/chat/message-list-provider"
 import { cn } from "@/lib/utils"
-import { BoltIcon, DocumentTextIcon, PencilSquareIcon, TableCellsIcon } from "@heroicons/react/24/solid"
+import { BoltIcon, DocumentTextIcon, ExclamationTriangleIcon, LockClosedIcon, ShieldCheckIcon, TableCellsIcon } from "@heroicons/react/24/solid"
 
-const REVIEW_GRID_PROMPT =
-  "Review the contracts in this folder and build a review grid — one row per document, with columns for the parties, effective date, term, governing law, and assignment/change-of-control. Put a short value in each cell with a citation to the source document, and flag anything missing or unusual."
+const CONTRACT_REVIEW_PROMPT =
+  "Review this Axleo contract or client terms document. Summarize the commercial/legal risk, flag clauses to accept/negotiate/reject, suggest fallback wording where appropriate, cite sources or internal reference files, and say what needs Axleo approval or solicitor review."
 
-const REDLINE_PROMPT =
-  "Redline this contract: propose your changes as tracked redlines and give me a short rationale for each. If we have a standard template or playbook, mark it up against that."
+const DPA_REVIEW_PROMPT =
+  "Review this DPA, privacy, or data-processing issue for Axleo. Identify controller/processor roles, data categories, GDPR/PECR risks, missing terms, suggested wording, citations, and any DPO/solicitor escalation needed."
 
-const SUMMARIZE_PROMPT =
-  "Summarize the contracts in this folder. For each one, note what it is in a sentence, then give me an overall summary of what this set covers and anything that stands out — citing the source file for the important points."
+const COMMERCIAL_DRAFT_PROMPT =
+  "Draft client-facing legal/commercial wording for Axleo. Ask for any missing facts first if needed, then produce final-ready wording plus internal risk notes, citations, and an approval checklist."
+
+const DISCLOSURE_PROMPT =
+  "Check this motor finance agreement and disclosure pack against FCA CONC pre-contract disclosure expectations. Cite each rule or source you rely on, flag gaps, and log the citations."
+
+const AD_REVIEW_PROMPT =
+  "Review this vehicle advert or marketing copy against the ASA CAP Code and FCA finance-promotion expectations. Give claim-by-claim findings with citations and safer wording."
+
+const COMPLAINT_PROMPT =
+  "Draft a complaint response for this customer issue. Separate facts, missing evidence, regulatory duties, proposed outcome, and escalation risks, with citations."
 
 interface TaskSuggestionsProps {
   className?: string
@@ -36,7 +45,7 @@ export function TaskSuggestions({ className }: TaskSuggestionsProps) {
   return (
     <div className={cn("@container flex flex-col gap-4 pt-1", className)}>
       <p className="text-muted-foreground font-medium select-none">
-        {noProviders ? "Connect a model provider to get started:" : "Try one of these:"}
+        {noProviders ? "Connect a model provider to get started:" : "What do you need Leo to help with?"}
       </p>
       <div className="grid min-w-0 gap-2 @lg:grid-cols-2 @2xl:grid-cols-3">
         {noProviders ? (
@@ -63,33 +72,63 @@ export function TaskSuggestions({ className }: TaskSuggestionsProps) {
           </DescriptiveButton>
         ) : null}
 
-        <DescriptiveButton orientation="vertical" onClick={() => setPrompt(REVIEW_GRID_PROMPT)}>
+        <DescriptiveButton orientation="vertical" onClick={() => setPrompt(CONTRACT_REVIEW_PROMPT)}>
+          <DescriptiveButtonIcon>
+            <DocumentTextIcon className="size-6 text-blue-10" aria-hidden />
+          </DescriptiveButtonIcon>
+          <DescriptiveButtonContent>
+            <DescriptiveButtonTitle>Review contract</DescriptiveButtonTitle>
+            <DescriptiveButtonDescription>Check terms and negotiation risk</DescriptiveButtonDescription>
+          </DescriptiveButtonContent>
+        </DescriptiveButton>
+
+        <DescriptiveButton orientation="vertical" onClick={() => setPrompt(DPA_REVIEW_PROMPT)}>
+          <DescriptiveButtonIcon>
+            <ShieldCheckIcon className="size-6 text-green-10" aria-hidden />
+          </DescriptiveButtonIcon>
+          <DescriptiveButtonContent>
+            <DescriptiveButtonTitle>Review DPA/privacy</DescriptiveButtonTitle>
+            <DescriptiveButtonDescription>Check GDPR, roles, and wording</DescriptiveButtonDescription>
+          </DescriptiveButtonContent>
+        </DescriptiveButton>
+
+        <DescriptiveButton orientation="vertical" onClick={() => setPrompt(COMMERCIAL_DRAFT_PROMPT)}>
+          <DescriptiveButtonIcon>
+            <LockClosedIcon className="size-6 text-purple-10" aria-hidden />
+          </DescriptiveButtonIcon>
+          <DescriptiveButtonContent>
+            <DescriptiveButtonTitle>Draft legal wording</DescriptiveButtonTitle>
+            <DescriptiveButtonDescription>Create client-ready wording for approval</DescriptiveButtonDescription>
+          </DescriptiveButtonContent>
+        </DescriptiveButton>
+
+        <DescriptiveButton orientation="vertical" onClick={() => setPrompt(DISCLOSURE_PROMPT)}>
           <DescriptiveButtonIcon>
             <TableCellsIcon className="size-6 text-blue-10" aria-hidden />
           </DescriptiveButtonIcon>
           <DescriptiveButtonContent>
-            <DescriptiveButtonTitle>Build a review grid</DescriptiveButtonTitle>
-            <DescriptiveButtonDescription>Extract key terms across many documents</DescriptiveButtonDescription>
+            <DescriptiveButtonTitle>Check finance disclosure</DescriptiveButtonTitle>
+            <DescriptiveButtonDescription>Review CONC gaps with citations</DescriptiveButtonDescription>
           </DescriptiveButtonContent>
         </DescriptiveButton>
 
-        <DescriptiveButton orientation="vertical" onClick={() => setPrompt(REDLINE_PROMPT)}>
+        <DescriptiveButton orientation="vertical" onClick={() => setPrompt(AD_REVIEW_PROMPT)}>
           <DescriptiveButtonIcon>
-            <PencilSquareIcon className="size-6 text-amber-10" aria-hidden />
+            <ExclamationTriangleIcon className="size-6 text-amber-10" aria-hidden />
           </DescriptiveButtonIcon>
           <DescriptiveButtonContent>
-            <DescriptiveButtonTitle>Redline a contract</DescriptiveButtonTitle>
-            <DescriptiveButtonDescription>Propose tracked changes with rationale</DescriptiveButtonDescription>
+            <DescriptiveButtonTitle>Review an advert</DescriptiveButtonTitle>
+            <DescriptiveButtonDescription>Check CAP Code and finance claims</DescriptiveButtonDescription>
           </DescriptiveButtonContent>
         </DescriptiveButton>
 
-        <DescriptiveButton orientation="vertical" onClick={() => setPrompt(SUMMARIZE_PROMPT)}>
+        <DescriptiveButton orientation="vertical" onClick={() => setPrompt(COMPLAINT_PROMPT)}>
           <DescriptiveButtonIcon>
             <DocumentTextIcon className="size-6 text-green-10" aria-hidden />
           </DescriptiveButtonIcon>
           <DescriptiveButtonContent>
-            <DescriptiveButtonTitle>Summarize documents</DescriptiveButtonTitle>
-            <DescriptiveButtonDescription>Get an overview of every file</DescriptiveButtonDescription>
+            <DescriptiveButtonTitle>Draft complaint response</DescriptiveButtonTitle>
+            <DescriptiveButtonDescription>Ground the reply and flag risk</DescriptiveButtonDescription>
           </DescriptiveButtonContent>
         </DescriptiveButton>
       </div>

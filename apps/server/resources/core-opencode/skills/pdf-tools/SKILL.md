@@ -6,13 +6,13 @@ description: >-
   annotate it (sticky notes, highlight boxes), list or fill its form fields (AcroForm),
   or stamp a signature (typed name + date, or a PNG signature image). Editing always
   writes a NEW copy (.annotated.pdf / .filled.pdf / .signed.pdf) — the original PDF is
-  never modified. Self-contained; runs on the firm's own infrastructure; pairs with
+  never modified. Self-contained; runs on the user's configured local infrastructure; pairs with
   the in-app PDF viewer.
 ---
 
 # PDF reading + actions (text / annotate / fill-form / sign)
 
-This skill is how this firm reads, annotates, fills, and signs PDFs with AI. It is
+This skill is how Axleo reads, annotates, fills, and signs PDFs with AI. It is
 **self-contained**: `assets/pdf-agent.mjs` imports vendored engines (pdf-lib for
 actions, pdf.js for text — pure JS, no native deps), so it runs in any workspace
 with no install. **Do not hand-edit PDF bytes or reach for python or `pdftotext`**

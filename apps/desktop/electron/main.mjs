@@ -29,6 +29,7 @@ import {
   getComputerUseMcpCommand,
   listRunningApps,
   openComputerUseSetupApp,
+  resetComputerUsePermissions,
 } from "./computer-use.mjs";
 import { createUiControlServer } from "./ui-control-server.mjs";
 import { createApplicationMenu } from "./app-menu.mjs";
@@ -40,18 +41,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
 const pty = require(["node", "pty"].join("-"));
 const NATIVE_DEEP_LINK_EVENT = "legalwork:deep-link-native";
-const APP_BUNDLE_IDENTIFIER = "com.eigenweltlabs.legalwork";
-const DEV_APP_IDENTIFIER = "com.eigenweltlabs.legalwork.dev";
+const APP_BUNDLE_IDENTIFIER = "com.axleosystems.legalwork";
+const DEV_APP_IDENTIFIER = "com.axleosystems.legalwork.dev";
 const DESKTOP_PROTOCOL_SCHEME = "legalwork";
 const isDevMode = process.env.LEGALWORK_DEV_MODE === "1";
 const APP_NAME =
   process.env.LEGALWORK_ELECTRON_APP_NAME?.trim() ||
-  (isDevMode ? "LegalWork - Dev" : "LegalWork");
+  (isDevMode ? "Axleo Legal Work - Dev" : "Axleo Legal Work");
 const APP_IDENTIFIER =
   process.env.LEGALWORK_ELECTRON_APP_IDENTIFIER?.trim() ||
   (isDevMode ? DEV_APP_IDENTIFIER : APP_BUNDLE_IDENTIFIER);
-const RELEASE_DOWNLOAD_BASE_URL = "https://github.com/eigenweltlabs/legalwork/releases/latest/download";
-const RELEASE_PAGE_URL = "https://github.com/eigenweltlabs/legalwork/releases/latest";
+const RELEASE_DOWNLOAD_BASE_URL = "https://github.com/louayfj/axleo-legal-work/releases/latest/download";
+const RELEASE_PAGE_URL = "https://github.com/louayfj/axleo-legal-work/releases/latest";
 
 async function showSupportLogsProgressWindow(parent) {
   const dark = nativeTheme.shouldUseDarkColors;
@@ -359,7 +360,7 @@ async function resolveArchitectureInfo() {
   const systemArch = resolveSystemArch();
   const version = app.getVersion();
   const targetArch = systemArch === "arm64" || systemArch === "x64" ? systemArch : appArch;
-  const assetName = `legalwork-${platformDownloadSlug()}-${downloadAssetArch(targetArch)}-${version}.${downloadAssetExtension()}`;
+  const assetName = `axleo-legal-work-${platformDownloadSlug()}-${downloadAssetArch(targetArch)}-${version}.${downloadAssetExtension()}`;
   const latestDownloadUrl = await resolveCorrectArchitectureDownloadUrl(targetArch);
   const hasCorrectArchitectureDownload = Boolean(latestDownloadUrl);
   return {
@@ -1256,6 +1257,9 @@ const desktopCommandHandlers = {
       // Legacy: open the setup app (same as above).
       await openComputerUseSetupApp();
       return checkComputerUsePermissions();
+  },
+  "resetComputerUsePermissions": async (event, ...args) => {
+      return resetComputerUsePermissions();
   },
   "getLegalworkUiMcpEnvironment": async (event, ...args) => {
       return {

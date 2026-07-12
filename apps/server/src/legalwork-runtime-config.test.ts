@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
+  buildLegalworkRuntimeConfigObject,
   keepLegalworkRuntimeConfigFileFresh,
   legalworkRuntimeConfigFilePath,
   writeLegalworkRuntimeConfigFile,
@@ -53,7 +54,51 @@ async function readConfigFile(config: ServerConfig): Promise<Record<string, unkn
   return JSON.parse(raw) as Record<string, unknown>;
 }
 
+function recordValue(value: unknown, label: string): Record<string, unknown> {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    throw new Error(`${label} was not an object`);
+  }
+  return value as Record<string, unknown>;
+}
+
+function stringValue(value: unknown, label: string): string {
+  if (typeof value !== "string") throw new Error(`${label} was not a string`);
+  return value;
+}
+
 describe("legalwork runtime config file", () => {
+  test("injects the Axleo internal legal and compliance persona into the default agent", async () => {
+    const parsed = await buildLegalworkRuntimeConfigObject();
+    const agents = recordValue(parsed.agent, "agent");
+    const legalwork = recordValue(agents.legalwork, "agent.legalwork");
+    const prompt = stringValue(legalwork.prompt, "agent.legalwork.prompt");
+
+    expect(stringValue(legalwork.description, "agent.legalwork.description")).toBe(
+      "Axleo internal legal and compliance assistant",
+    );
+    expect(prompt).toContain("Leo, Axleo Systems' internal legal and compliance assistant");
+    expect(prompt).toContain("Axleo company legal operations");
+    expect(prompt).toContain("SaaS client contracts");
+    expect(prompt).toContain("DPAs");
+    expect(prompt).toContain("NDAs");
+    expect(prompt).toContain("call recording/transcription");
+    expect(prompt).toContain("UK automotive retail and dealership compliance");
+    expect(prompt).toContain("CONC");
+    expect(prompt).toContain("PRIN 2A Consumer Duty");
+    expect(prompt).toContain("Consumer Credit Act 1974");
+    expect(prompt).toContain("Consumer Rights Act 2015");
+    expect(prompt).toContain("UK GDPR and Data Protection Act 2018");
+    expect(prompt).toContain("ASA CAP Code");
+    expect(prompt).toContain("axleo_reference_search");
+    expect(prompt).toContain("axleo_citation_log");
+    expect(prompt).toContain("Do not make uncited legal claims");
+    expect(prompt).toContain("recommend human legal or compliance review");
+    expect(prompt).toContain("draft final-ready wording");
+    expect(prompt).not.toContain("inside a law firm");
+    expect(prompt).not.toContain("litigation");
+    expect(prompt).not.toContain("engagement letters");
+  });
+
   test("writes runtime-DB MCPs and legalwork defaults into the file", async () => {
     const { config } = await setup();
     await writeRuntimeOpencodeConfig(config, "ws_1", (current) => ({
@@ -72,6 +117,12 @@ describe("legalwork runtime config file", () => {
     expect(Array.isArray(parsed.plugin)).toBe(true);
     const agents = parsed.agent as Record<string, Record<string, unknown>>;
     expect(agents.reviewer?.model).toBe("opencode/big-pickle");
+    const plugins = parsed.plugin as string[];
+    expect(plugins.some((plugin) => plugin.includes("legalwork-axleo-reference-tools"))).toBe(true);
+    const permission = parsed.permission as Record<string, Record<string, unknown>>;
+    const externalDirectory = permission.external_directory ?? {};
+    expect(Object.keys(externalDirectory).some((key) => key.endsWith("/Documents/axleo-private-legal-reference/*"))).toBe(true);
+    expect(Object.keys(externalDirectory).some((key) => key.endsWith("/Documents/axleo-legal-reference/*"))).toBe(true);
   });
 
   test("keepLegalworkRuntimeConfigFileFresh rewrites the file on runtime-DB writes", async () => {
@@ -135,6 +186,9 @@ describe("legalwork runtime config file", () => {
     }
     // Global tool key + this workspace's own external_directory, merged.
     expect(permission.bash).toBe("ask");
-    expect(permission.external_directory).toEqual({ "/tmp/shared/*": "allow" });
+    expect(permission.external_directory).toMatchObject({ "/tmp/shared/*": "allow" });
+    expect(Object.keys(permission.external_directory as Record<string, unknown>).some((key) => (
+      key.endsWith("/Documents/axleo-legal-reference/*")
+    ))).toBe(true);
   });
 });

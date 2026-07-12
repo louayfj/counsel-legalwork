@@ -431,6 +431,7 @@ export type DesktopCommandMap = {
   listRunningApps: { args: []; result: RunningAppsResult };
   openComputerUsePermissionSetup: { args: []; result: ComputerUsePermissions };
   openComputerUsePermissionSettings: { args: []; result: unknown };
+  resetComputerUsePermissions: { args: []; result: ComputerUsePermissions };
 
   // Bootstrap config
   getDesktopBootstrapConfig: { args: []; result: DesktopBootstrapConfig };

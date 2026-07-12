@@ -182,9 +182,9 @@ export function LearningsPane() {
         {/* Header — left aligned */}
         <div className="text-left">
           <span className="lw-section-eyebrow">Learnings · Private preview</span>
-          <h1 className="mt-2 text-4xl font-medium tracking-[-0.04em] text-foreground">Own your firm&apos;s intelligence</h1>
+          <h1 className="mt-2 text-4xl font-medium tracking-[-0.04em] text-foreground">Own Axleo&apos;s intelligence</h1>
           <p className="mt-2 max-w-lg text-sm text-muted-foreground">
-            Your firm&apos;s own models, learned on your matters, improving every week.
+            Axleo&apos;s own models, learned on your matters, improving every week.
           </p>
         </div>
 
@@ -193,14 +193,14 @@ export function LearningsPane() {
           <PreviewCard
             step="01"
             title="Data structuring"
-            desc="We extract the firm's tacit knowledge from your matters, redlines, and comments: partner preferences, drafting style, negotiation playbooks, and review standards."
+            desc="We extract Axleo's working knowledge from matters, tracked changes, comments, compliance playbooks, and review standards."
           >
             <DataStructuringViz />
           </PreviewCard>
           <PreviewCard
             step="02"
             title="Post learning"
-            desc="A specialist model per practice area, learned on your work and benchmarked against open baselines. Weights your firm owns."
+            desc="A specialist model per compliance area, learned on your work and benchmarked against open baselines. Weights Axleo owns."
           >
             <ModelsViz />
           </PreviewCard>

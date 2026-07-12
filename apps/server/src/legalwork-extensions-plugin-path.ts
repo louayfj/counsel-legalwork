@@ -27,6 +27,7 @@ export function legalworkPluginPath(name: string, here = dirname(fileURLToPath(i
 
 export const legalworkExtensionsPreviewPluginPath = () => legalworkPluginPath("legalwork-extensions-preview");
 export const legalworkCapabilitiesKnowledgePluginPath = () => legalworkPluginPath("legalwork-capabilities-knowledge");
+export const legalworkAxleoReferenceToolsPluginPath = () => legalworkPluginPath("legalwork-axleo-reference-tools");
 export const legalworkAnthropicAdaptiveThinkingPluginPath = () => legalworkPluginPath("legalwork-anthropic-adaptive-thinking");
 export const legalworkAnthropicToolSchemaPluginPath = () => legalworkPluginPath("legalwork-anthropic-tool-schema");
 export const legalworkWordToolsPluginPath = () => legalworkPluginPath("legalwork-word-tools");

@@ -47,22 +47,6 @@ export function AppRoot() {
                 }
               />
               <Route
-                path="/learnings"
-                element={
-                  <DevProfiler id="SessionRoute">
-                    <SessionRoute />
-                  </DevProfiler>
-                }
-              />
-              <Route
-                path="/workspace/:workspaceId/learnings"
-                element={
-                  <DevProfiler id="SessionRoute">
-                    <SessionRoute />
-                  </DevProfiler>
-                }
-              />
-              <Route
                 path="/session"
                 element={
                   <DevProfiler id="SessionRoute">

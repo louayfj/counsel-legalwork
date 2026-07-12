@@ -2,24 +2,26 @@
 import type * as React from "react";
 import {
   ArrowLeft,
+  BookOpen,
   Bug,
   ChevronDown,
   CloudCog,
+  CloudDownload,
   Cog,
   Container,
-  FileStack,
+  Cpu,
+  EyeOff,
+  FileSpreadsheet,
   FolderLock,
   KeyRound,
-  Languages,
-  Layout,
+  Lock,
+  Palette,
   Puzzle,
-  RefreshCcw,
+  RotateCcw,
   ShieldCheck,
-  Sparkles,
+  SlidersHorizontal,
   Store,
   UserCircle,
-  Wrench,
-  Zap,
 } from "lucide-react";
 
 import {
@@ -59,15 +61,13 @@ import { WorkspaceIcon } from "../../../design-system/workspace-icon";
 export function getSettingsTabIcon(tab: SettingsTab) {
   switch (tab) {
     case "ai":
-      return Zap;
+      return Cpu;
     case "preferences":
-      return ShieldCheck;
-    case "shell":
-      return Layout;
+      return EyeOff;
     case "permissions":
       return FolderLock;
     case "safety":
-      return ShieldCheck;
+      return Lock;
     case "cloud-account":
       return UserCircle;
     case "cloud-marketplaces":
@@ -77,21 +77,21 @@ export function getSettingsTabIcon(tab: SettingsTab) {
     case "cloud-providers":
       return CloudCog;
     case "skills":
-      return Sparkles;
+      return BookOpen;
     case "extensions":
       return Puzzle;
     case "environment":
       return KeyRound;
     case "advanced":
-      return Wrench;
+      return SlidersHorizontal;
     case "appearance":
-      return Languages;
+      return Palette;
     case "updates":
-      return RefreshCcw;
+      return CloudDownload;
     case "recovery":
-      return ShieldCheck;
+      return RotateCcw;
     case "office-addins":
-      return FileStack;
+      return FileSpreadsheet;
     case "debug":
       return Bug;
     default:
@@ -105,8 +105,6 @@ export function getSettingsTabLabel(tab: SettingsTab) {
       return "AI Providers";
     case "preferences":
       return "Privacy";
-    case "shell":
-      return "Customization";
     case "permissions":
       return "Permissions";
     case "safety":
@@ -150,8 +148,6 @@ export function getSettingsTabDescription(tab: SettingsTab) {
       return "Connect services that provide AI models";
     case "preferences":
       return "Usage analytics and data sharing";
-    case "shell":
-      return "Branding and task suggestions";
     case "permissions":
       return "Authorized folders and file access";
     case "safety":
@@ -199,7 +195,7 @@ export function getWorkspaceSettingsTabs(): SettingsTab[] {
 export function getGlobalSettingsTabs(developerMode: boolean): SettingsTab[] {
   // Appearance/Language and Recovery are hidden (theme is fixed to Light).
   // "preferences" is the Privacy tab (usage-analytics opt-in).
-  const tabs: SettingsTab[] = ["ai", "safety", "shell", "environment", "preferences", "updates"];
+  const tabs: SettingsTab[] = ["ai", "safety", "environment", "preferences", "updates"];
   // Office add-ins install into local desktop apps, so the tab is desktop-only.
   // Placed right after the first tab.
   if (isDesktopRuntime()) tabs.splice(1, 0, "office-addins");

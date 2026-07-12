@@ -65,7 +65,7 @@ export type McpDirectoryInfo = {
    */
   requestAccessUrl?: string;
   /**
-   * Connector whose vendor has no OAuth dynamic client registration: the firm
+   * Connector whose vendor has no OAuth dynamic client registration: the organization
    * supplies its own OAuth app clientId/secret. When set, Connect opens a setup
    * form to collect them (written into the MCP config's `oauth`). A url with
    * {placeholder} segments also triggers that form (to fill in instance/tenant).
@@ -135,10 +135,10 @@ export const MCP_QUICK_CONNECT: McpDirectoryInfo[] = [
     iconSlug: "notion",
     iconSrc: "/ext-notion.svg",
   },
-  // Law-firm document, eDiscovery, contract, and legal-research connectors.
+  // Document, evidence-search, and legal-research connectors.
   // Endpoints verified against live vendor docs (mid-2026). Entries marked
-  // `preview` need a firm admin to enable the server vendor-side and/or the
-  // firm to substitute an instance/tenant segment in the URL before Connect
+  // `preview` need an organization admin to enable the server vendor-side and/or the
+  // organization to substitute an instance/tenant segment in the URL before Connect
   // works (no dynamic client registration). See the connector catalog notes.
   {
     get name() { return t("mcp.quick_connect_imanage_title"); },
@@ -319,7 +319,7 @@ export const MCP_QUICK_CONNECT: McpDirectoryInfo[] = [
   {
     name: "Everlaw",
     serverName: "everlaw",
-    description: "Ediscovery and litigation document review from Everlaw.",
+    description: "Document review and evidence search from Everlaw.",
     url: "https://api.everlaw.com/v1/mcp",
     type: "remote",
     oauth: false,
@@ -355,7 +355,7 @@ export const MCP_QUICK_CONNECT: McpDirectoryInfo[] = [
     get name() { return t("mcp.quick_connect_sharepoint_title"); },
     serverName: "sharepoint",
     get description() { return t("mcp.quick_connect_sharepoint_desc"); },
-    // Official ODSP/Work IQ remote server. {tenant_id} is per-firm; tenant
+    // Official ODSP/Work IQ remote server. {tenant_id} is per organization; tenant
     // admin must consent in the M365 admin center before connecting.
     url: "https://agent365.svc.cloud.microsoft/agents/tenants/{tenant_id}/servers/mcp_SharePointRemoteServer",
     type: "remote",
@@ -446,7 +446,7 @@ export const MCP_QUICK_CONNECT: McpDirectoryInfo[] = [
     serverName: "courtlistener",
     get description() { return t("mcp.quick_connect_courtlistener_desc"); },
     // Free, first-party Free Law Project server. Standard OAuth with dynamic
-    // client registration — genuine one-click, no firm-admin step.
+    // client registration — genuine one-click, no organization-admin step.
     url: "https://mcp.courtlistener.com/",
     type: "remote",
     oauth: true,
@@ -481,7 +481,7 @@ export const MCP_QUICK_CONNECT: McpDirectoryInfo[] = [
     serverName: "netdocuments",
     get description() { return t("mcp.quick_connect_netdocuments_desc"); },
     // US pod (swap us->de for EU). OAuth with dynamic client registration works;
-    // the firm must be ndMAX Enterprise with MCP enabled or tools come back empty.
+    // the organization must be ndMAX Enterprise with MCP enabled or tools come back empty.
     url: "https://web-api.us.netdocuments.app/connect/mcp",
     type: "remote",
     oauth: true,
@@ -493,7 +493,7 @@ export const MCP_QUICK_CONNECT: McpDirectoryInfo[] = [
     serverName: "relativity",
     get description() { return t("mcp.quick_connect_relativity_desc"); },
     // RelativityOne instance MCP server. {tenantHostname} is the first segment
-    // of the firm's RelativityOne URL (e.g. kcura.relativity.one → "kcura").
+    // of the organization's RelativityOne URL (e.g. kcura.relativity.one -> "kcura").
     // Relativity Support enables the server and issues the OAuth Client ID; it
     // is a public client (PKCE), so no client secret. The signed-in user must
     // be a RelativityOne System Administrator and acts as themselves.
@@ -514,7 +514,7 @@ export const MCP_QUICK_CONNECT: McpDirectoryInfo[] = [
     command: ["npx", "-y", "legalwork-ui-mcp"],
     oauth: false,
     kind: "ui-control",
-    iconSrc: "/legalwork-mark.svg",
+    iconSrc: "/brand/logo/logo.png",
   },
   ...BUILT_IN_LEGALWORK_EXTENSION_MANIFESTS.map(extensionManifestToDirectoryInfo),
 ];

@@ -38,7 +38,6 @@ import { decodeComposerMentionValue, encodeComposerMentionValue, type ComposerMe
 import { desktopBridge } from "@/app/lib/desktop";
 import { parseSlashCommandInvocation } from "./composer/slash-command";
 import { DevProfiler } from "@/react-app/shell/dev-profiler";
-import { PaperGrainGradient } from "@legalwork/ui/react";
 import { useShellConfig } from "@/react-app/shell/shell-config";
 import { useReactRenderWatchdog } from "@/react-app/shell/react-render-watchdog";
 import { SessionDebugPanel } from "./debug-panel";
@@ -81,6 +80,7 @@ import {
   type ApplyEnvironmentChangesResult,
 } from "@/react-app/domains/settings/pages/environment-variable-provider";
 
+const LEO_AVATAR_SRC = `${import.meta.env.BASE_URL}brand/avatar/leo-profilepic.png`;
 const EMPTY_TRANSCRIPT: UIMessage[] = [];
 const IDLE_STATUS: SessionStatus = { type: "idle" };
 const DEFAULT_COMPOSER_CONTROL_TEXT = "Help me outline the next LegalWork task.";
@@ -213,18 +213,11 @@ function AssistantWaitingCard({ label = t("session.assistant_thinking") }: { lab
   return (
     <div className="flex justify-start" role="status" aria-live="polite">
       <div className="inline-flex items-center gap-1.5 px-1 py-1 text-[12px] text-dls-secondary">
-        <div style={{ width: 20, height: 20, borderRadius: "50%", overflow: "hidden" }}>
-          <PaperGrainGradient
-            speed={12}
-            softness={0.1}
-            intensity={1}
-            noise={0.05}
-            shape="sphere"
-            colors={["#818cf8", "#fb7185", "#fbbf24", "#34d399"]}
-            colorBack="#ffffff00"
-            style={{ backgroundColor: "#818cf8", width: "100%", height: "100%", borderRadius: "50%" }}
-          />
-        </div>
+        <img
+          src={LEO_AVATAR_SRC}
+          alt="Leo"
+          className="size-5 rounded-full border border-border object-cover"
+        />
         <span>{label}</span>
       </div>
     </div>
@@ -934,8 +927,8 @@ export function SessionSurface(props: SessionSurfaceProps) {
         { description: "Files over 25 MB were skipped." },
       );
     }
-    const unreadable = sized.filter((file) => !isModelReadableAttachment(file.type));
-    const accepted = sized.filter((file) => isModelReadableAttachment(file.type));
+    const unreadable = sized.filter((file) => !isModelReadableAttachment(file.type, file.name));
+    const accepted = sized.filter((file) => isModelReadableAttachment(file.type, file.name));
     if (unreadable.length) {
       toast.warning(
         unreadable.length === 1

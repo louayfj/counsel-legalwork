@@ -1,6 +1,7 @@
 import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 import type { ApprovalMode, ApprovalConfig, ServerConfig, WordAddinConfig, WorkspaceConfig, LogFormat } from "./types.js";
+import { resolveAxleoReferenceRoots } from "./axleo-reference.js";
 import { buildWorkspaceInfos } from "./workspaces.js";
 import { parseList, readJsonFile, shortId } from "./utils.js";
 
@@ -342,10 +343,14 @@ export async function resolveServerConfig(cli: CliArgs): Promise<ServerConfig> {
   const envLogRequests = parseBoolean(process.env.LEGALWORK_LOG_REQUESTS);
   const logRequests = cli.logRequests ?? envLogRequests ?? fileConfig.logRequests ?? DEFAULT_LOG_REQUESTS;
 
-  const authorizedRoots =
+  const configuredAuthorizedRoots =
     fileConfig.authorizedRoots?.length
       ? fileConfig.authorizedRoots.map((root) => resolve(configDir, root))
       : workspaces.map((workspace) => workspace.path);
+  const authorizedRoots = Array.from(new Set([
+    ...configuredAuthorizedRoots,
+    ...resolveAxleoReferenceRoots(),
+  ]));
 
   const host = cli.host ?? process.env.LEGALWORK_HOST ?? fileConfig.host ?? DEFAULT_HOST;
   const port = cli.port ?? (process.env.LEGALWORK_PORT ? Number(process.env.LEGALWORK_PORT) : undefined) ?? fileConfig.port ?? DEFAULT_PORT;

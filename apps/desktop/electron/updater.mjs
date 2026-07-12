@@ -30,9 +30,10 @@ function resolveAppVersion(app) {
   return _cachedAppVersion;
 }
 const ELECTRON_UPDATER_FEEDS = Object.freeze({
-  stable: "https://github.com/eigenweltlabs/legalwork/releases/latest/download",
-  alpha: "https://github.com/eigenweltlabs/legalwork/releases/download/alpha-macos-latest",
+  stable: "https://github.com/louayfj/axleo-legal-work/releases/latest/download",
+  alpha: "https://github.com/louayfj/axleo-legal-work/releases/download/alpha-macos-latest",
 });
+const AXLEO_AUTO_UPDATES_ENABLED = true;
 
 function normalizeElectronUpdaterChannel(value) {
   if (value === "alpha" && process.platform === "darwin") return "alpha";
@@ -147,6 +148,8 @@ function updaterChannelState(app, channel) {
     channel: normalized,
     feedUrl: electronUpdaterFeedUrl(normalized),
     currentVersion: resolveAppVersion(app),
+    supported: AXLEO_AUTO_UPDATES_ENABLED,
+    reason: AXLEO_AUTO_UPDATES_ENABLED ? null : AXLEO_AUTO_UPDATES_DISABLED_REASON,
   };
 }
 
@@ -176,7 +179,7 @@ function runDefaults(args) {
 
 // Squirrel.Mac's `ShipIt` helper (which swaps the .app on macOS) reads its
 // options from this NSUserDefaults domain.
-const SHIP_IT_DEFAULTS_DOMAIN = "com.eigenweltlabs.legalwork.ShipIt";
+const SHIP_IT_DEFAULTS_DOMAIN = "com.axleosystems.legalwork.ShipIt";
 
 // Squirrel.Mac defaults to moving the *entire* app bundle through a temp
 // directory. On repeat installs that move can leave the staged bundle missing,
@@ -232,6 +235,7 @@ export function registerUpdaterIpc({ app, ipcMain, getMainWindow }) {
   }
 
   async function ensureAutoUpdater() {
+    if (!AXLEO_AUTO_UPDATES_ENABLED) return null;
     if (!app.isPackaged) return null;
     if (autoUpdaterLoaded) return autoUpdaterInstance;
     autoUpdaterLoaded = true;

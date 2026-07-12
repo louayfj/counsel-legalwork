@@ -39,8 +39,8 @@ export type ShellConfig = {
 /* ------------------------------------------------------------------ */
 
 export const DEFAULT_SHELL_CONFIG: ShellConfig = {
-  appName: "LegalWork",
-  sidebarBrandName: "LegalWork",
+  appName: "",
+  sidebarBrandName: "",
   sidebarBrandLogoDataUrl: "",
   statusBar: true,
   sidebar: true,
