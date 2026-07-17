@@ -78,7 +78,7 @@ function extname(value: string) {
   return index >= 0 ? name.slice(index) : "";
 }
 
-function classifyOpenTarget(value: string, kind: OpenTargetKind): OpenTargetPreview {
+export function classifyOpenTarget(value: string, kind: OpenTargetKind): OpenTargetPreview {
   if (kind === "url") return "browser";
   const ext = extname(value);
   if ([".md", ".markdown", ".mdx"].includes(ext)) return "markdown";
@@ -236,6 +236,14 @@ export function resolveFilePartOpenTarget(part: FilePartLike, openTargets: OpenT
   const source = opencodeSourceFromMetadata(part.providerMetadata);
   const uri = source?.uri ?? (typeof part.url === "string" && URI_PATTERN.test(part.url) ? part.url : null);
   if (uri && /^https?:\/\//i.test(uri)) return targetFromUrl(uri, 80, "attachment");
+  // Last resort: build a target straight from the attachment's own filename so
+  // the badge stays openable. The handler decides the in-app viewer vs. the
+  // system default app from the file type — the badge never needs to gate on
+  // "is this openable".
+  if (typeof part.filename === "string" && !part.filename.startsWith("data:")) {
+    const built = targetFromFile(part.filename, 70, "attachment");
+    if (built) return { ...built, exists: true };
+  }
   return null;
 }
 

@@ -302,6 +302,51 @@ export type RunningAppsResult = {
   apps: string[];
 };
 
+export type OfficeAddinAppId = "word" | "excel" | "powerpoint";
+
+export type OfficeAddinAppStatus = {
+  id: OfficeAddinAppId;
+  label: string;
+  /** The Office app is installed on this machine. */
+  installed: boolean;
+  /** The user has installed the LegalWork add-in for this app. */
+  enabled: boolean;
+  /** The LegalWork manifest is sideloaded (wef folder on macOS, registry on Windows). */
+  manifestInstalled: boolean;
+};
+
+export type OfficeAddinStatus = {
+  /** The current platform supports installing the add-in (macOS and Windows). */
+  supported: boolean;
+  /** process.platform of the desktop app, e.g. "darwin" | "win32". */
+  platform: string;
+  /** OpenSSL (needed to generate the certificate) is available. */
+  toolAvailable: boolean;
+  /** The add-in is installed and the HTTPS listener is enabled. */
+  enabled: boolean;
+  port: number;
+  installedAt: number | null;
+  certPresent: boolean;
+  /** The localhost CA is trusted by the OS. */
+  certTrusted: boolean;
+  caFingerprint: string | null;
+  /** The built task pane bundle is available to serve. */
+  paneBundlePresent: boolean;
+  apps: OfficeAddinAppStatus[];
+};
+
+export type OfficeAddinActionResult = {
+  ok: boolean;
+  error?: string;
+  steps?: Array<{ step: string; ok: boolean; skipped?: boolean; error?: string; apps?: unknown }>;
+  status: OfficeAddinStatus;
+};
+
+export type OfficeAddinOpenAppResult = {
+  ok: boolean;
+  error?: string;
+};
+
 // ---------------------------------------------------------------------------
 // The command map
 // ---------------------------------------------------------------------------
@@ -359,6 +404,8 @@ export type DesktopCommandMap = {
   prepareFreshRuntime: { args: []; result: unknown };
   runtimeBootstrap: { args: []; result: unknown };
   runtimeStatus: { args: []; result: unknown };
+  /** Write a token-free support-log bundle and reveal it in the file manager. */
+  supportBundleCollect: { args: []; result: { path: string | null } };
   engineStop: { args: []; result: EngineInfo };
   engineRestart: { args: [options?: Record<string, unknown>]; result: EngineInfo };
   engineInfo: { args: []; result: EngineInfo };
@@ -406,6 +453,12 @@ export type DesktopCommandMap = {
     args: [options?: Record<string, unknown>];
     result: LegalworkServerInfo;
   };
+
+  // Office add-ins (Word/Excel/PowerPoint task pane)
+  officeAddinStatus: { args: []; result: OfficeAddinStatus };
+  officeAddinInstall: { args: [app: OfficeAddinAppId]; result: OfficeAddinActionResult };
+  officeAddinUninstall: { args: [app: OfficeAddinAppId]; result: OfficeAddinActionResult };
+  officeAddinOpenApp: { args: [app: OfficeAddinAppId]; result: OfficeAddinOpenAppResult };
 
   // Dialogs
   pickDirectory: {
@@ -455,6 +508,20 @@ export type DesktopCommandMap = {
     result: ExecResult;
   };
   uninstallSkill: { args: [projectDir: string, skillName: string]; result: ExecResult };
+  // Zip a skill/workflow folder (SKILL.md + resources/ + supporting files) to
+  // outputPath — the self-contained shareable form. Empty projectDir → global
+  // skills dir, same resolution as readLocalSkill.
+  exportSkillZip: {
+    args: [projectDir: string, skillName: string, outputPath: string];
+    result: ExecResult;
+  };
+  // Install a skill from a zip (the shape exportSkillZip produces, or any zip
+  // with SKILL.md at the root or under one top-level folder). asWorkflow adds
+  // the workflow- name prefix the Workflows view detects.
+  importSkillZip: {
+    args: [projectDir: string, archivePath: string, options?: { overwrite?: boolean; asWorkflow?: boolean }];
+    result: ExecResult;
+  };
   // One-time lift of per-workspace skills + MCP into the global config. No args →
   // self-enumerates all local workspaces.
   migrateExtensionsToGlobal: {

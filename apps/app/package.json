@@ -1,7 +1,7 @@
 {
   "name": "@legalwork/app",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "test": "bun test tests/",
@@ -9,6 +9,8 @@
     "build": "vite build",
     "dev:web": "LEGALWORK_DEV_MODE=1 vite",
     "build:web": "vite build",
+    "build:word-addin": "vite build --config vite.wordaddin.config.ts",
+    "dev:word-addin": "LEGALWORK_PANE_KEEP_DIST=1 vite build --watch --config vite.wordaddin.config.ts",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test:health": "node scripts/health.mjs",
@@ -29,11 +31,7 @@
     "test:fs-engine": "node scripts/fs-engine.mjs",
     "test:local-file-path": "node scripts/local-file-path.mjs",
     "test:browser-entry": "node scripts/browser-entry.mjs",
-    "test:e2e": "pnpm test:local-file-path && node scripts/e2e.mjs && node scripts/session-switch.mjs && node scripts/fs-engine.mjs && node scripts/browser-entry.mjs",
-    "bump:patch": "node scripts/bump-version.mjs patch",
-    "bump:minor": "node scripts/bump-version.mjs minor",
-    "bump:major": "node scripts/bump-version.mjs major",
-    "bump:set": "node scripts/bump-version.mjs --set"
+    "test:e2e": "pnpm test:local-file-path && node scripts/e2e.mjs && node scripts/session-switch.mjs && node scripts/fs-engine.mjs && node scripts/browser-entry.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.148",

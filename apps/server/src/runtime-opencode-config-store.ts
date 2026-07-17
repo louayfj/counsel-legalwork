@@ -12,8 +12,10 @@ export type RuntimeOpencodeConfig = {
   mcp?: Record<string, Record<string, unknown>>;
   permission?: {
     external_directory?: Record<string, unknown>;
+    [key: string]: unknown;
   };
   provider?: Record<string, unknown>;
+  agent?: Record<string, Record<string, unknown>>;
 };
 
 const runtimeOpencodeConfigs = sqliteTable("runtime_opencode_configs", {
@@ -31,6 +33,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function recordRecordMap(value: unknown): Record<string, Record<string, unknown>> | undefined {
+  if (!isRecord(value)) return undefined;
+  const entries: Record<string, Record<string, unknown>> = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (isRecord(item)) entries[key] = item;
+  }
+  return Object.keys(entries).length ? entries : undefined;
+}
+
 function normalizeRuntimeOpencodeConfig(value: unknown): RuntimeOpencodeConfig {
   if (!isRecord(value)) return {};
   const defaultAgent = typeof value.default_agent === "string" ? value.default_agent : undefined;
@@ -39,16 +50,17 @@ function normalizeRuntimeOpencodeConfig(value: unknown): RuntimeOpencodeConfig {
     ? value.disabled_providers.filter((item) => typeof item === "string")
     : undefined;
   const mcp = isRecord(value.mcp) ? value.mcp as Record<string, Record<string, unknown>> : undefined;
-  const permission = isRecord(value.permission) ? value.permission : undefined;
-  const externalDirectory = permission && isRecord(permission.external_directory) ? permission.external_directory : undefined;
+  const permission = isRecord(value.permission) && Object.keys(value.permission).length ? value.permission : undefined;
   const provider = isRecord(value.provider) ? value.provider : undefined;
+  const agent = recordRecordMap(value.agent);
   return {
     ...(defaultAgent ? { default_agent: defaultAgent } : {}),
     ...(plugin ? { plugin } : {}),
     ...(disabledProviders ? { disabled_providers: disabledProviders } : {}),
     ...(mcp ? { mcp } : {}),
-    ...(externalDirectory ? { permission: { external_directory: externalDirectory } } : {}),
+    ...(permission ? { permission } : {}),
     ...(provider ? { provider } : {}),
+    ...(agent ? { agent } : {}),
   };
 }
 
@@ -133,6 +145,44 @@ async function runtimeDb(config: ServerConfig): Promise<RuntimeOpencodeDb> {
   return db;
 }
 
+/**
+ * Tool permissions are GLOBAL — one safety posture for every workspace this
+ * server hosts. They live under a reserved runtime-DB row instead of per
+ * workspace; only `permission.external_directory` (Authorized Folders) stays
+ * workspace-scoped. The id can never collide with real workspaces (those are
+ * `ws_<hash>`).
+ */
+export const GLOBAL_TOOL_PERMISSIONS_ID = "__global_tool_permissions__";
+
+/** Read the global tool-permission map (never contains external_directory). */
+export async function readGlobalToolPermissions(config: ServerConfig): Promise<Record<string, unknown>> {
+  const globalConfig = await readRuntimeOpencodeConfig(config, GLOBAL_TOOL_PERMISSIONS_ID);
+  const permission = isRecord(globalConfig.permission) ? { ...globalConfig.permission } : {};
+  delete permission.external_directory;
+  return permission;
+}
+
+/**
+ * Effective permission map for a workspace: the global tool permissions plus
+ * the workspace's own external_directory. Tool keys in the workspace row are
+ * ignored (legacy rows from when permissions were workspace-scoped).
+ */
+export function applyGlobalToolPermissions(
+  runtimeConfig: RuntimeOpencodeConfig,
+  globalPermission: Record<string, unknown>,
+): RuntimeOpencodeConfig {
+  const workspacePermission = isRecord(runtimeConfig.permission) ? runtimeConfig.permission : {};
+  const permission: Record<string, unknown> = { ...globalPermission };
+  if (isRecord(workspacePermission.external_directory)) {
+    permission.external_directory = workspacePermission.external_directory;
+  }
+  const next = { ...runtimeConfig };
+  delete next.permission;
+  return Object.keys(permission).length
+    ? { ...next, permission: permission as RuntimeOpencodeConfig["permission"] }
+    : next;
+}
+
 export function runtimePluginList(config: RuntimeOpencodeConfig): string[] {
   return Array.isArray(config.plugin) ? config.plugin.filter((item) => typeof item === "string") : [];
 }
@@ -145,6 +195,10 @@ export function runtimeDisabledProviderList(config: RuntimeOpencodeConfig): stri
 
 export function runtimeMcpMap(config: RuntimeOpencodeConfig): Record<string, Record<string, unknown>> {
   return isRecord(config.mcp) ? config.mcp as Record<string, Record<string, unknown>> : {};
+}
+
+export function runtimeAgentMap(config: RuntimeOpencodeConfig): Record<string, Record<string, unknown>> {
+  return recordRecordMap(config.agent) ?? {};
 }
 
 export function runtimeExternalDirectory(config: RuntimeOpencodeConfig): Record<string, unknown> {
@@ -178,6 +232,26 @@ export async function writeRuntimeOpencodeConfig(
   return next;
 }
 
+/**
+ * Merge a provider patch into the current runtime provider map. A `null` value
+ * in the patch removes that provider — patch payloads can't carry `undefined`
+ * over JSON, so callers signal deletion with `null`. This is what lets a client
+ * fully disconnect a custom/runtime provider (not just drop its credential).
+ */
+export function mergeRuntimeProviderPatch(
+  current: Record<string, unknown> | undefined,
+  update: Record<string, unknown>,
+): Record<string, unknown> {
+  const merged: Record<string, unknown> = {
+    ...(isRecord(current) ? current : {}),
+    ...update,
+  };
+  for (const [key, value] of Object.entries(update)) {
+    if (value === null) delete merged[key];
+  }
+  return merged;
+}
+
 export function mergeOpencodeConfigs(
   persisted: Record<string, unknown>,
   runtime: RuntimeOpencodeConfig,
@@ -202,12 +276,14 @@ export function mergeOpencodeConfigs(
     },
     permission: {
       ...persistedPermission,
+      ...(isRecord(runtime.permission) ? runtime.permission : {}),
       external_directory: {
         ...persistedExternalDirectory,
         ...runtimeExternalDirectory(runtime),
       },
     },
     ...(runtime.provider ? { provider: { ...(isRecord(persisted.provider) ? persisted.provider : {}), ...runtime.provider } } : {}),
+    ...(runtime.agent ? { agent: { ...(isRecord(persisted.agent) ? persisted.agent : {}), ...runtime.agent } } : {}),
     ...(runtime.default_agent ? { default_agent: runtime.default_agent } : {}),
   };
 }

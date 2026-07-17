@@ -51,10 +51,11 @@ import {
 } from "@/react-app/shell/route-workspaces";
 import { createConnectionsStore, useConnectionsStoreSnapshot } from "@/react-app/domains/connections/store";
 import { createLegalworkServerStore, useLegalworkServerStoreSnapshot } from "@/react-app/domains/connections/legalwork-server-store";
-import { createProviderAuthStore, useProviderAuthStoreSnapshot } from "@/react-app/domains/connections/provider-auth/store";
+import { createProviderAuthStore, useProviderAuthStoreSnapshot, type CustomProviderEditData } from "@/react-app/domains/connections/provider-auth/store";
 import ProviderAuthModal from "@/react-app/domains/connections/provider-auth/provider-auth-modal";
 import ConnectionsModals from "@/react-app/domains/connections/modals";
 import { AiSettingsView } from "@/react-app/domains/settings/pages/ai-view";
+import { FusionSettingsSection } from "@/react-app/domains/settings/pages/fusion-settings-section";
 // Side-effect imports: register extension config components into the registry.
 import "@/react-app/domains/settings/computer-use-config";
 import "@/react-app/domains/settings/google-workspace-config";
@@ -65,6 +66,7 @@ import { PreferencesView } from "@/react-app/domains/settings/pages/preferences-
 import { ShellCustomizationView } from "@/react-app/domains/settings/pages/shell-view";
 import { GeneralSettingsView } from "@/react-app/domains/settings/pages/general-view";
 import { AuthorizedFoldersPanel } from "@/react-app/domains/settings/panels/authorized-folders-panel";
+import { ToolPermissionsPanel } from "@/react-app/domains/settings/panels/tool-permissions-panel";
 import { SettingsStack } from "@/react-app/domains/settings/settings-section";
 import { AdvancedView } from "@/react-app/domains/settings/pages/advanced-view";
 import { AppearanceView } from "@/react-app/domains/settings/pages/appearance-view";
@@ -73,12 +75,14 @@ import { EnvironmentView } from "@/react-app/domains/settings/pages/environment-
 import { ExtensionsView } from "@/react-app/domains/settings/pages/extensions-view";
 import { McpView } from "@/react-app/domains/settings/pages/mcp-view";
 import { RecoveryView } from "@/react-app/domains/settings/pages/recovery-view";
+import { OfficeAddinsView } from "@/react-app/domains/settings/pages/office-addins-view";
 import { MessagingView } from "@/react-app/domains/settings/pages/messaging-view";
 import { SkillsView } from "@/react-app/domains/settings/pages/skills-view";
 import { UpdatesView } from "@/react-app/domains/settings/pages/updates-view";
 import { useDebugViewModel } from "@/react-app/domains/settings/state/debug-view-model";
 import { useMessagingViewProps } from "@/react-app/domains/settings/state/messaging-view-state";
 import { useElectronUpdaterState } from "@/react-app/domains/settings/state/electron-updater-state";
+import { UPDATE_AUTO_CHECK_STORAGE_KEY } from "@/react-app/domains/settings/state/update-status-store";
 import { useBootState } from "./boot-state";
 import { SettingsShell } from "@/react-app/domains/settings/shell/settings-shell";
 import { createExtensionsStore, useExtensionsStoreSnapshot } from "@/react-app/domains/settings/state/extensions-store";
@@ -180,7 +184,8 @@ function reconcileSelectedWorkspaceId(
 }
 
 const SETTINGS_HIDE_TITLEBAR_KEY = "legalwork.react.settings.hide-titlebar";
-const SETTINGS_UPDATE_AUTO_CHECK_KEY = "legalwork.react.settings.update-auto-check";
+// Shared with the sidebar update badge's background check.
+const SETTINGS_UPDATE_AUTO_CHECK_KEY = UPDATE_AUTO_CHECK_STORAGE_KEY;
 const SETTINGS_UPDATE_AUTO_DOWNLOAD_KEY = "legalwork.react.settings.update-auto-download";
 
 function parseSettingsPath(pathname: string): {
@@ -202,12 +207,14 @@ function parseSettingsPath(pathname: string): {
     case "ai":
     case "preferences":
     case "permissions":
+    case "safety":
     case "shell":
     case "advanced":
     case "appearance":
     case "environment":
     case "updates":
     case "recovery":
+    case "office-addins":
     case "debug":
     case "skills":
     case "workflows":
@@ -372,6 +379,9 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
   const [localProviderBusy, setLocalProviderBusy] = useState(false);
   const [localProviderStatus, setLocalProviderStatus] = useState<string | null>(null);
   const [localProviderError, setLocalProviderError] = useState<string | null>(null);
+  const [disconnectingProviderId, setDisconnectingProviderId] = useState<string | null>(null);
+  const [providerDisconnectStatus, setProviderDisconnectStatus] = useState<string | null>(null);
+  const [providerDisconnectError, setProviderDisconnectError] = useState<string | null>(null);
   const [googleWorkspaceConnected, setGoogleWorkspaceConnected] = useState(false);
   const [imageExtensionBusy, setImageExtensionBusy] = useState(false);
   const [imageExtensionStatus, setImageExtensionStatus] = useState<string | null>(null);
@@ -662,7 +672,25 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
   }, [connectionsStore, legalworkServerStatusForMcp]);
 
   const handleOpenProviderAuth = useCallback(() => {
+    setCustomProviderEdit(null);
     void providerAuthStore.openProviderAuthModal();
+  }, [providerAuthStore]);
+
+  const [customProviderEdit, setCustomProviderEdit] = useState<CustomProviderEditData | null>(null);
+  const [customProviderEditError, setCustomProviderEditError] = useState<string | null>(null);
+  const handleEditCustomProvider = useCallback(async (providerId: string) => {
+    setCustomProviderEditError(null);
+    try {
+      const data = await providerAuthStore.readCustomProviderForEdit(providerId);
+      if (!data) {
+        setCustomProviderEditError(`Couldn't load configuration for ${providerId}.`);
+        return;
+      }
+      setCustomProviderEdit(data);
+      await providerAuthStore.openProviderAuthModal();
+    } catch (error) {
+      setCustomProviderEditError(describeRouteError(error));
+    }
   }, [providerAuthStore]);
 
   const debugViewProps = useDebugViewModel({
@@ -736,6 +764,9 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
   const handleModelPickerLoadError = useCallback((error: unknown) => {
     toast.error(error instanceof Error ? error.message : t("app.unknown_error"));
   }, []);
+  // Which fusion default-candidate slot (0-2) the shared model picker modal
+  // is currently choosing for; null = picking the default model.
+  const [fusionPickerSlot, setFusionPickerSlot] = useState<number | null>(null);
   const modelPicker = useModelPicker({
     client: opencodeClient,
     baseUrl: opencodeBaseUrl,
@@ -969,6 +1000,22 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
       setLocalProviderBusy(false);
     }
   }, [local, legalworkClient, reloadCoordinator, runtimeWorkspaceId, selectedWorkspaceEndpoint]);
+
+  const handleDisconnectProvider = useCallback(async (providerId: string) => {
+    const resolved = providerId.trim();
+    if (!resolved || disconnectingProviderId) return;
+    setProviderDisconnectStatus(null);
+    setProviderDisconnectError(null);
+    setDisconnectingProviderId(resolved);
+    try {
+      const message = await providerAuthStore.disconnectProvider(resolved);
+      setProviderDisconnectStatus(typeof message === "string" && message ? message : `Disconnected ${resolved}.`);
+    } catch (error) {
+      setProviderDisconnectError(describeRouteError(error));
+    } finally {
+      setDisconnectingProviderId(null);
+    }
+  }, [disconnectingProviderId, providerAuthStore]);
 
   useEffect(() => {
     local.setUi((previous) => ({ ...previous, view: "settings", tab: route.tab }));
@@ -1378,15 +1425,20 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
     ? t("status.providers_connected", { count: providerConnectedIds.length })
     : t("settings.no_providers_connected");
   const providerConnectedIdSet = new Set(providerConnectedIds);
-  const connectedProviders = providers.flatMap((provider) =>
-    providerConnectedIdSet.has(provider.id)
-      ? [{
-          id: provider.id,
-          name: provider.name ?? provider.id,
-          source: provider.source,
-        }]
-      : [],
-  );
+  const connectedProviders = providers.flatMap((provider) => {
+    if (!providerConnectedIdSet.has(provider.id)) return [];
+    const providerOptions =
+      provider.options && typeof provider.options === "object"
+        ? (provider.options as Record<string, unknown>)
+        : null;
+    const hasBaseURL = typeof providerOptions?.baseURL === "string" && providerOptions.baseURL.trim().length > 0;
+    return [{
+      id: provider.id,
+      name: provider.name ?? provider.id,
+      source: provider.source,
+      editableAsCustom: provider.source === "custom" || hasBaseURL,
+    }];
+  });
   const mcpConnectedAppsCount = connectionsSnapshot.mcpServers.length;
 
   // Build enablement context from all available runtime state.
@@ -1725,6 +1777,31 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
             />
           </SettingsStack>
         );
+      // Tool permissions are global (one safety posture for all workspaces),
+      // so they live in the Global sidebar group — the workspace connection is
+      // only the transport for reading/writing the shared config.
+      case "safety":
+        return (
+          <SettingsStack>
+            <ToolPermissionsPanel
+              legalworkServerClient={legalworkClient}
+              legalworkServerStatus={routeLegalworkStatus}
+              legalworkServerCapabilities={routeLegalworkCapabilities}
+              runtimeWorkspaceId={runtimeWorkspaceId}
+              onConfigUpdated={() => {
+                setConfigActionStatus(t("settings.config_updated"));
+                // Permissions only take effect when the engine rebuilds its
+                // config — without this the running engine silently keeps the
+                // old (permissionless) behavior.
+                reloadCoordinator.markReloadRequired("config", {
+                  type: "config",
+                  name: "opencode.json",
+                  action: "updated",
+                });
+              }}
+            />
+          </SettingsStack>
+        );
       case "ai":
         return (
           <AiSettingsView
@@ -1734,15 +1811,30 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
             providerStatusStyle={providerStatusStyle}
             providerSummary={providerSummary}
             connectedProviders={connectedProviders}
-            disconnectingProviderId={null}
-            providerConnectError={providerAuthSnapshot.providerAuthError}
-            providerDisconnectStatus={configActionStatus}
-            providerDisconnectError={null}
+            disconnectingProviderId={disconnectingProviderId}
+            providerConnectError={customProviderEditError ?? providerAuthSnapshot.providerAuthError}
+            providerDisconnectStatus={providerDisconnectStatus ?? configActionStatus}
+            providerDisconnectError={providerDisconnectError}
             onOpenProviderAuth={handleOpenProviderAuth}
-            onDisconnectProvider={async (providerId) => {
-              await providerAuthStore.disconnectProvider(providerId);
-            }}
+            onDisconnectProvider={handleDisconnectProvider}
+            onEditProvider={handleEditCustomProvider}
             canDisconnectProvider={(source) => source !== "env"}
+            fusionView={
+              <FusionSettingsSection
+                fusionModels={local.prefs.fusionModels ?? []}
+                onPickModel={(slot) => {
+                  setFusionPickerSlot(slot);
+                  modelPicker.setQuery("");
+                  modelPicker.setOpen(true);
+                }}
+                onClearModel={(slot) => {
+                  local.setPrefs((prev) => ({
+                    ...prev,
+                    fusionModels: (prev.fusionModels ?? []).filter((_, index) => index !== slot),
+                  }));
+                }}
+              />
+            }
           />
         );
       case "preferences":
@@ -1965,6 +2057,8 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
             runtimeKey={environmentRuntimeKey}
           />
         );
+      case "office-addins":
+        return <OfficeAddinsView />;
       case "debug":
         return <DebugView {...debugViewProps} />;
       default:
@@ -2012,9 +2106,14 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
         authMethods={providerAuthSnapshot.providerAuthMethods}
         onSelect={providerAuthStore.startProviderAuth}
         onSubmitApiKey={providerAuthStore.submitProviderApiKey}
+        onSubmitCustomProvider={providerAuthStore.submitCustomProvider}
+        customEdit={customProviderEdit}
         onSubmitOAuth={providerAuthStore.completeProviderAuthOAuth}
         onRefreshProviders={providerAuthStore.refreshProviders}
-        onClose={() => providerAuthStore.closeProviderAuthModal()}
+        onClose={() => {
+          setCustomProviderEdit(null);
+          providerAuthStore.closeProviderAuthModal();
+        }}
       />
       <CreateWorkspaceModal
         open={createWorkspaceOpen}
@@ -2066,21 +2165,39 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
         setQuery={modelPicker.setQuery}
         target="default"
         current={
-          local.prefs.defaultModel ?? { providerID: "", modelID: "" }
+          (fusionPickerSlot !== null
+            ? (local.prefs.fusionModels ?? [])[fusionPickerSlot]
+            : local.prefs.defaultModel) ?? { providerID: "", modelID: "" }
         }
         onSelect={(next: ModelRef) => {
-          local.setPrefs((prev) => ({
-            ...prev,
-            defaultModel: next,
-            modelVariant: prev.defaultModel?.providerID === next.providerID && prev.defaultModel.modelID === next.modelID
-              ? prev.modelVariant
-              : null,
-          }));
+          if (fusionPickerSlot !== null) {
+            local.setPrefs((prev) => {
+              const models = [...(prev.fusionModels ?? [])];
+              if (fusionPickerSlot < models.length) {
+                models[fusionPickerSlot] = next;
+              } else {
+                models.push(next);
+              }
+              return { ...prev, fusionModels: models.slice(0, 3) };
+            });
+          } else {
+            local.setPrefs((prev) => ({
+              ...prev,
+              defaultModel: next,
+              modelVariant: prev.defaultModel?.providerID === next.providerID && prev.defaultModel.modelID === next.modelID
+                ? prev.modelVariant
+                : null,
+            }));
+          }
+          setFusionPickerSlot(null);
           modelPicker.setOpen(false);
         }}
         onBehaviorChange={() => {}}
         onOpenSettings={() => {}}
-        onClose={() => modelPicker.setOpen(false)}
+        onClose={() => {
+          setFusionPickerSlot(null);
+          modelPicker.setOpen(false);
+        }}
       />
     </>
   );

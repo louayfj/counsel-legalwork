@@ -1,5 +1,6 @@
 /** @jsxImportSource react */
 import * as React from "react";
+import legalworkMarkDark from "@/assets/legalwork-mark-dark.svg";
 import {
   Archive,
   ArchiveRestore,
@@ -77,6 +78,7 @@ import { Button } from "@/components/ui/button";
 
 import { SidebarContext, useSidebarContext } from "./app-sidebar-provider";
 import type { SidebarContextValue } from "./app-sidebar-provider";
+import { SidebarUpdateBadge } from "./sidebar-update-badge";
 import {
   MAX_SESSIONS_PREVIEW,
   buildSessionTreeState,
@@ -581,7 +583,7 @@ export function AppSidebar(props: AppSidebarProps) {
 
   const customSidebarBrandName = shellConfig.sidebarBrandName.trim();
   const customSidebarBrandLogo = shellConfig.sidebarBrandLogoDataUrl.trim();
-  const sidebarBrandLogoSrc = customSidebarBrandLogo || "/legalwork-logo-square.svg";
+  const sidebarBrandLogoSrc = customSidebarBrandLogo || legalworkMarkDark;
   const showSidebarBrandName = customSidebarBrandName.length > 0 || !customSidebarBrandLogo;
   const sidebarBrandName = showSidebarBrandName
     ? (customSidebarBrandName || DEFAULT_SHELL_CONFIG.sidebarBrandName)
@@ -715,6 +717,7 @@ export function AppSidebar(props: AppSidebarProps) {
               </Reorder.Group>
             </m.div>
           </LazyMotion>
+          <SidebarUpdateBadge onOpenUpdatesSettings={() => navigate("/settings/updates")} />
           <SidebarFooter>
             <SidebarMenu>
               <SidebarMenuItem>

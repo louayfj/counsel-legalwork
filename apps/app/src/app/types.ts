@@ -182,6 +182,7 @@ export const SETTINGS_TAB_VALUES = [
   "ai",
   "preferences",
   "permissions",
+  "safety",
   "shell",
   "cloud-account",
   "cloud-marketplaces",
@@ -195,6 +196,7 @@ export const SETTINGS_TAB_VALUES = [
   "appearance",
   "updates",
   "recovery",
+  "office-addins",
   "debug",
 ] as const;
 
@@ -287,6 +289,14 @@ export type SkillCard = {
   kind?: string;
   /** SKILL.md frontmatter `workflow_type` — "tabular" | "assistant" for workflows. */
   workflowType?: string;
+};
+
+/** A file attached to a skill — lives in the skill's own resources/ folder. */
+export type SkillResourceCard = {
+  name: string;
+  path: string;
+  size: number;
+  updatedAt: number;
 };
 
 export type HubSkillRepo = {

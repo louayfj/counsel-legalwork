@@ -7,6 +7,7 @@ import {
   CloudCog,
   Cog,
   Container,
+  FileStack,
   FolderLock,
   KeyRound,
   Languages,
@@ -39,6 +40,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { t } from "../../../../i18n";
+import { isDesktopRuntime } from "../../../../app/utils";
 import type { SettingsTab } from "../../../../app/types";
 import {
   SettingsContent,
@@ -64,6 +66,8 @@ export function getSettingsTabIcon(tab: SettingsTab) {
       return Layout;
     case "permissions":
       return FolderLock;
+    case "safety":
+      return ShieldCheck;
     case "cloud-account":
       return UserCircle;
     case "cloud-marketplaces":
@@ -86,6 +90,8 @@ export function getSettingsTabIcon(tab: SettingsTab) {
       return RefreshCcw;
     case "recovery":
       return ShieldCheck;
+    case "office-addins":
+      return FileStack;
     case "debug":
       return Bug;
     default:
@@ -103,6 +109,8 @@ export function getSettingsTabLabel(tab: SettingsTab) {
       return "Customization";
     case "permissions":
       return "Permissions";
+    case "safety":
+      return "Tool Permissions";
     case "cloud-account":
       return t("settings.tab_cloud_account");
     case "cloud-marketplaces":
@@ -125,6 +133,8 @@ export function getSettingsTabLabel(tab: SettingsTab) {
       return t("settings.tab_updates");
     case "recovery":
       return t("settings.tab_recovery");
+    case "office-addins":
+      return t("office_addins.tab_label");
     case "debug":
       return t("settings.tab_debug");
     case "general":
@@ -144,6 +154,8 @@ export function getSettingsTabDescription(tab: SettingsTab) {
       return "Branding and task suggestions";
     case "permissions":
       return "Authorized folders and file access";
+    case "safety":
+      return "What LegalWork may do on its own — applies to all workspaces";
     case "cloud-account":
       return t("settings.tab_description_cloud_account");
     case "cloud-marketplaces":
@@ -166,6 +178,8 @@ export function getSettingsTabDescription(tab: SettingsTab) {
       return t("settings.tab_description_updates");
     case "recovery":
       return t("settings.tab_description_recovery");
+    case "office-addins":
+      return t("office_addins.tab_description");
     case "debug":
       return t("settings.tab_description_debug");
     case "general":
@@ -185,7 +199,10 @@ export function getWorkspaceSettingsTabs(): SettingsTab[] {
 export function getGlobalSettingsTabs(developerMode: boolean): SettingsTab[] {
   // Appearance/Language and Recovery are hidden (theme is fixed to Light).
   // "preferences" is the Privacy tab (usage-analytics opt-in).
-  const tabs: SettingsTab[] = ["ai", "shell", "environment", "preferences", "updates"];
+  const tabs: SettingsTab[] = ["ai", "safety", "shell", "environment", "preferences", "updates"];
+  // Office add-ins install into local desktop apps, so the tab is desktop-only.
+  // Placed right after the first tab.
+  if (isDesktopRuntime()) tabs.splice(1, 0, "office-addins");
   if (developerMode) tabs.push("debug");
   return tabs;
 }

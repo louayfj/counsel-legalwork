@@ -1,14 +1,35 @@
 import { randomUUID } from "node:crypto";
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import net from "node:net";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { pathToFileURL } from "node:url";
 
+import { createOfficeAddinManager } from "./office-addin-manager.mjs";
+
 const __runtimeDir = path.dirname(fileURLToPath(import.meta.url));
+
+/** Directory holding the built server bundle (embedded.js, word-addin.js). */
+function locateServerDistDir() {
+  const candidates = [
+    path.resolve(__runtimeDir, "..", "..", "server", "dist"),
+    path.resolve(__runtimeDir, "..", "server", "dist"),
+    ...(process.resourcesPath ? [path.resolve(process.resourcesPath, "server", "dist")] : []),
+  ];
+  return candidates.find((dir) => existsSync(path.join(dir, "word-addin.js"))) ?? null;
+}
+
+/** Directory holding the built Office task pane bundle (taskpane.html). */
+function locatePaneDistDir() {
+  const candidates = [
+    path.resolve(__runtimeDir, "..", "..", "app", "dist-word-addin"),
+    ...(process.resourcesPath ? [path.resolve(process.resourcesPath, "word-addin-dist")] : []),
+  ];
+  return candidates.find((dir) => existsSync(path.join(dir, "taskpane.html"))) ?? null;
+}
 
 const DIRECT_RUNTIME = "direct";
 const ORCHESTRATOR_RUNTIME = "legalwork-orchestrator";
@@ -365,14 +386,31 @@ function extraPathEntries() {
   return candidates.filter((entry) => entry && isDirectory(entry));
 }
 
-function enrichedPath(sidecarDirs, currentPath) {
+function enrichedPath(sidecarDirs, currentPath, fallbackDirs = []) {
   const entries = [
     ...sidecarDirs.filter(isDirectory),
     ...extraPathEntries(),
     ...String(currentPath ?? "").split(path.delimiter).filter(Boolean),
+    ...fallbackDirs.filter(isDirectory),
   ];
   const deduped = entries.filter((entry, index) => entries.indexOf(entry) === index);
   return deduped.length > 0 ? deduped.join(path.delimiter) : null;
+}
+
+export function nodeShimFileName(platform = process.platform) {
+  return platform === "win32" ? "node.cmd" : "node";
+}
+
+// A `node` that re-execs this app's own binary in Node mode. Electron ships a
+// full Node runtime, so machines without a system Node.js can still run the
+// bundled workspace skills (docx-edit, pdf-tools, tabular-review), which shell
+// out to `node`. The shim directory is appended LAST to the child PATH, so any
+// real Node installation always wins.
+export function nodeShimScriptContent(execPath, platform = process.platform) {
+  if (platform === "win32") {
+    return `@echo off\r\nset ELECTRON_RUN_AS_NODE=1\r\n"${execPath}" %*\r\n`;
+  }
+  return `#!/bin/sh\nELECTRON_RUN_AS_NODE=1 exec "${execPath}" "$@"\n`;
 }
 
 async function portAvailable(host, port) {
@@ -515,6 +553,16 @@ export function createRuntimeManager({ app, desktopRoot, listLocalWorkspacePaths
     process.resourcesPath ? path.join(process.resourcesPath, "sidecars") : null,
     path.join(path.dirname(app.getPath("exe")), "sidecars"),
   ].filter(Boolean);
+
+  // Office add-in (Word/Excel/PowerPoint) manager. Install/uninstall is driven
+  // by the "Office Add-ins" settings tab; startLegalworkServer reads its state
+  // so the HTTPS listener comes up on every launch when installed.
+  const officeAddinManager = createOfficeAddinManager({
+    app,
+    locateServerDist: locateServerDistDir,
+    locatePaneDist: locatePaneDistDir,
+    requestServerRestart: () => withRuntimeLifecycle(() => legalworkServerRestart({})),
+  });
 
   function legalworkServerTokenStorePath() {
     return path.join(userDataDir, "legalwork-server-tokens.json");
@@ -687,6 +735,24 @@ export function createRuntimeManager({ app, desktopRoot, listLocalWorkspacePaths
     return paths;
   }
 
+  // Written once per app launch so the shim tracks the current binary
+  // location across updates/moves. Best-effort: on failure children simply
+  // fall back to whatever `node` the PATH provides.
+  let nodeShimDirPromise = null;
+  function ensureNodeShimDir() {
+    nodeShimDirPromise ??= (async () => {
+      const shimDir = path.join(userDataDir, "node-shim");
+      const shimPath = path.join(shimDir, nodeShimFileName());
+      await mkdir(shimDir, { recursive: true });
+      await writeFile(shimPath, nodeShimScriptContent(process.execPath), "utf8");
+      if (process.platform !== "win32") {
+        await chmod(shimPath, 0o755);
+      }
+      return shimDir;
+    })().catch(() => null);
+    return nodeShimDirPromise;
+  }
+
   async function buildChildEnv(extra = {}) {
     /** @type {NodeJS.ProcessEnv} */
     // User env is layered first so process.env + any caller overrides always
@@ -703,7 +769,8 @@ export function createRuntimeManager({ app, desktopRoot, listLocalWorkspacePaths
       !Object.prototype.hasOwnProperty.call(env, "Path")
         ? "PATH"
         : "Path";
-    const pathEnv = enrichedPath(sidecarDirs, env[pathKey]);
+    const nodeShimDir = await ensureNodeShimDir();
+    const pathEnv = enrichedPath(sidecarDirs, env[pathKey], nodeShimDir ? [nodeShimDir] : []);
     if (pathEnv) {
       env[pathKey] = pathEnv;
     }
@@ -718,37 +785,13 @@ export function createRuntimeManager({ app, desktopRoot, listLocalWorkspacePaths
       env.XDG_STATE_HOME = devPaths.xdgStateHome;
       env.OPENCODE_CONFIG_DIR = devPaths.opencodeConfigDir;
       env.OPENCODE_TEST_HOME = devPaths.homeDir;
-    } else {
-      // Production: scope opencode to LegalWork on EVERY platform so it never
-      // shares projects/sessions/auth with a standalone opencode or a prior
-      // LegalWork install.
-      //
-      // opencode derives its data dir from XDG_DATA_HOME (unix) / LOCALAPPDATA
-      // (Windows), so XDG_DATA_HOME alone would NOT isolate it on Windows.
-      // OPENCODE_DB (absolute db path) and OPENCODE_CONFIG_DIR are honored on all
-      // platforms — they're checked before any platform-specific path logic — so
-      // they guarantee the sessions/projects DB + config/auth are isolated
-      // everywhere. We also set XDG_DATA_HOME on unix so opencode's other data
-      // (storage/repos) lands in the LegalWork tree. XDG_CONFIG_HOME is
-      // intentionally NOT set — it would double-nest the server's config dir.
-      // Paths are fixed (not derived from the mutable env) so this is idempotent
-      // even though the result is later merged back into process.env.
-      const home = app.getPath("home");
-      const isWindows = process.platform === "win32";
-      const dataRoot = isWindows
-        ? path.join(process.env.LOCALAPPDATA || path.join(home, "AppData", "Local"), "legalwork")
-        : path.join(home, ".local", "share", "legalwork");
-      const configRoot = isWindows
-        ? path.join(process.env.APPDATA || path.join(home, "AppData", "Roaming"), "legalwork")
-        : path.join(home, ".config", "legalwork");
-      const opencodeDataDir = path.join(dataRoot, "opencode");
-      const opencodeConfigDir = path.join(configRoot, "opencode");
-      if (!isWindows) env.XDG_DATA_HOME = dataRoot;
-      env.OPENCODE_DB = path.join(opencodeDataDir, "opencode.db");
-      env.OPENCODE_CONFIG_DIR = opencodeConfigDir;
-      await mkdir(opencodeDataDir, { recursive: true });
-      await mkdir(opencodeConfigDir, { recursive: true });
     }
+    // Production no longer scopes opencode's store to a LegalWork-specific dir.
+    // opencode uses its standard per-platform data/config locations
+    // (unix: $XDG_DATA_HOME|~/.local/share/opencode + ~/.config/opencode;
+    // Windows: %LOCALAPPDATA%\opencode). The previous override set OPENCODE_DB /
+    // OPENCODE_CONFIG_DIR (+ XDG_DATA_HOME on unix) but broke on Windows, so it
+    // was removed in favor of opencode's defaults.
     return env;
   }
 
@@ -1061,12 +1104,23 @@ export function createRuntimeManager({ app, desktopRoot, listLocalWorkspacePaths
   }
 
   async function ensureOpencodeConfig(projectDir) {
-    const jsoncPath = path.join(projectDir, "opencode.jsonc");
-    const jsonPath = path.join(projectDir, "opencode.json");
-    if ((await fileExists(jsoncPath)) || (await fileExists(jsonPath))) return;
-    await mkdir(projectDir, { recursive: true });
+    // Seed the project config in the hidden .opencode/ directory (the engine
+    // reads it from there too) so the user's workspace folder stays free of
+    // files they didn't create. A config the user already keeps at the
+    // workspace root is respected and left alone.
+    const candidates = [
+      path.join(projectDir, "opencode.jsonc"),
+      path.join(projectDir, "opencode.json"),
+      path.join(projectDir, ".opencode", "opencode.jsonc"),
+      path.join(projectDir, ".opencode", "opencode.json"),
+    ];
+    for (const candidate of candidates) {
+      if (await fileExists(candidate)) return;
+    }
+    const hiddenJsoncPath = path.join(projectDir, ".opencode", "opencode.jsonc");
+    await mkdir(path.dirname(hiddenJsoncPath), { recursive: true });
     await writeFile(
-      jsoncPath,
+      hiddenJsoncPath,
       `${JSON.stringify({ $schema: "https://opencode.ai/config.json" }, null, 2)}\n`,
       "utf8",
     );
@@ -1166,6 +1220,33 @@ export function createRuntimeManager({ app, desktopRoot, listLocalWorkspacePaths
       manageOpencode: options.manageOpencode === true,
       opencodeBin: managedOpencode?.path ?? undefined,
       opencodeCwd: managedOpencodeWorkdir(),
+      // Native folder picker for webview clients (Office task pane): the
+      // pane cannot open OS dialogs itself, so the server forwards here.
+      // Focus is stolen because the request originates from another app
+      // (Word/Excel) — without it the dialog opens behind that app. After
+      // the dialog closes, focus is handed back to that Office app.
+      pickDirectory: async (pickOptions) => {
+        const { dialog } = await import("electron");
+        app.focus({ steal: true });
+        const result = await dialog.showOpenDialog({
+          title: pickOptions?.title,
+          defaultPath: pickOptions?.defaultPath,
+          properties: ["openDirectory", "createDirectory"],
+        });
+        const officeBundleIds = {
+          word: "com.microsoft.Word",
+          excel: "com.microsoft.Excel",
+          powerpoint: "com.microsoft.Powerpoint",
+        };
+        const bundleId = officeBundleIds[pickOptions?.returnFocusTo ?? ""];
+        if (process.platform === "darwin" && bundleId) {
+          spawn("open", ["-b", bundleId], { stdio: "ignore", detached: true }).unref();
+        }
+        return result.canceled ? null : (result.filePaths[0] ?? null);
+      },
+      // Word/Excel/PowerPoint add-in listener — enabled via the Office Add-ins
+      // settings tab; null when not installed so the listener stays off.
+      ...(officeAddinManager.serverConfig() ?? {}),
     });
     inProcessServer = handle;
     legalworkServerState.managedOpencodeExecution = handle.managedOpencodeExecution ?? null;
@@ -1462,6 +1543,18 @@ export function createRuntimeManager({ app, desktopRoot, listLocalWorkspacePaths
       return snapshotEngineState(engineState);
     } catch (error) {
       lifecycleState = "error";
+      // Surface the *real* reason to the main-process log before the generic
+      // boot error bubbles up to the renderer. Best-effort; never mask the
+      // original failure with a diagnostics error.
+      try {
+        console.error(
+          "[runtime] engineStart failed:",
+          error instanceof Error ? error.stack || error.message : String(error),
+        );
+        console.error("[runtime] diagnostics:", JSON.stringify(collectRuntimeDiagnostics(), null, 2));
+      } catch {
+        /* diagnostics are best-effort */
+      }
       throw error;
     }
   }
@@ -1495,6 +1588,69 @@ export function createRuntimeManager({ app, desktopRoot, listLocalWorkspacePaths
       lifecycleState,
       engine: await engineInfo(),
       legalworkServer: snapshotLegalworkServerState(legalworkServerState),
+    };
+  }
+
+  // A token-free snapshot of everything we know about why the local runtime is
+  // (not) up: the embedded server + managed OpenCode stderr/stdout tails, exit
+  // codes, resolved binary paths, and the OpenCode doctor probe. This is the
+  // payload we surface to the console / boot screen instead of the generic
+  // "server did not finish starting" message, so a failing machine can be
+  // diagnosed without a special build.
+  function collectRuntimeDiagnostics() {
+    const diagTail = (value, limit = 4000) => {
+      const text = String(value ?? "").trim();
+      if (!text) return null;
+      return text.length <= limit ? text : text.slice(text.length - limit);
+    };
+    const engine = snapshotEngineState(engineState);
+    const server = snapshotLegalworkServerState(legalworkServerState);
+    let opencode = null;
+    try {
+      opencode = engineDoctor({
+        opencodeBinPath:
+          legalworkServerState.managedOpencodeBinPath || engineState.opencodeBinPath || undefined,
+      });
+    } catch (error) {
+      opencode = { error: error instanceof Error ? error.message : String(error) };
+    }
+    return {
+      platform: process.platform,
+      arch: process.arch,
+      lifecycleState,
+      // NOTE: token fields from the snapshots are intentionally omitted here.
+      engine: {
+        running: engine.running,
+        runtime: engine.runtime,
+        baseUrl: engine.baseUrl,
+        port: engine.port,
+        pid: engine.pid,
+        opencodeBinPath: engine.opencodeBinPath,
+        opencodeBinSource: engine.opencodeBinSource,
+        lastStdout: diagTail(engine.lastStdout),
+        lastStderr: diagTail(engine.lastStderr),
+        execution: engine.execution ?? null,
+      },
+      legalworkServer: {
+        running: server.running,
+        inProcess: legalworkServerState.inProcess === true,
+        host: server.host,
+        port: server.port,
+        baseUrl: server.baseUrl,
+        pid: server.pid,
+        managedOpencodeBinPath: server.managedOpencodeBinPath,
+        managedOpencodeBinSource: server.managedOpencodeBinSource,
+        lastStdout: diagTail(server.lastStdout),
+        lastStderr: diagTail(server.lastStderr),
+        managedOpencodeExecution: server.managedOpencodeExecution ?? null,
+      },
+      orchestrator: {
+        baseUrl: orchestratorState.baseUrl,
+        daemonPort: orchestratorState.daemonPort,
+        lastStdout: diagTail(orchestratorState.lastStdout),
+        lastStderr: diagTail(orchestratorState.lastStderr),
+      },
+      opencode,
     };
   }
 
@@ -1921,11 +2077,16 @@ export function createRuntimeManager({ app, desktopRoot, listLocalWorkspacePaths
     prepareFreshRuntime: () => withRuntimeLifecycle(() => prepareFreshRuntime()),
     dispose: () => withRuntimeLifecycle(() => stopAllRuntimeChildren()),
     runtimeStatus,
+    collectRuntimeDiagnostics,
     engineInfo,
     engineDoctor,
     engineInstall,
     legalworkServerInfo,
     legalworkServerRestart: (options) => withRuntimeLifecycle(() => legalworkServerRestart(options)),
+    officeAddinStatus: () => officeAddinManager.status(),
+    officeAddinInstall: (appId) => officeAddinManager.install(appId),
+    officeAddinUninstall: (appId) => officeAddinManager.uninstall(appId),
+    officeAddinOpenApp: (appId) => officeAddinManager.openApp(appId),
     orchestratorStatus,
     orchestratorWorkspaceActivate,
     orchestratorInstanceDispose,

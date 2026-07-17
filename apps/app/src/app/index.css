@@ -42,6 +42,15 @@
   app-region: no-drag;
 }
 
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 :root {
   color-scheme: light;
   --dls-surface: var(--slate-1);
@@ -358,6 +367,66 @@ select:disabled {
   border-color: var(--indigo-a9);
 }
 
+/* Fusion mode: animated rainbow ring around the composer panel. The gradient
+   is painted on an inset pseudo-element and masked down to the border ring so
+   the panel background and content stay untouched. */
+@keyframes fusion-rainbow-slide {
+  to {
+    background-position: 400% 50%;
+  }
+}
+
+.fusion-rainbow-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    90deg,
+    #ff5f6d,
+    #ffc371,
+    #f9f871,
+    #3ec97e,
+    #38b6ff,
+    #8b5cf6,
+    #ff5f6d
+  );
+  background-size: 400% 100%;
+  animation: fusion-rainbow-slide 6s linear infinite;
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.fusion-rainbow-text {
+  background: linear-gradient(
+    90deg,
+    #ff5f6d,
+    #ffc371,
+    #3ec97e,
+    #38b6ff,
+    #8b5cf6,
+    #ff5f6d
+  );
+  background-size: 400% 100%;
+  animation: fusion-rainbow-slide 6s linear infinite;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.fusion-rainbow-text svg {
+  color: #8b5cf6;
+}
+
 @keyframes progress-shimmer {
   0% {
     transform: translateX(-100%);
@@ -607,6 +676,8 @@ select:disabled {
   --sidebar-foreground:   #F4F6FA;
   --sidebar-border:       rgba(255,255,255,.06);
   --glass-fill:           var(--glass-fill-dark);
+  /* Opaque fill for modals/popovers — frosted look without see-through. */
+  --overlay-fill:         linear-gradient(180deg, #161C29, #0F141D);
   --glass-border:         var(--glass-border-dark);
   --shadow-glass:         0 18px 44px rgba(2,8,28,.5), inset 0 1px 0 rgba(255,255,255,.14), inset 0 -1px 0 rgba(255,255,255,.05);
   --dls-surface:          #11161F;
@@ -739,6 +810,8 @@ body {
 :root:not([data-theme="dark"]):not(.dark) {
   --card:        rgba(255, 255, 255, 0.62);
   --popover:     rgba(255, 255, 255, 0.74);
+  /* Opaque fill for modals/popovers — frosted look without see-through. */
+  --overlay-fill: linear-gradient(180deg, #FFFFFF, #F3F5F8);
   --secondary:   rgba(255, 255, 255, 0.52);
   --muted:       rgba(255, 255, 255, 0.45);
   --sidebar:     rgba(248, 250, 253, 0.50);
@@ -782,14 +855,28 @@ body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 1px 0 0 rgba(22, 34, 56, 0.06);
 }
 
-/* Overlays → unmistakable liquid glass. */
+/* Overlays → an opaque frosted surface instead of a live backdrop-filter. A
+   live blur on an element that also fade/zoom-animates on open/close forces the
+   compositor to re-rasterize the blurred region every frame (and re-sample the
+   backdrop-filtered cards behind it), which made modals flicker and feel
+   sluggish. We use a solid, OPAQUE fill (not the translucent glass fill, which
+   without the blur just looked see-through) and keep the brand blue as the
+   primary color for anything inside the modal.
+
+   Shadow: keep it small-radius. The big `--shadow-glass-lg` (64px blur, 28px
+   offset) has to be re-rasterized as the modal zoom/fade-animates on open, which
+   reads as a laggy shadow lurching in behind the modal. Upstream uses the
+   component's plain `shadow-xl`; we match that radius with a brand-tinted tone. */
 [data-slot="dialog-content"],
 [data-slot="popover-content"],
 [data-slot="command-dialog-popup"] {
-  -webkit-backdrop-filter: var(--blur-glass-lg) !important;
-  backdrop-filter: var(--blur-glass-lg) !important;
-  box-shadow: var(--shadow-glass-lg) !important;
-  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  background: var(--overlay-fill) !important;
+  box-shadow:
+    0 20px 25px -5px rgba(8, 23, 79, 0.10),
+    0 8px 10px -6px rgba(8, 23, 79, 0.08) !important;
+  border: 1px solid var(--popover-border) !important;
+  --primary: var(--lw-blue);
+  --primary-foreground: #FEFEFE;
 }
 
 /* Primary surfaces (titlebar / session surface) frost over the field on mac. */

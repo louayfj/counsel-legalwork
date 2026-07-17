@@ -2,11 +2,15 @@
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePanelRef } from "react-resizable-panels";
-import { Columns2, FileText, Globe, Mic2, ScrollText, Settings2, SquarePen, X, Zap } from "lucide-react";
+import { Columns2, FileText, Folder, Globe, Mic2, ScrollText, Settings2, SquarePen, X, Zap } from "lucide-react";
 
 import { t } from "../../../../i18n";
 import { LEGALWORK_EXTENSION_CATALOG } from "../../../../app/constants";
-import { type LegalworkServerClient, type LegalworkServerStatus } from "../../../../app/lib/legalwork-server";
+import {
+  type LegalworkServerClient,
+  type LegalworkServerStatus,
+  type LegalworkWorkspaceDirectoryEntry,
+} from "../../../../app/lib/legalwork-server";
 import { getDisplaySessionTitle } from "../../../../app/lib/session-title";
 import type { BootPhase } from "../../../../app/lib/startup-boot";
 import { openDesktopPath, revealDesktopItemInDir, type WorkspaceInfo } from "../../../../app/lib/desktop";
@@ -52,10 +56,11 @@ import { useShellConfig } from "../../../shell/shell-config";
 import { type SidePanelItem, useUiStateStore } from "../../../shell/ui-state-store";
 
 import { isElectronRuntime } from "../../../../app/utils";
-import { isCollectibleArtifactTarget, isLocalhostBrowserTarget, isOpenableFileTarget, type OpenTarget } from "../artifacts/open-target";
+import { classifyOpenTarget, isCollectibleArtifactTarget, isLocalhostBrowserTarget, isOpenableFileTarget, type OpenTarget } from "../artifacts/open-target";
 import type { OpenTargetOptions } from "@/lib/target-provider";
 import { VoicePanel } from "../voice/voice-panel";
 import { SidePanel } from "../panel/side-panel";
+import { WorkspaceFilesPanel } from "../panel/workspace-files-panel";
 import { TerminalDock } from "../terminal/terminal-dock";
 import { useActivePanelTab, usePanelTabStore, useSessionPanelState } from "../panel/panel-tab-store";
 import { useWorkspaceShellLayout } from "../../../shell/workspace-shell-layout";
@@ -310,6 +315,7 @@ export function SessionPage(props: SessionPageProps) {
   const activeSidePanel = voiceSidePanelOpen ? "voice" : sessionSidePanel;
   const sidePanelOpen = activeSidePanel !== null;
   const panelRailActive = activeSidePanel === "panel";
+  const filesRailActive = activeSidePanel === "files";
   const extensionsRailActive = activeSidePanel === "extensions";
   const voiceRailActive = activeSidePanel === "voice";
   const voiceExtension = useMemo(
@@ -557,6 +563,43 @@ export function SessionPage(props: SessionPageProps) {
       toggleCurrentSidePanel("panel");
     }
   }, [artifactFileTargets, hasArtifactTargets, openTab, panelRailActive, props.selectedSessionId, selectTab, sessionPanelState, toggleCurrentSidePanel]);
+  const openFilesRailPane = useCallback(() => {
+    toggleCurrentSidePanel("files");
+  }, [toggleCurrentSidePanel]);
+  const openWorkspaceFileEntry = useCallback((entry: LegalworkWorkspaceDirectoryEntry) => {
+    const preview = classifyOpenTarget(entry.name, "file");
+    if (preview === "external" || preview === "browser") {
+      if (props.selectedWorkspaceDisplay.workspaceType !== "remote" && isElectronRuntime()) {
+        void openDesktopPath(absoluteWorkspacePath(props.selectedWorkspaceRoot, entry.path)).catch(() => undefined);
+      } else {
+        void downloadOpenTarget({
+          id: `file:${entry.path.toLowerCase()}`,
+          kind: "file",
+          value: entry.path,
+          name: entry.name,
+          preview,
+          confidence: 100,
+          reason: "workspace file",
+          exists: true,
+          size: entry.size,
+          updatedAt: entry.updatedAt,
+        }).catch(() => undefined);
+      }
+      return;
+    }
+    if (!props.selectedSessionId) return;
+    openTab(props.selectedSessionId, {
+      id: `file:${entry.path.toLowerCase()}`,
+      type: "artifact",
+      label: entry.name,
+      preview,
+      value: entry.path,
+      size: entry.size,
+      updatedAt: entry.updatedAt,
+    });
+    preserveSidePanelOnPanelOpenRef.current = true;
+    setCurrentSidePanel("panel");
+  }, [downloadOpenTarget, openTab, props.selectedSessionId, props.selectedWorkspaceDisplay.workspaceType, props.selectedWorkspaceRoot, setCurrentSidePanel]);
   const openExtensionsRailPane = useCallback(() => {
     toggleCurrentSidePanel("extensions");
   }, [toggleCurrentSidePanel]);
@@ -865,7 +908,13 @@ export function SessionPage(props: SessionPageProps) {
             <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
               <header className="z-10 flex h-10 shrink-0 items-center justify-between border-b border-border px-4 md:px-6 mac:titlebar-drag mac:backdrop-blur-2xl mac:backdrop-saturate-150">
                 <div className="flex min-w-0 items-center gap-3">
-                  {shellConfig.sidebar ? <SidebarTrigger className="mac:hidden" /> : null}
+                  {shellConfig.sidebar ? (
+                <SidebarTrigger className="mac:hidden" />
+              ) : (
+                // Keeps the title clear of overlaid leading controls (e.g. the
+                // Word pane back button) when the sidebar trigger is hidden.
+                <span aria-hidden className="w-6 shrink-0" />
+              )}
                 </div>
                 <div className="flex items-center gap-1.5 text-gray-10 mac:titlebar-no-drag">
                   <NotificationBell />
@@ -899,7 +948,13 @@ export function SessionPage(props: SessionPageProps) {
               <main className="flex h-full min-w-0 flex-col overflow-hidden border-r border-border">
           <header className="z-10 flex h-10 shrink-0 items-center justify-between border-b border-border px-4 md:px-6 mac:titlebar-drag  mac:backdrop-blur-2xl mac:backdrop-saturate-150 @container/titlebar">
             <div className="flex min-w-0 items-center gap-3">
-              {shellConfig.sidebar ? <SidebarTrigger className="mac:hidden" /> : null}
+              {shellConfig.sidebar ? (
+                <SidebarTrigger className="mac:hidden" />
+              ) : (
+                // Keeps the title clear of overlaid leading controls (e.g. the
+                // Word pane back button) when the sidebar trigger is hidden.
+                <span aria-hidden className="w-6 shrink-0" />
+              )}
               <h1 className="truncate text-[15px] font-semibold text-dls-text">
                 {showWorkspaceSetupEmptyState
                   ? t("session.create_or_connect_workspace")
@@ -1281,6 +1336,15 @@ export function SessionPage(props: SessionPageProps) {
                       sessionId={props.selectedSessionId}
                       onClose={closeRightPane}
                     />
+                  ) : activeSidePanel === "files" ? (
+                    <WorkspaceFilesPanel
+                      key={props.runtimeWorkspaceId ?? "__no_workspace__"}
+                      client={props.legalworkServerClient}
+                      workspaceId={props.runtimeWorkspaceId}
+                      workspaceRoot={props.selectedWorkspaceRoot}
+                      onOpenFile={openWorkspaceFileEntry}
+                      onClose={closeRightPane}
+                    />
                   ) : activeSidePanel === "panel" && props.selectedSessionId ? (
                     <SidePanel
                       sessionId={props.selectedSessionId}
@@ -1295,6 +1359,7 @@ export function SessionPage(props: SessionPageProps) {
               </>
             ) : null}
           </ResizablePanelGroup>
+          {shellConfig.panelRail ? (
           <aside className="flex w-11 shrink-0 flex-col items-center gap-1 border-l border-border bg-background/95 px-1 py-2 text-muted-foreground mac:titlebar-no-drag">
             {isElectronRuntime() ? (
               <Button
@@ -1353,6 +1418,21 @@ export function SessionPage(props: SessionPageProps) {
               size="icon-sm"
               className={cn(
                 "rounded-xl transition-colors hover:bg-muted hover:text-foreground",
+                filesRailActive && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
+              )}
+              onClick={openFilesRailPane}
+              title="Workspace files"
+              aria-label="Workspace files"
+              aria-pressed={filesRailActive}
+              disabled={!props.selectedSessionId || !props.legalworkServerClient || !props.runtimeWorkspaceId}
+            >
+              <Folder size={17} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className={cn(
+                "rounded-xl transition-colors hover:bg-muted hover:text-foreground",
                 extensionsRailActive && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
               )}
               onClick={props.settingsSlot ? openExtensionsRailPane : props.onOpenSettings}
@@ -1363,6 +1443,7 @@ export function SessionPage(props: SessionPageProps) {
               <Settings2 size={17} />
             </Button>
           </aside>
+          ) : null}
           </div>
         </SidebarInset>
         )}

@@ -2,6 +2,10 @@
 
 A local computer-use agent for law firms, from Eigenwelt Labs. Point it at a folder of documents and ask in plain English — it reads, drafts, and redlines them on your own machine, using the model you connect. Everything stays owned by the firm.
 
+https://github.com/user-attachments/assets/4a576c3a-7c2a-46c6-9856-1254282b1b70
+
+
+
 ## What it does
 
 - **Review & redline** contracts as tracked changes, right in Word.

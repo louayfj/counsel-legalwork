@@ -229,9 +229,9 @@ function FileMessage({ part }: FileMessageProps) {
     )
   }
 
-  // Resolve the badge to the underlying workspace file (PDF, DOCX, …) so it can
-  // open in the in-app viewer. Falls back to a non-interactive chip when the
-  // attachment carries no recoverable path (e.g. a purely inline upload).
+  // Resolve the badge to the underlying file. Clicking opens it — the handler
+  // picks the in-app viewer when the type is supported and the system default
+  // app otherwise.
   const openTarget = onOpenTarget ? resolveFilePartOpenTarget(part, openTargets) : null
 
   const inner = (
@@ -253,11 +253,15 @@ function FileMessage({ part }: FileMessageProps) {
   const baseClassName =
     "flex h-auto w-fit min-w-0 max-w-full shrink items-center justify-start gap-2 rounded-xl border border-border ps-2 pe-4 py-1 text-left text-sm font-medium whitespace-normal"
 
-  if (openTarget && onOpenTarget) {
+  // Always render the badge as a clickable button. A file mention always gets an
+  // interactive badge.
+  if (onOpenTarget) {
     return (
       <button
         type="button"
-        onClick={() => onOpenTarget(openTarget)}
+        onClick={() => {
+          if (openTarget) onOpenTarget(openTarget)
+        }}
         title={`Open ${title}`}
         className={cn(baseClassName, "cursor-pointer transition-colors hover:bg-muted/60")}
       >
@@ -365,7 +369,9 @@ const AssistantMessage = React.memo(
               return (
                 <MessageContent
                   key={`reasoning-${index}`}
-                  className="text-muted-foreground prose w-full min-w-0 flex-1 rounded-lg bg-transparent p-0"
+                  // chat-reasoning is an unstyled hook so embedders can
+                  // target reasoning output (the Office pane hides it).
+                  className="chat-reasoning text-muted-foreground prose w-full min-w-0 flex-1 rounded-lg bg-transparent p-0"
                   markdown
                 >
                   {group.text}
@@ -756,7 +762,10 @@ function MessageGroup({
   return (
       <div className="flex flex-col gap-2 group/message-group">
       {stepItems.length > 0 ? (
-        <div ref={stepsRef} className="max-h-[520px] overflow-y-auto">
+        // data-scrollable: the transcript's scroll controller must not treat
+        // gestures inside this nested scroller as transcript browsing, or
+        // autoscroll disengages whenever the user wheels over tool output.
+        <div ref={stepsRef} data-scrollable className="max-h-[520px] overflow-y-auto">
           {stepItems.map((item, groupIndex) => renderItem(item, groupIndex))}
         </div>
       ) : null}
@@ -820,9 +829,10 @@ export function MessageList({ messages, status, retryStatus }: MessageListProps)
 
       {items.map((item) => {
         if (isMessageGroup(item)) {
+          const key = item.messages[0]?.message.id ?? "empty-assistant-group"
           return (
             <MessageGroup
-              key={item.messages[0]?.message.id ?? "empty-assistant-group"}
+              key={key}
               items={item.messages}
               messages={messages}
               isStreaming={isStreaming}

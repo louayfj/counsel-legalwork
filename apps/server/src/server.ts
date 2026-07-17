@@ -9,6 +9,14 @@ import { addPlugin, listPlugins, normalizePluginSpec, removePlugin } from "./plu
 import { sanitizePortableOpencodeConfig } from "./portable-opencode.js";
 import { addMcp, listMcp, removeMcp, setMcpEnabled } from "./mcp.js";
 import { deleteSkill, listSkills, upsertSkill } from "./skills.js";
+import {
+  deleteSkillResource,
+  listSkillResources,
+  readSkillResource,
+  resolveSkillDir,
+  upsertSkillResource,
+  validateResourceName,
+} from "./skill-resources.js";
 import { installHubSkill, listHubSkills } from "./skill-hub.js";
 import { scanGithubSkills, installGithubSkills, promoteSkillToWorkflow } from "./github-skills.js";
 import { deleteCommand, listCommands, repairCommands, upsertCommand } from "./commands.js";
@@ -50,6 +58,9 @@ import {
   type WorkspaceExportSensitiveMode,
 } from "./workspace-export-safety.js";
 import { serve, type ServeResult } from "./serve-node.js";
+import { handleWordAddinRequest, loadWordAddinTls, WORD_ADDIN_PATH_PREFIX } from "./word-addin.js";
+import { OfficeToolRelay } from "./office-tools.js";
+import { registerOfficeToolRoutes } from "./routes/office-tools.js";
 import { registerCoreRoutes } from "./routes/core.js";
 import { registerFileRoutes } from "./routes/files.js";
 import { registerOperationRoutes } from "./routes/operations.js";
@@ -57,7 +68,11 @@ import { addRoute, matchRoute, type AuthMode, type RequestContext, type Route } 
 import { registerSessionRoutes } from "./routes/sessions.js";
 import { registerWorkspaceRoutes } from "./routes/workspaces.js";
 import {
+  applyGlobalToolPermissions,
+  GLOBAL_TOOL_PERMISSIONS_ID,
   mergeOpencodeConfigs,
+  mergeRuntimeProviderPatch,
+  readGlobalToolPermissions,
   readRuntimeOpencodeConfig,
   runtimeMcpMap,
   type RuntimeOpencodeConfig,
@@ -123,8 +138,17 @@ function readStringField(value: unknown, key: string): string {
   return typeof field === "string" ? field.trim() : "";
 }
 
-const LEGACY_RUNTIME_CONFIG_KEYS = ["plugin", "mcp", "permission", "provider"] as const;
-const USER_OPENCODE_RUNTIME_CONFIG_KEYS = ["default_agent", "plugin", "mcp", "disabled_providers", "provider"] as const;
+function recordRecordMap(value: unknown): Record<string, Record<string, unknown>> | null {
+  if (!isRecord(value)) return null;
+  const entries: Record<string, Record<string, unknown>> = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (isRecord(item)) entries[key] = item;
+  }
+  return Object.keys(entries).length ? entries : null;
+}
+
+const LEGACY_RUNTIME_CONFIG_KEYS = ["plugin", "mcp", "permission", "provider", "agent"] as const;
+const USER_OPENCODE_RUNTIME_CONFIG_KEYS = ["default_agent", "plugin", "mcp", "disabled_providers", "provider", "agent"] as const;
 
 type LegacyRuntimeConfigKey = typeof LEGACY_RUNTIME_CONFIG_KEYS[number];
 type UserOpencodeRuntimeConfigKey = typeof USER_OPENCODE_RUNTIME_CONFIG_KEYS[number];
@@ -144,11 +168,13 @@ function legacyRuntimeConfigFromLegalworkConfig(legalwork: Record<string, unknow
   const permission = isRecord(legalwork.permission) ? legalwork.permission : null;
   const externalDirectory = permission && isRecord(permission.external_directory) ? permission.external_directory : null;
   const provider = isRecord(legalwork.provider) ? legalwork.provider : null;
+  const agent = recordRecordMap(legalwork.agent);
 
   if (plugin.length) keys.push("plugin");
   if (Object.keys(mcp).length) keys.push("mcp");
   if (externalDirectory && Object.keys(externalDirectory).length) keys.push("permission");
   if (provider && Object.keys(provider).length) keys.push("provider");
+  if (agent && Object.keys(agent).length) keys.push("agent");
 
   return {
     keys,
@@ -157,6 +183,7 @@ function legacyRuntimeConfigFromLegalworkConfig(legalwork: Record<string, unknow
       ...(Object.keys(mcp).length ? { mcp } : {}),
       ...(externalDirectory ? { permission: { external_directory: externalDirectory } } : {}),
       ...(provider ? { provider } : {}),
+      ...(agent ? { agent } : {}),
     },
   };
 }
@@ -186,12 +213,14 @@ function userRuntimeConfigFromOpencodeConfig(opencode: Record<string, unknown>):
     ? opencode.disabled_providers.filter((item) => typeof item === "string")
     : undefined;
   const provider = isRecord(opencode.provider) ? opencode.provider : undefined;
+  const agent = recordRecordMap(opencode.agent) ?? undefined;
 
   if (defaultAgent) keys.push("default_agent");
   if (Array.isArray(opencode.plugin)) keys.push("plugin");
   if (Object.keys(mcp).length) keys.push("mcp");
   if (Array.isArray(opencode.disabled_providers)) keys.push("disabled_providers");
   if (isRecord(opencode.provider)) keys.push("provider");
+  if (isRecord(opencode.agent)) keys.push("agent");
 
   return {
     keys,
@@ -201,6 +230,7 @@ function userRuntimeConfigFromOpencodeConfig(opencode: Record<string, unknown>):
       ...(Object.keys(mcp).length ? { mcp } : {}),
       ...(disabledProviders?.length ? { disabled_providers: disabledProviders } : {}),
       ...(provider && Object.keys(provider).length ? { provider } : {}),
+      ...(agent && Object.keys(agent).length ? { agent } : {}),
     },
   };
 }
@@ -222,6 +252,7 @@ function runtimeConfigKeys(config: RuntimeOpencodeConfig): string[] {
     keys.push("permission");
   }
   if (isRecord(config.provider) && Object.keys(config.provider).length) keys.push("provider");
+  if (isRecord(config.agent) && Object.keys(config.agent).length) keys.push("agent");
   return keys;
 }
 
@@ -262,6 +293,10 @@ function mergeLegacyRuntimeConfig(
     provider: {
       ...(isRecord(legacy.provider) ? legacy.provider : {}),
       ...(isRecord(current.provider) ? current.provider : {}),
+    },
+    agent: {
+      ...(isRecord(legacy.agent) ? legacy.agent : {}),
+      ...(isRecord(current.agent) ? current.agent : {}),
     },
   };
 }
@@ -639,7 +674,12 @@ function isSessionCommandProxyRequest(method: string, proxyPath: string) {
   return method === "POST" && /^\/session\/[^/]+\/command$/.test(normalizeOpencodeProxyPath(proxyPath));
 }
 
-export async function startServer(config: ServerConfig): Promise<ServeResult> {
+export type StartedServer = ServeResult & {
+  /** Bound port of the HTTPS Word add-in listener, when enabled and started. */
+  wordAddinPort: number | null;
+};
+
+export async function startServer(config: ServerConfig): Promise<StartedServer> {
   const approvals = new ApprovalService(config.approval);
   const reloadEvents = new ReloadEventStore();
   const tokens = new TokenService(config);
@@ -653,7 +693,8 @@ export async function startServer(config: ServerConfig): Promise<ServeResult> {
     watcherHandle.close();
     watcherHandle = startReloadWatchers({ config, reloadEvents, logger });
   };
-  const routes = createRoutes(config, approvals, tokens, env, restartReloadWatchers);
+  const officeTools = new OfficeToolRelay();
+  const routes = createRoutes(config, approvals, tokens, env, officeTools, restartReloadWatchers);
 
   const serverOptions: {
     hostname: string;
@@ -708,6 +749,24 @@ export async function startServer(config: ServerConfig): Promise<ServeResult> {
 
       if (request.method === "OPTIONS") {
         return finalize(new Response(null, { status: 204 }));
+      }
+
+      if (url.pathname === WORD_ADDIN_PATH_PREFIX || url.pathname.startsWith(`${WORD_ADDIN_PATH_PREFIX}/`)) {
+        const addinResponse = await handleWordAddinRequest({ request, url, config });
+        if (addinResponse) {
+          // Deliberately not CORS-wrapped: /word-addin/bootstrap returns the
+          // client token and must only be readable same-origin.
+          if (config.logRequests) {
+            logRequest({
+              logger,
+              request,
+              response: addinResponse,
+              durationMs: Date.now() - startedAt,
+              authMode: "none",
+            });
+          }
+          return addinResponse;
+        }
       }
 
       const canonicalOpencodeMount = parseWorkspaceOpencodeMount(url.pathname);
@@ -800,11 +859,48 @@ export async function startServer(config: ServerConfig): Promise<ServeResult> {
     idleTimeout: 120,
   });
 
+  // Optional HTTPS listener for the Word add-in. It shares the exact same
+  // fetch handler (API, OpenCode proxy, and /word-addin static hosting), so
+  // the task pane talks to a single same-origin base URL. Word requires
+  // HTTPS for task pane sources, hence the dedicated TLS listener.
+  let wordAddinServer: ServeResult | null = null;
+  if (config.wordAddin?.enabled) {
+    const tlsMaterial = await loadWordAddinTls(config.wordAddin);
+    if (!tlsMaterial.tls) {
+      logger.log(
+        "warn",
+        `Word add-in is enabled but the TLS certificate could not be loaded (${tlsMaterial.error ?? "unknown"}). ` +
+          "Run `npx office-addin-dev-certs install` or pass --word-addin-cert/--word-addin-key.",
+      );
+    } else {
+      try {
+        wordAddinServer = await serve({
+          hostname: config.host,
+          port: config.wordAddin.port,
+          fetch: serverOptions.fetch,
+          idleTimeout: 120,
+          tls: tlsMaterial.tls,
+        });
+        // Keep the manifest in sync with the actually bound port.
+        config.wordAddin = { ...config.wordAddin, port: wordAddinServer.port };
+        logger.log(
+          "info",
+          `Word add-in listening on https://localhost:${wordAddinServer.port}${WORD_ADDIN_PATH_PREFIX}/ ` +
+            `(manifest: https://localhost:${wordAddinServer.port}${WORD_ADDIN_PATH_PREFIX}/manifest.xml, cert: ${tlsMaterial.certPath})`,
+        );
+      } catch (error) {
+        logger.log("error", `Failed to start the Word add-in listener: ${String(error)}`);
+      }
+    }
+  }
+
   return {
     ...server,
+    wordAddinPort: wordAddinServer?.port ?? null,
     stop: async () => {
       watcherHandle.close();
       reloadBaselineRefreshers.delete(config);
+      await wordAddinServer?.stop();
       await server.stop();
     },
   };
@@ -1030,6 +1126,7 @@ function buildCapabilities(config: ServerConfig): Capabilities {
     serverVersion: SERVER_VERSION,
     opencodeVersion: OPENCODE_VERSION,
     skills: { read: true, write: writeEnabled, source: "legalwork" },
+    skillResources: { read: true, write: writeEnabled },
     hub: {
       skills: {
         read: true,
@@ -1282,6 +1379,7 @@ function createRoutes(
   approvals: ApprovalService,
   tokens: TokenService,
   env: EnvService,
+  officeTools: OfficeToolRelay,
   onWorkspacesChanged: () => void,
 ): Route[] {
   const routes: Route[] = [];
@@ -1341,9 +1439,14 @@ function createRoutes(
       await readLegalworkConfig(workspace.path),
       await readLegalworkWorkspaceConfig(config, workspace.id),
     );
+    // Tool permissions come from the global row; the workspace row only
+    // contributes external_directory (see applyGlobalToolPermissions).
     const opencode = mergeOpencodeConfigs(
       await readOpencodeConfig(workspace.path),
-      await readRuntimeOpencodeConfig(config, workspace.id),
+      applyGlobalToolPermissions(
+        await readRuntimeOpencodeConfig(config, workspace.id),
+        await readGlobalToolPermissions(config),
+      ),
     );
     const lastAudit = await readLastAudit(workspace.path, workspace.id);
     return jsonResponse({ opencode, legalwork, updatedAt: lastAudit?.timestamp ?? null });
@@ -1763,36 +1866,60 @@ function createRoutes(
     if (opencode) {
       const configPath = legalworkConfigPath(workspace.path);
       const nextOpencode = ensurePlainObject(opencode);
-      const { permission, provider, ...topLevelUpdates } = nextOpencode;
+      const { permission, provider, agent, ...topLevelUpdates } = nextOpencode;
       const logicalUpdates: Record<string, unknown> = { ...topLevelUpdates };
 
       const providerUpdate = ensurePlainObject(provider);
       if (Object.keys(providerUpdate).length) {
         const currentRuntime = await readRuntimeOpencodeConfig(config, workspace.id);
-        logicalUpdates.provider = {
-          ...(ensurePlainObject(currentRuntime.provider)),
-          ...providerUpdate,
-        };
+        // A `null` value in the patch removes that provider (see
+        // mergeRuntimeProviderPatch) so a client can fully disconnect it.
+        logicalUpdates.provider = mergeRuntimeProviderPatch(
+          ensurePlainObject(currentRuntime.provider),
+          providerUpdate,
+        );
+      }
+
+      const agentUpdate = ensurePlainObject(agent);
+      if (Object.keys(agentUpdate).length) {
+        const currentRuntime = await readRuntimeOpencodeConfig(config, workspace.id);
+        logicalUpdates.agent = mergeRuntimeProviderPatch(
+          ensurePlainObject(currentRuntime.agent),
+          agentUpdate,
+        );
       }
 
       const permissionUpdate = ensurePlainObject(permission);
-      if (Object.prototype.hasOwnProperty.call(permissionUpdate, "external_directory")) {
-        const existingRuntime = await readRuntimeOpencodeConfig(config, workspace.id);
-        const existingPermission = ensurePlainObject(existingRuntime.permission);
-        const nextExternalDirectory = permissionUpdate.external_directory;
-        const existingPermissionKeys = Object.keys(existingPermission);
-        const removePermissionParent =
-          typeof nextExternalDirectory === "undefined" &&
-            (existingPermissionKeys.length === 0 ||
-            (existingPermissionKeys.length === 1 && Object.prototype.hasOwnProperty.call(existingPermission, "external_directory")));
+      if (Object.keys(permissionUpdate).length) {
+        const { external_directory: externalDirectoryUpdate, ...toolPermissionUpdate } = permissionUpdate;
 
-        if (removePermissionParent) {
-          logicalUpdates.permission = undefined;
-        } else {
-          logicalUpdates.permission = {
-            ...existingPermission,
-            external_directory: nextExternalDirectory,
-          };
+        // Tool permissions are GLOBAL — one safety posture for every
+        // workspace — so they merge into the reserved global row. A `null`
+        // value in the patch removes that key (JSON cannot carry
+        // `undefined`); unmentioned keys are preserved as-is.
+        if (Object.keys(toolPermissionUpdate).length) {
+          const globalRuntime = await readRuntimeOpencodeConfig(config, GLOBAL_TOOL_PERMISSIONS_ID);
+          const nextGlobal = mergeRuntimeProviderPatch(
+            ensurePlainObject(globalRuntime.permission),
+            toolPermissionUpdate,
+          );
+          await writeRuntimeOpencodeConfig(config, GLOBAL_TOOL_PERMISSIONS_ID, (current) => ({
+            ...current,
+            permission: Object.keys(nextGlobal).length
+              ? (nextGlobal as RuntimeOpencodeConfig["permission"])
+              : undefined,
+          }));
+        }
+
+        // external_directory stays workspace-scoped: it is owned by the
+        // authorized-folders routes and describes this workspace's folders.
+        if (externalDirectoryUpdate !== undefined) {
+          const existingRuntime = await readRuntimeOpencodeConfig(config, workspace.id);
+          const nextPermission = mergeRuntimeProviderPatch(
+            ensurePlainObject(existingRuntime.permission),
+            { external_directory: externalDirectoryUpdate },
+          );
+          logicalUpdates.permission = Object.keys(nextPermission).length ? nextPermission : undefined;
         }
       }
 
@@ -1835,6 +1962,16 @@ function createRoutes(
     requireClientScope,
     resolveWorkspace,
     reloadOpencodeEngine,
+  });
+
+  registerOfficeToolRoutes({
+    routes,
+    config,
+    officeTools,
+    jsonResponse,
+    readJsonBody,
+    requireClientScope,
+    resolveWorkspace,
   });
 
   registerFileRoutes({
@@ -2122,6 +2259,97 @@ function createRoutes(
       name,
       action: "removed",
       path: result.path,
+    });
+    return jsonResponse({ ok: true, name, path: result.path });
+  });
+
+  // Attached files (firm templates/playbooks) live INSIDE the skill's own
+  // folder — .opencode/skills/<name>/resources/<file> — so a workflow plus its
+  // templates is one self-contained folder that can be shared as a zip.
+  // Mutations also regenerate the managed "Attached resources" SKILL.md section.
+  addRoute(routes, "GET", "/workspace/:id/skills/:skill/resources", "client", async (ctx) => {
+    const workspace = await resolveWorkspace(config, ctx.params.id);
+    const items = await listSkillResources(workspace.path, String(ctx.params.skill ?? ""));
+    return jsonResponse({ items });
+  });
+
+  addRoute(routes, "GET", "/workspace/:id/skills/:skill/resources/:name", "client", async (ctx) => {
+    const workspace = await resolveWorkspace(config, ctx.params.id);
+    const result = await readSkillResource(
+      workspace.path,
+      String(ctx.params.skill ?? ""),
+      String(ctx.params.name ?? "").trim(),
+    );
+    return jsonResponse(result);
+  });
+
+  addRoute(routes, "POST", "/workspace/:id/skills/:skill/resources", "client", async (ctx) => {
+    ensureWritable(config);
+    requireClientScope(ctx, "collaborator");
+    const workspace = await resolveWorkspace(config, ctx.params.id);
+    const skill = String(ctx.params.skill ?? "").trim();
+    const body = await readJsonBody(ctx.request);
+    const name = String(body.name ?? "").trim();
+    const content = typeof body.content === "string" ? body.content : undefined;
+    const contentBase64 = typeof body.contentBase64 === "string" ? body.contentBase64 : undefined;
+    // Validate + resolve up front so the approval prompt shows the real path.
+    validateResourceName(name);
+    const skillDir = await resolveSkillDir(workspace.path, skill);
+    await requireApproval(ctx, {
+      workspaceId: workspace.id,
+      action: "skills.resource.upsert",
+      summary: `Attach ${name} to skill ${skill}`,
+      paths: [join(skillDir, "resources", name)],
+    });
+    const result = await upsertSkillResource(workspace.path, skill, { name, content, contentBase64 });
+    await recordAudit(workspace.path, {
+      id: shortId(),
+      workspaceId: workspace.id,
+      actor: ctx.actor ?? { type: "remote" },
+      action: "skills.resource.upsert",
+      target: result.path,
+      summary: `Attached ${name} to skill ${skill}`,
+      timestamp: Date.now(),
+    });
+    // The mutation rewrote the skill's SKILL.md section — reload like a skill edit.
+    emitReloadEvent(ctx.reloadEvents, workspace, "skills", {
+      type: "skill",
+      name: skill,
+      action: "updated",
+      path: result.skillPath,
+    });
+    return jsonResponse({ ok: true, name: result.name, path: result.path, action: result.action });
+  });
+
+  addRoute(routes, "DELETE", "/workspace/:id/skills/:skill/resources/:name", "client", async (ctx) => {
+    ensureWritable(config);
+    requireClientScope(ctx, "collaborator");
+    const workspace = await resolveWorkspace(config, ctx.params.id);
+    const skill = String(ctx.params.skill ?? "").trim();
+    const name = String(ctx.params.name ?? "").trim();
+    validateResourceName(name);
+    const skillDir = await resolveSkillDir(workspace.path, skill);
+    await requireApproval(ctx, {
+      workspaceId: workspace.id,
+      action: "skills.resource.delete",
+      summary: `Remove ${name} from skill ${skill}`,
+      paths: [join(skillDir, "resources", name)],
+    });
+    const result = await deleteSkillResource(workspace.path, skill, name);
+    await recordAudit(workspace.path, {
+      id: shortId(),
+      workspaceId: workspace.id,
+      actor: ctx.actor ?? { type: "remote" },
+      action: "skills.resource.delete",
+      target: result.path,
+      summary: `Removed ${name} from skill ${skill}`,
+      timestamp: Date.now(),
+    });
+    emitReloadEvent(ctx.reloadEvents, workspace, "skills", {
+      type: "skill",
+      name: skill,
+      action: "updated",
+      path: result.skillPath,
     });
     return jsonResponse({ ok: true, name, path: result.path });
   });
