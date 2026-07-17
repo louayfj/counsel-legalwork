@@ -1,7 +1,8 @@
 import { createRequire } from "node:module";
 import { existsSync } from "node:fs";
 import { readdir, readFile, stat } from "node:fs/promises";
-import { basename, extname, join, relative, resolve } from "node:path";
+import { basename, dirname, extname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
 import { resolveAxleoReferenceRoots } from "../axleo-reference.js";
@@ -227,9 +228,13 @@ async function walkFiles(root: string, files: string[] = []): Promise<string[]> 
 
 function pdfVendorDir(context: OpenCodeContext): string | null {
   const directory = context.directory?.trim();
-  if (!directory) return null;
-  const vendor = join(directory, ".opencode", "skills", "tabular-review", "assets", "vendor");
-  return existsSync(join(vendor, "pdf.min.js")) && existsSync(join(vendor, "pdf.worker.min.js")) ? vendor : null;
+  if (directory) {
+    const vendor = join(directory, ".opencode", "skills", "tabular-review", "assets", "vendor");
+    if (existsSync(join(vendor, "pdf.min.js")) && existsSync(join(vendor, "pdf.worker.min.js"))) return vendor;
+  }
+  // ponytail: fall back to bundled vendor so PDF extraction works regardless of session directory
+  const bundled = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "resources", "core-opencode", "skills", "tabular-review", "assets", "vendor");
+  return existsSync(join(bundled, "pdf.min.js")) && existsSync(join(bundled, "pdf.worker.min.js")) ? bundled : null;
 }
 
 function loadPdfJs(vendor: string): PdfJs | null {

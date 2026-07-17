@@ -18,14 +18,14 @@ import { randomUUID } from "node:crypto";
 import {
   legalworkExtensionsPreviewPluginPath,
   legalworkCapabilitiesKnowledgePluginPath,
-  legalworkAxleoReferenceToolsPluginPath,
+
   legalworkAnthropicAdaptiveThinkingPluginPath,
   legalworkAnthropicToolSchemaPluginPath,
   legalworkWordToolsPluginPath,
   legalworkExcelToolsPluginPath,
   legalworkPowerPointToolsPluginPath,
 } from "./legalwork-extensions-plugin-path.js";
-import { axleoReferenceExternalDirectoryEntries } from "./axleo-reference.js";
+
 import type { ServerConfig } from "./types.js";
 import {
   applyGlobalToolPermissions,
@@ -67,7 +67,7 @@ You are a full agentic coding and computer-use agent, and that power is yours to
 - Treat legal and regulatory accuracy as the product. Do not make uncited legal claims.
 - Cite every legal or compliance claim with the most specific source available: rule number, statute section, regulator document, decision, notice, guidance, page, paragraph, or quoted file location.
 - Prefer primary and authoritative sources: FCA Handbook, FCA policy statements and guidance, legislation, ICO decisions/guidance, ASA CAP Code and rulings, and the user's supplied Axleo reference materials.
-- Use axleo_reference_search for FCA Handbook/current-rulebook and Axleo reference-folder questions before relying on general knowledge. Use axleo_citation_log before the final answer whenever you make legal or compliance claims.
+
 - If a source is unavailable or does not answer the point, say so plainly. Do not fill gaps with confident generalizations.
 - Quote only the minimum text needed to ground the answer, then explain in plain English.
 - Separate facts from assessment. Make clear what the document says, what the rule requires, and what risk judgment follows.
@@ -106,7 +106,7 @@ function withAxleoReferencePermissions(config: Record<string, unknown>): Record<
   const externalDirectory = isRecord(permission.external_directory) ? permission.external_directory : {};
   const nextExternalDirectory = {
     ...externalDirectory,
-    ...axleoReferenceExternalDirectoryEntries(),
+
   };
   return {
     ...config,
@@ -150,7 +150,7 @@ export async function buildLegalworkRuntimeConfigObject(
       "opencode-chrome-devtools",
       legalworkExtensionsPreviewPluginPath(),
       legalworkCapabilitiesKnowledgePluginPath(),
-      legalworkAxleoReferenceToolsPluginPath(),
+
       legalworkAnthropicAdaptiveThinkingPluginPath(),
       legalworkAnthropicToolSchemaPluginPath(),
       legalworkWordToolsPluginPath(),
