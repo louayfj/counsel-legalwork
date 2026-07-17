@@ -90,11 +90,15 @@ declare global {
           channel: "stable" | "alpha";
           feedUrl: string;
           currentVersion: string;
+          supported?: boolean;
+          reason?: string | null;
         }>;
         setChannel?: (channel: "stable" | "alpha") => Promise<{
           channel: "stable" | "alpha";
           feedUrl: string;
           currentVersion: string;
+          supported?: boolean;
+          reason?: string | null;
         }>;
         check?: (channel?: "stable" | "alpha") => Promise<{
           available: boolean;

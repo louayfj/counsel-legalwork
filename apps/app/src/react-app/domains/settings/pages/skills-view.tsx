@@ -546,7 +546,7 @@ export function SkillsView(props: SkillsViewProps) {
             ) : null}
             <p className={`max-w-xl text-[14px] leading-[1.65] text-dls-secondary ${props.showHeader !== false ? "mt-3" : ""}`}>
               {isWorkflowsView
-                ? "Reusable templates for the firm's recurring legal tasks. Assistant workflows run like a skill; tabular workflows drive a review grid through the tabular-review skill."
+                ? "Reusable templates for Axleo's recurring compliance tasks. Assistant workflows run like a skill; tabular workflows drive a review grid through the tabular-review skill."
                 : t("skills.worker_profile_desc")}
             </p>
           </div>
@@ -1116,7 +1116,7 @@ function SkillCreatorButton(props: {
               <input
                 value={name}
                 onChange={(event) => setName(event.currentTarget.value)}
-                placeholder="contract-summary"
+                placeholder="conc-disclosure-check"
                 spellCheck={false}
                 className={inputClass}
               />
@@ -1137,7 +1137,7 @@ function SkillCreatorButton(props: {
                 value={description}
                 onChange={(event) => setDescription(event.currentTarget.value)}
                 rows={2}
-                placeholder="Use when the user wants to summarize a contract's key terms."
+                placeholder="Use when the user wants to check a motor-finance disclosure pack."
                 className={`${inputClass} resize-none`}
               />
               <span className="text-[11px] text-dls-secondary">This is the trigger the agent matches on. Be specific.</span>
@@ -1352,7 +1352,7 @@ function WorkflowCreatorButton(props: {
                   <input
                     value={name}
                     onChange={(event) => setName(event.currentTarget.value)}
-                    placeholder="NDA Diligence Review"
+                    placeholder="FCA Disclosure Review"
                     className={inputClass}
                   />
                   <span className="text-[11px] text-dls-secondary">
@@ -1372,7 +1372,7 @@ function WorkflowCreatorButton(props: {
                     value={description}
                     onChange={(event) => setDescription(event.currentTarget.value)}
                     rows={2}
-                    placeholder="Use when reviewing NDAs for diligence."
+                    placeholder="Use when reviewing dealer finance disclosures for compliance."
                     className={`${inputClass} resize-none`}
                   />
                 </label>

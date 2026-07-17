@@ -1,18 +1,18 @@
 ---
 name: docx-edit
 description: >-
-  Firm-owned Word (.docx) reading + editing. Use whenever the user wants to work with
-  a Word document: read/answer questions about a contract ("what's the salary / term /
-  governing law"), check a value against a threshold, redline or comment on a clause,
+  Axleo Word (.docx) reading + editing. Use whenever the user wants to work with
+  a Word document: read/answer questions about a finance agreement, complaint response,
+  policy, disclosure, or advert, check a value against a threshold, propose edits or comment on wording,
   or accept/adopt or reject tracked changes. Reads the FULL document — including clauses
-  laid out in tables — and writes tracked-change redlines + comments as reviewable
-  suggestions anywhere in the document. Self-contained; runs on the firm's own model and
+  laid out in tables — and writes tracked changes + comments as reviewable
+  suggestions anywhere in the document. Self-contained; runs on the user's configured model and
   infrastructure; pairs with the in-app .docx viewer.
 ---
 
 # Word (.docx) reading + editing
 
-This skill is how this firm reads and edits Word documents with AI. It is **self-contained**:
+This skill is how Axleo reads and edits Word documents with AI. It is **self-contained**:
 `assets/docx-agent.mjs` imports a vendored copy of the OOXML engine
 (`assets/vendor/docx-engine.mjs`) — the same engine behind the in-app `.docx` viewer — so it
 runs in any workspace with no install. **Do not hand-parse the document's XML with python** —
@@ -27,7 +27,7 @@ reviewable tracked changes the lawyer accepts in the viewer.
 # col C"). `changes`/`comments` summarize existing tracked changes & comments.
 node .opencode/skills/docx-edit/assets/docx-agent.mjs inspect "<file.docx>"
 
-# Apply comments + tracked-change redlines (plan JSON on stdin). Writes <base>.redlined.docx.
+# Apply comments + tracked changes (plan JSON on stdin). Writes <base>.redlined.docx.
 echo '<plan-json>' | node .opencode/skills/docx-edit/assets/docx-agent.mjs apply "<file.docx>" --plan -
 
 # Accept ("adopt") or reject ALL tracked changes, then write the clean result.
@@ -64,13 +64,13 @@ the `index` from `inspect`** (the same index works for body paragraphs and table
 
 1. **Resolve the target** `.docx` (attached, `@path`, named, or in a folder). The engine handles
    OOXML Word (`.docx`, `.docm`, `.dotx`). For legacy `.doc/.odt/.rtf`, ask the user to save as `.docx`.
-2. **`inspect`** and read the JSON. Most legal contracts lay every numbered clause inside a table —
+2. **`inspect`** and read the JSON. Many finance agreements and disclosure documents lay important wording inside a table —
    those cells are in `paragraphs` with `location: "table, row R, col C"`. Find the clause you need
    (e.g. the Remuneration clause for the salary) and note its `index`. Check existing `changes`/`comments`.
 3. **Do what was asked. Read the verb first:**
-   - **"edit / change / revise / redline / amend / rewrite / mark up / comment / draft"** →
+   - **"edit / change / revise / amend / rewrite / mark up / comment / draft"** →
      this means **PROPOSE NEW edits**. Find the relevant clause in `paragraphs` and `apply` a
-     redline/comment anchored by its `index` + a verbatim `search`. **Do NOT start by looking at
+     tracked change/comment anchored by its `index` + a verbatim `search`. **Do NOT start by looking at
      existing tracked changes** — a document having no tracked changes is NOT a reason to stop;
      you are there to *create* them. If the user said "edit" but didn't say *what* to change, ask
      what change they want (or read the doc and propose a specific one) — never reply "there are
@@ -85,7 +85,7 @@ the `index` from `inspect`** (the same index works for body paragraphs and table
    Never treat "no existing tracked changes" as the answer to an *edit* request.
 4. **Hand back:** state the output file by the **`name`** the tool returns (a plain, space-free
    filename — this is what makes it appear as a clickable Word artifact in the panel, exactly like
-   a `.md`/`.csv`/`.html` the firm produces; a name with spaces/parens will NOT surface). Tell the
+   a `.md`/`.csv`/`.html` the app produces; a name with spaces/parens will NOT surface). Tell the
    user to open it in the in-app `.docx` viewer to review — tracked changes + comments render
    inline; they accept/reject there. Don't pass a `--out` with spaces/parens. Summarize what you
    changed and **flag any `errors`** (ops whose `search` didn't match verbatim) and retry those
@@ -99,7 +99,7 @@ the `index` from `inspect`** (the same index works for body paragraphs and table
   viewer. Default to a copy; overwrite in place only on request.
 - **Never fabricate** a value, party, number, or a "done." If `search` won't match or there are no
   changes to adopt, say so.
-- **Open models, firm-owned.** Don't hardcode a model; the `docx-redliner` subagent inherits the
-  firm's configured model.
+- **Open models, Axleo-owned workflow.** Don't hardcode a model; the `docx-redliner` subagent inherits the
+  configured model.
 - **Distribution.** Bundled-core: seeded into every workspace via `core-skills.ts`
   (`scripts/gen-core-skills.mjs`), alongside the in-app viewer it feeds.

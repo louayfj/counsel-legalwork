@@ -26,6 +26,9 @@ describe("ensureWorkspaceFiles", () => {
       // bundled-core: the tabular-review engine + its HTML template + the extractor agent
       const skill = await readFile(join(root, ".opencode", "skills", "tabular-review", "SKILL.md"), "utf8");
       expect(skill).toContain("name: tabular-review");
+      const axleoSkill = await readFile(join(root, ".opencode", "skills", "fca-disclosure-checker", "SKILL.md"), "utf8");
+      expect(axleoSkill).toContain("name: fca-disclosure-checker");
+      expect(axleoSkill).toContain("axleo_citation_log");
       await expect(
         stat(join(root, ".opencode", "skills", "tabular-review", "assets", "review-template.html")),
       ).resolves.toBeDefined();

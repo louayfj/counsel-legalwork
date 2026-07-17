@@ -1374,6 +1374,64 @@ function serializeWorkspace(workspace: ServerConfig["workspaces"][number]) {
   };
 }
 
+function sanitizeCitationList(value: unknown): Record<string, unknown>[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!isRecord(item)) return [];
+    const source = readStringField(item, "source");
+    if (!source) return [];
+    return [{
+      source,
+      locator: readStringField(item, "locator") || undefined,
+      claim: readStringField(item, "claim") || undefined,
+    }];
+  });
+}
+
+function citationLogDetails(body: Record<string, unknown>): Record<string, unknown> {
+  const context = isRecord(body.context) ? body.context : {};
+  const citations = sanitizeCitationList(body.citations);
+  const riskLevel = readStringField(body, "riskLevel") || readStringField(body, "risk_level") || "unspecified";
+  return {
+    answerSummary: readStringField(body, "answerSummary") || readStringField(body, "answer_summary"),
+    riskLevel,
+    escalationRequired: body.escalationRequired === true || body.escalation_required === true,
+    citations,
+    context: {
+      sessionId: readStringField(context, "sessionId"),
+      messageId: readStringField(context, "messageId"),
+      agent: readStringField(context, "agent"),
+      directory: readStringField(context, "directory"),
+    },
+  };
+}
+
+async function resolveWorkspaceFromCitationContext(
+  config: ServerConfig,
+  body: Record<string, unknown>,
+): Promise<WorkspaceInfo> {
+  const workspaceId = readStringField(body, "workspaceId") || readStringField(body, "workspace_id");
+  if (workspaceId) return resolveWorkspace(config, workspaceId);
+
+  const context = isRecord(body.context) ? body.context : {};
+  const directory = readStringField(context, "directory");
+  const resolvedDirectory = directory ? resolve(directory) : "";
+  if (resolvedDirectory) {
+    const workspace = config.workspaces.find((entry) => {
+      const workspacePath = resolve(entry.path);
+      return resolvedDirectory === workspacePath || resolvedDirectory.startsWith(workspacePath + sep);
+    });
+    if (workspace) return resolveWorkspace(config, workspace.id);
+  }
+
+  const [singleWorkspace] = config.workspaces;
+  if (singleWorkspace && config.workspaces.length === 1) {
+    return resolveWorkspace(config, singleWorkspace.id);
+  }
+
+  throw new ApiError(400, "workspace_required", "Could not determine workspace for citation log");
+}
+
 function createRoutes(
   config: ServerConfig,
   approvals: ApprovalService,
@@ -1431,6 +1489,30 @@ function createRoutes(
     resolveWorkspace,
     createWorkspaceOpencodeClient,
     unwrapOpencodeResult,
+  });
+
+  addRoute(routes, "POST", "/experimental/axleo/citations", "client", async (ctx) => {
+    const body = await readJsonBody(ctx.request);
+    const recordBody = isRecord(body) ? body : {};
+    const workspace = await resolveWorkspaceFromCitationContext(config, recordBody);
+    const details = citationLogDetails(recordBody);
+    const citations = Array.isArray(details.citations) ? details.citations : [];
+    const answerSummary = typeof details.answerSummary === "string" && details.answerSummary.trim()
+      ? details.answerSummary.trim()
+      : "Logged cited compliance answer";
+
+    await recordAudit(workspace.path, {
+      id: shortId(),
+      workspaceId: workspace.id,
+      actor: ctx.actor ?? { type: "remote" },
+      action: "axleo.citations.log",
+      target: "assistant-answer",
+      summary: `${answerSummary} (${citations.length} citation${citations.length === 1 ? "" : "s"})`,
+      timestamp: Date.now(),
+      details,
+    });
+
+    return jsonResponse({ ok: true, workspaceId: workspace.id, citations: citations.length });
   });
 
   addRoute(routes, "GET", "/workspace/:id/config", "client", async (ctx) => {

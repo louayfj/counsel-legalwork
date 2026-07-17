@@ -7,7 +7,6 @@ import {
   useState,
 } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { LearningsPane } from "./learnings-route";
 import { toast } from "@/components/ui/sonner";
 import type {
   AgentPartInput,
@@ -89,6 +88,7 @@ import {
 import { useLocal } from "@/react-app/kernel/local-provider";
 import { usePlatform } from "@/react-app/kernel/platform";
 import { SessionPage, type OpenSessionTab } from "@/react-app/domains/session/chat/session-page";
+import { resolveModelReadableAttachmentMime } from "@/react-app/domains/session/sync/attachment-support";
 import { ReactSessionRuntime } from "@/react-app/domains/session/sync/runtime-sync";
 import { useSessionActivityStore } from "@/react-app/domains/session/status/session-activity-store";
 import { buildLegalworkEnvSystemContext } from "@/react-app/domains/session/sync/env-context";
@@ -214,10 +214,8 @@ async function fileToDataUrl(file: File, mimeType: string) {
 
 function attachmentMime(attachment: ComposerAttachment) {
   if (attachment.kind === "image") return attachment.mimeType;
-  if (attachment.mimeType === "application/pdf") return attachment.mimeType;
-  // Everything else is sent as text; unsupported binary mimes poison
-  // server-side session history (see sync/attachment-support.ts).
-  return "text/plain";
+  const resolved = resolveModelReadableAttachmentMime(attachment.mimeType, attachment.name);
+  return typeof resolved === "string" ? resolved : "text/plain";
 }
 
 async function draftToParts(draft: ComposerDraft, workspaceRoot: string) {
@@ -293,24 +291,16 @@ async function draftToParts(draft: ComposerDraft, workspaceRoot: string) {
 
 export function SessionRoute() {
   const navigate = useNavigate();
-  const [showLearnings, setShowLearnings] = useState(false);
-  // Top-level pages that live in the main shell (sidebar stays, main pane swaps),
-  // same mechanism as Learnings. Mutually exclusive — only one main pane at a time.
+  // Top-level pages that live in the main shell (sidebar stays, main pane swaps).
+  // Mutually exclusive: only one main pane at a time.
   const [showWorkflows, setShowWorkflows] = useState(false);
   const [showExtensions, setShowExtensions] = useState(false);
-  const showLearningsPane = useCallback(() => {
-    setShowLearnings(true);
-    setShowWorkflows(false);
-    setShowExtensions(false);
-  }, []);
   const showWorkflowsPane = useCallback(() => {
     setShowWorkflows(true);
-    setShowLearnings(false);
     setShowExtensions(false);
   }, []);
   const showExtensionsPane = useCallback(() => {
     setShowExtensions(true);
-    setShowLearnings(false);
     setShowWorkflows(false);
   }, []);
   const platform = usePlatform();
@@ -1467,10 +1457,9 @@ export function SessionRoute() {
     }
   }, [baseUrl, client, local, navigateToWorkspaceSession, refreshRouteState, rememberPendingCreatedSession, token]);
 
-  // Leaving a top-level pane (Learnings/Skills/Integrations): any session/workspace
+  // Leaving a top-level pane (Workflows/Integrations): any session/workspace
   // navigation drops back to the session view.
   useEffect(() => {
-    setShowLearnings(false);
     setShowWorkflows(false);
     setShowExtensions(false);
   }, [selectedSessionId, selectedWorkspaceId]);
@@ -1577,8 +1566,6 @@ export function SessionRoute() {
           <SettingsSurface embedded singleView initialPath="workflows" workspaceId={selectedWorkspaceId} />
         ) : showExtensions ? (
           <SettingsSurface embedded singleView initialPath="extensions" workspaceId={selectedWorkspaceId} />
-        ) : showLearnings ? (
-          <LearningsPane />
         ) : undefined
       }
       settingsSlot={
@@ -1601,10 +1588,9 @@ export function SessionRoute() {
         sessionTabNavRef.current = { ...sessionTabNavRef.current, options: tabs };
       }}
       sidebar={{
-        onShowLearnings: showLearningsPane,
         onShowWorkflows: showWorkflowsPane,
         onShowExtensions: showExtensionsPane,
-        activeNav: showWorkflows ? "workflows" : showExtensions ? "extensions" : showLearnings ? "learnings" : null,
+        activeNav: showWorkflows ? "workflows" : showExtensions ? "extensions" : null,
         workspaceSessionGroups,
         selectedWorkspaceId,
         selectedSessionId,
@@ -1709,9 +1695,8 @@ export function SessionRoute() {
         onRevealWorkspace: (id) => void handleRevealWorkspace(id),
         onForgetWorkspace: (id) => void handleForgetWorkspace(id),
         onOpenCreateWorkspace: () => {
-          // New Task returns to the session view — drop any open top-level pane
-          // (Learnings/Skills/Integrations) so it doesn't linger behind the modal.
-          setShowLearnings(false);
+          // New Task returns to the session view: drop any open top-level pane
+          // so it doesn't linger behind the modal.
           setShowWorkflows(false);
           setShowExtensions(false);
           handleOpenCreateWorkspace();

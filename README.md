@@ -2,6 +2,10 @@
 
 A local AI agent for document work. Point it at a folder and ask in plain English — it reads, drafts, and redlines documents on your own machine, using the model you connect. Everything stays on your device.
 
+https://github.com/user-attachments/assets/4a576c3a-7c2a-46c6-9856-1254282b1b70
+
+
+
 ## What it does
 
 - **Review & redline** documents as tracked changes, right in Word.

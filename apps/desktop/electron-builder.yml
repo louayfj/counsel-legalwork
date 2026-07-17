@@ -1,10 +1,10 @@
-# appId / productName define LegalWork's macOS bundle identity (keychain,
+# appId / productName define Axleo Legal Work's macOS bundle identity (keychain,
 # Launchpad slot, TCC permissions). Keep in sync with the runtime identifiers
 # in apps/desktop/electron/main.mjs.
-appId: com.eigenweltlabs.legalwork
-productName: LegalWork
+appId: com.axleosystems.legalwork
+productName: Axleo Legal Work
 protocols:
-  - name: LegalWork
+  - name: Axleo Legal Work
     schemes:
       - legalwork
 directories:
@@ -30,22 +30,22 @@ asarUnpack:
 npmRebuild: false
 afterPack: scripts/electron-after-pack.cjs
 afterSign: scripts/electron-after-sign.cjs
-# electron-updater feed target — LegalWork's GitHub releases.
+# electron-updater feed target.
 publish:
   - provider: github
-    owner: eigenweltlabs
-    repo: legalwork
+    owner: louayfj
+    repo: axleo-legal-work
     releaseType: release
 mac:
   icon: resources/icons/icon.icns
   category: public.app-category.developer-tools
-  hardenedRuntime: true
+  hardenedRuntime: false
   gatekeeperAssess: false
   notarize: false
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
-    NSMicrophoneUsageDescription: LegalWork uses the microphone when you start Voice Mode so you can speak commands to your agent.
+    NSMicrophoneUsageDescription: Axleo Legal Work uses the microphone when you start Voice Mode so you can speak commands to your agent.
   extraResources:
     - from: resources/sidecars
       to: sidecars
@@ -62,7 +62,7 @@ mac:
     - from: resources/helpers
       to: helpers
       filter:
-        - "LegalWork Computer Use.app/**"
+        - "Axleo Computer Use.app/**"
   target:
     - dmg
     - zip

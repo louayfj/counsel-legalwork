@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { chmodSync, copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, copyFileSync, existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -10,8 +10,8 @@ const packagePath = resolve(repoRoot, "packages", "handsfree", "native", "HandsF
 const iconPath = resolve(desktopRoot, "resources", "icons", "icon.icns");
 const productName = "HandsFreeComputerUse";
 const helperExecutableName = "ComputerUse";
-const helperAppName = "LegalWork Computer Use.app";
-const bundleIdentifier = "com.eigenweltlabs.legalwork.computer-use";
+const helperAppName = "Axleo Computer Use.app";
+const bundleIdentifier = "com.axleosystems.legalwork.computer-use";
 
 const readArg = (name) => {
   const raw = process.argv.slice(2);
@@ -53,17 +53,39 @@ function signingIdentity() {
   return match ? match[1] : "-";
 }
 
+function cleanCodeSignMetadata() {
+  // -n deletes AppleDouble files without merging their resource forks in (-m would add them)
+  spawnSync("dot_clean", ["-n", appPath], { stdio: "ignore" });
+  spawnSync("xattr", ["-crs", appPath], { stdio: "ignore" });
+  // ditto strips com.apple.provenance and other protected xattrs that xattr -cr can't touch
+  const tmp = appPath + ".__clean__";
+  const r = spawnSync("ditto", ["--norsrc", "--noextattr", "--noqtn", appPath, tmp]);
+  if (r.status === 0 && existsSync(tmp)) {
+    rmSync(appPath, { recursive: true, force: true });
+    renameSync(tmp, appPath);
+  }
+}
+
 function signHelperApp() {
   if (process.platform !== "darwin") return;
+  cleanCodeSignMetadata();
   const identity = signingIdentity();
   const args = ["--force", "--deep", "--sign", identity];
   if (identity !== "-") args.push("--options", "runtime");
-  const result = spawnSync("codesign", [...args, appPath], {
+  let result = spawnSync("codesign", [...args, appPath], {
     encoding: "utf8",
     stdio: "pipe",
   });
+  if (result.status !== 0 && result.stderr?.includes("resource fork")) {
+    cleanCodeSignMetadata();
+    result = spawnSync("codesign", [...args, appPath], {
+      encoding: "utf8",
+      stdio: "pipe",
+    });
+  }
   if (identity !== "-" && (result.status !== 0 || result.error)) {
     // Keychain may refuse non-interactive signing; fall back to ad-hoc.
+    cleanCodeSignMetadata();
     const fallback = spawnSync("codesign", ["--force", "--deep", "--sign", "-", appPath], {
       encoding: "utf8",
       stdio: "pipe",
@@ -89,7 +111,7 @@ function infoPlist() {
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleDisplayName</key>
-  <string>LegalWork Computer Use</string>
+  <string>Axleo Computer Use</string>
   <key>CFBundleExecutable</key>
   <string>${helperExecutableName}</string>
   <key>CFBundleIdentifier</key>
@@ -99,7 +121,7 @@ function infoPlist() {
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleName</key>
-  <string>LegalWork Computer Use</string>
+  <string>Axleo Computer Use</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>

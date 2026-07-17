@@ -1244,6 +1244,7 @@ export function ReactSessionComposer(props: ComposerProps) {
                   }}
                   type="file"
                   multiple
+                  accept=".pdf,.md,.doc,.docx,.xls,.xlsx,image/*"
                   className="hidden"
                   onChange={(event) => {
                     const files = Array.from(event.currentTarget.files ?? []);

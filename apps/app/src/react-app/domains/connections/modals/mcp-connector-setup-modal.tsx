@@ -44,9 +44,9 @@ export type McpConnectorSetupModalProps = {
 };
 
 /**
- * Collects the per-firm bits a connector needs before its one-click OAuth can
+ * Collects the organization-specific bits a connector needs before its one-click OAuth can
  * fire: any {placeholder} segments in the URL (instance/tenant/site) and, for
- * vendors without OAuth dynamic client registration, the firm's own OAuth app
+ * vendors without OAuth dynamic client registration, the organization's own OAuth app
  * clientId/secret. It then hands a fully-resolved entry to connectMcp, which
  * already knows how to write `url` + `oauth` into the engine config.
  */
@@ -130,7 +130,7 @@ export function McpConnectorSetupModal(props: McpConnectorSetupModalProps) {
             {clientIdOnly
               ? "Enter your instance details and the OAuth client ID your provider issued, then connect."
               : needsCreds
-              ? "This service has no automatic app registration, so enter your firm's OAuth app details. Then connect."
+              ? "This service has no automatic app registration, so enter your organization's OAuth app details. Then connect."
               : needsToken
               ? "This service's OAuth isn't supported by the local engine — paste an access token to connect instead."
               : "Enter your instance details, then connect."}

@@ -4,7 +4,6 @@ import {
   FileStack,
   FolderLock,
   KeyRound,
-  Layout,
   RefreshCcw,
   ShieldCheck,
   Sparkles,
@@ -57,9 +56,7 @@ function SettingsRow(props: { icon: typeof Sparkles; title: string; desc: string
       onClick={props.onClick}
       className="group flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-[rgba(35,82,222,0.055)]"
     >
-      <div className="flex size-9 shrink-0 items-center justify-center rounded-[11px] border border-[rgba(35,82,222,0.22)] bg-[rgba(35,82,222,0.09)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
-        <props.icon size={16} className="text-[#2352DE]" />
-      </div>
+      <props.icon size={21} strokeWidth={1.8} className="shrink-0 text-[#2352DE]" />
       <div className="min-w-0 flex-1">
         <div className="text-[13.5px] font-medium tracking-[-0.01em] text-foreground">{props.title}</div>
         <div className="text-[11.5px] leading-snug text-muted-foreground">{props.desc}</div>

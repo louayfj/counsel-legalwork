@@ -167,10 +167,20 @@ export function useElectronUpdaterState(options: UseElectronUpdaterStateOptions)
       .then(async (state) => {
         if (cancelled) return;
         dispatchEnvState({ type: "app-version", appVersion: state.currentVersion ?? null });
+        if (state.supported === false) {
+          dispatchEnvState({ type: "unsupported", reason: state.reason ?? "Updates are installed manually for this build." });
+          setUpdateStatus(null);
+          return;
+        }
         if (state.channel && state.channel !== releaseChannel && bridge.setChannel) {
           const nextState = await bridge.setChannel(releaseChannel);
           if (cancelled) return;
           dispatchEnvState({ type: "app-version", appVersion: nextState.currentVersion ?? null });
+          if (nextState.supported === false) {
+            dispatchEnvState({ type: "unsupported", reason: nextState.reason ?? "Updates are installed manually for this build." });
+            setUpdateStatus(null);
+            return;
+          }
           if (nextState.channel && nextState.channel !== releaseChannel) {
             onReleaseChannelChange(nextState.channel);
           }

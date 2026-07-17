@@ -12,25 +12,25 @@ const steps = [
   {
     n: "01",
     title: "Open a folder of documents",
-    desc: "Point LegalWork at any folder on this computer.",
+    desc: "Point it at any folder on this computer.",
   },
   {
     n: "02",
     title: "Ask in plain English",
-    desc: "“Redline this NDA for the buyer.” “Build a review grid across these contracts.”",
+    desc: "“Check this finance disclosure against CONC.” “Review this advert against the CAP Code.”",
   },
   {
     n: "03",
-    title: "Review, redline, iterate",
-    desc: "Accept tracked changes, refine, and save the result as a reusable workflow.",
+    title: "Review, evidence, escalate",
+    desc: "Check cited findings, refine the draft, and flag high-risk items for human review.",
   },
 ];
 
 // The "what" — capabilities, as an editorial ledger (not tiles).
 const capabilities = [
-  { title: "Review & redline", desc: "Mark up contracts as tracked changes, right in Word." },
-  { title: "Tabular review", desc: "Extract terms across many documents into a sourced review grid." },
-  { title: "Draft documents", desc: "Briefs, memos, contracts, and engagement letters." },
+  { title: "FCA disclosure checks", desc: "Review motor-finance packs against CONC with source citations." },
+  { title: "Consumer Duty workflows", desc: "Draft fair-value and customer-outcome evidence with PRIN 2A grounding." },
+  { title: "Complaint and ad review", desc: "Draft responses and check marketing copy against cited rules." },
   { title: "Bring your own model", desc: "Connect AWS Bedrock, Azure OpenAI, or your own provider." },
   { title: "Runs on this machine", desc: "The agent works locally — data is only shared with the model you choose." },
 ];
@@ -69,8 +69,8 @@ export function WelcomePage({
                     {t("welcome.title")}
                   </h1>
                   <p className="mt-4 max-w-sm text-[15px] leading-[1.6] text-dls-secondary">
-                    A computer-use agent that runs on this machine. Point it at a folder of documents and it
-                    reads, drafts, and redlines them for you — in plain English.
+                    A computer-use agent that runs on this machine. Point it at compliance files and it
+                    checks, drafts, and cites the evidence for you — in plain English.
                   </p>
                 </div>
 

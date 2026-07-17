@@ -234,7 +234,7 @@ jobs:
           const fs = require("node:fs");
           const manifestPath = "apps/desktop/dist-electron/latest-mac.yml";
           const releaseTag = process.env.ALPHA_RUN_RELEASE_TAG;
-          const baseUrl = `https://github.com/eigenweltlabs/legalwork/releases/download/${releaseTag}`;
+          const baseUrl = `https://github.com/louayfj/axleo-legal-work/releases/download/${releaseTag}`;
           const rewritten = fs.readFileSync(manifestPath, "utf8")
             .replace(/(url:\s*)(legalwork-[^\n]+)/g, `$1${baseUrl}/$2`)
             .replace(/(path:\s*)(legalwork-[^\n]+)/g, `$1${baseUrl}/$2`);

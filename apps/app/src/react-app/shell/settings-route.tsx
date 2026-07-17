@@ -63,7 +63,6 @@ import { useSettingsExtensionController } from "@/react-app/domains/settings/set
 import { buildExtensionItems } from "@/react-app/domains/settings/extension-items";
 import { isLegalWorkExtensionEnabled, LEGALWORK_EXTENSION_STATE_CHANGED, setLegalWorkExtensionEnabled } from "@/react-app/domains/settings/extension-state";
 import { PreferencesView } from "@/react-app/domains/settings/pages/preferences-view";
-import { ShellCustomizationView } from "@/react-app/domains/settings/pages/shell-view";
 import { GeneralSettingsView } from "@/react-app/domains/settings/pages/general-view";
 import { AuthorizedFoldersPanel } from "@/react-app/domains/settings/panels/authorized-folders-panel";
 import { ToolPermissionsPanel } from "@/react-app/domains/settings/panels/tool-permissions-panel";
@@ -361,7 +360,7 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
     readStoredBoolean(SETTINGS_UPDATE_AUTO_CHECK_KEY, true),
   );
   const [updateAutoDownload, setUpdateAutoDownload] = useState(() =>
-    readStoredBoolean(SETTINGS_UPDATE_AUTO_DOWNLOAD_KEY, false),
+    readStoredBoolean(SETTINGS_UPDATE_AUTO_DOWNLOAD_KEY, true),
   );
   const [configActionStatus, setConfigActionStatus] = useState<string | null>(null);
   const [revealConfigBusy, setRevealConfigBusy] = useState(false);
@@ -1854,8 +1853,6 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
             }}
           />
         );
-      case "shell":
-        return <ShellCustomizationView />;
       case "skills":
       case "workflows":
         return (

@@ -208,7 +208,7 @@ export const LegalWorkExtensionsPreview = async () => ({
   tool: {
     legalwork_extension_list_actions: {
       description: `List extension actions currently exposed by LegalWork. ${LEGALWORK_EXTENSION_DISCOVERY_INSTRUCTION}`,
-      args: listActionsArgsSchema.shape,
+      args: (listActionsArgsSchema.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
       async execute(rawArgs: unknown, context: OpenCodeContext) {
         const args = listActionsArgsSchema.parse(rawArgs);
         const query = args.extensionId ? `?extensionId=${encodeURIComponent(args.extensionId)}` : "";
@@ -223,7 +223,7 @@ export const LegalWorkExtensionsPreview = async () => ({
     },
     legalwork_extension_call: {
       description: `Call a LegalWork extension action. Use legalwork_extension_list_actions first to inspect available actions and schemas. ${LEGALWORK_EXTENSION_DISCOVERY_INSTRUCTION}`,
-      args: callArgsSchema.shape,
+      args: (callArgsSchema.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
       async execute(rawArgs: unknown, context: OpenCodeContext) {
         const args = callArgsSchema.parse(rawArgs);
         const payload = await postJson("/experimental/extensions/call", {
@@ -253,7 +253,7 @@ export const LegalWorkExtensionsPreview = async () => ({
     },
     legalwork_ui_execute_action: {
       description: `Execute a LegalWork UI action by its id. Use legalwork_ui_list_actions first to see available actions. ${LEGALWORK_UI_CONTROL_INSTRUCTION}`,
-      args: uiExecuteArgsSchema.shape,
+      args: (uiExecuteArgsSchema.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
       async execute(rawArgs: unknown) {
         const { actionId, args } = uiExecuteArgsSchema.parse(rawArgs);
         const result = await uiBridgeRequest("/execute", {
@@ -265,7 +265,7 @@ export const LegalWorkExtensionsPreview = async () => ({
     },
     legalwork_browser_open_url: {
       description: "Open a URL in the LegalWork built-in browser and return the exact CDP browser_url and target_id to use for browser_* automation tools. Always use this before browser_snapshot/click/fill/eval for web browsing tasks.",
-      args: browserOpenUrlArgsSchema.shape,
+      args: (browserOpenUrlArgsSchema.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
       async execute(rawArgs: unknown) {
         const args = browserOpenUrlArgsSchema.parse(rawArgs);
         const result = await uiBridgeRequest("/execute", {
@@ -280,7 +280,7 @@ export const LegalWorkExtensionsPreview = async () => ({
     },
     legalwork_browser_set_proxy: {
       description: "Route all LegalWork built-in browser traffic through an HTTP/SOCKS proxy — for example to fetch search results or pages as seen from another location. Applies to every built-in browser tab (including browser_* automation) until cleared with legalwork_browser_clear_proxy. If the user has named proxies configured as LEGALWORK_BROWSER_PROXY_<NAME> environment variables, pass env:NAME instead of a raw URL.",
-      args: browserSetProxyArgsSchema.shape,
+      args: (browserSetProxyArgsSchema.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
       async execute(rawArgs: unknown) {
         const args = browserSetProxyArgsSchema.parse(rawArgs);
         const result = await uiBridgeRequest("/execute", {

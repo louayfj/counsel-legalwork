@@ -120,8 +120,26 @@ export function ComputerUseConfig({
     },
   });
 
-  const isBusy = isFetching || isGrantPending;
-  const error = (grantError ?? checkError)?.message ?? result?.error ?? null;
+  const {
+    mutate: resetPermissions,
+    isPending: isResetPending,
+    error: resetError,
+    reset: resetResetPermissions,
+  } = useMutation({
+    mutationFn: async () => {
+      if (!hasDesktopBridge()) {
+        throw new Error("Computer Use is Mac only and requires the Axleo Legal Work desktop app on macOS.");
+      }
+
+      return parsePermissionResult(await desktopBridge.resetComputerUsePermissions());
+    },
+    onSuccess: (next) => {
+      queryClient.setQueryData(PERMISSIONS_QUERY_KEY, next);
+    },
+  });
+
+  const isBusy = isFetching || isGrantPending || isResetPending;
+  const error = (grantError ?? resetError ?? checkError)?.message ?? result?.error ?? null;
 
   // Bubble the latest read up to the parent.
   useEffect(() => {
@@ -137,6 +155,7 @@ export function ComputerUseConfig({
     }
 
     resetGrant();
+    resetResetPermissions();
     void refetch();
   };
 
@@ -185,7 +204,7 @@ export function ComputerUseConfig({
         {/* Step 2 — Permissions */}
         <SetupRow
           title="2. Grant macOS permissions"
-          description="Opens the LegalWork Computer Use helper. Grant both permissions there, then click Verify below."
+          description="Opens the Axleo Computer Use helper. Grant both permissions there, then click Verify below."
           complete={allGranted}
         >
           <div className="flex w-full min-w-0 flex-col gap-3">
@@ -199,15 +218,26 @@ export function ComputerUseConfig({
               onClick={() => void grant()}
               disabled={isBusy}
             >
-              {isBusy ? (
-                <Loader2 className="size-4 shrink-0 animate-spin" />
-              ) : (
+            {isBusy ? (
+              <Loader2 className="size-4 shrink-0 animate-spin" />
+            ) : (
                 <Settings2 className="size-4 shrink-0" />
               )}
               <span className="min-w-0 wrap-break-word">
                 {isBusy ? "Opening…" : allGranted ? "Reopen helper" : "Grant permissions"}
               </span>
             </Button>
+            {!allGranted && result ? (
+              <Button
+                className="min-h-10 w-full justify-center whitespace-normal text-center"
+                variant="outline"
+                onClick={() => void resetPermissions()}
+                disabled={isBusy}
+              >
+                {isResetPending ? <Loader2 className="size-4 shrink-0 animate-spin" /> : null}
+                <span className="min-w-0 wrap-break-word">Reset macOS permissions</span>
+              </Button>
+            ) : null}
           </div>
         </SetupRow>
       </CardContent>
@@ -217,7 +247,7 @@ export function ComputerUseConfig({
           <p className="text-xs text-muted-foreground">
             {allGranted
               ? "Permissions verified. Try a Composer prompt that uses Computer Use."
-              : "After granting permissions in the helper, click Verify."}
+              : "If macOS shows permissions as granted but Axleo still says Needed, reset permissions, grant them again, then click Verify."}
           </p>
           <div className="flex w-full justify-end gap-2">
             {onRefresh ? (

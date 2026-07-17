@@ -22,7 +22,7 @@ export const BUNDLED_PLUGINS: BundledPlugin[] = [
     id: "tabular-review",
     name: "Tabular Review",
     description:
-      "Firm-owned document review grid — extract structured, source-cited columns across many documents into an interactive table. The open-model answer to Harvey/Legora review grids.",
+      "Axleo compliance review grid — extract structured, source-cited columns across many documents into an interactive table.",
     command: "/review-docs",
     components: [
       "tabular-review skill",
@@ -33,9 +33,9 @@ export const BUNDLED_PLUGINS: BundledPlugin[] = [
   },
   {
     id: "docx-redline",
-    name: "DOCX Redline",
+    name: "DOCX Review",
     description:
-      "Read and edit Word documents in-app — tracked-change redlines and comments through a headless OOXML engine, paired with a real .docx viewer.",
+      "Read and edit Word documents in-app with tracked changes and comments through a headless OOXML engine, paired with a real .docx viewer.",
     command: "/edit-docx",
     components: [
       "docx-edit skill",

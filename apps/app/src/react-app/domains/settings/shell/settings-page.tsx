@@ -2,24 +2,24 @@
 import type * as React from "react";
 import {
   ArrowLeft,
+  BookOpen,
   Bug,
   ChevronDown,
   CloudCog,
+  CloudDownload,
   Cog,
   Container,
   FileStack,
   FolderLock,
   KeyRound,
-  Languages,
-  Layout,
+  Lock,
+  Palette,
   Puzzle,
-  RefreshCcw,
+  RotateCcw,
   ShieldCheck,
-  Sparkles,
+  SlidersHorizontal,
   Store,
   UserCircle,
-  Wrench,
-  Zap,
 } from "lucide-react";
 
 import {
@@ -59,11 +59,9 @@ import { WorkspaceIcon } from "../../../design-system/workspace-icon";
 export function getSettingsTabIcon(tab: SettingsTab) {
   switch (tab) {
     case "ai":
-      return Zap;
+      return Cpu;
     case "preferences":
-      return ShieldCheck;
-    case "shell":
-      return Layout;
+      return EyeOff;
     case "permissions":
       return FolderLock;
     case "safety":
@@ -77,17 +75,17 @@ export function getSettingsTabIcon(tab: SettingsTab) {
     case "cloud-providers":
       return CloudCog;
     case "skills":
-      return Sparkles;
+      return BookOpen;
     case "extensions":
       return Puzzle;
     case "environment":
       return KeyRound;
     case "advanced":
-      return Wrench;
+      return SlidersHorizontal;
     case "appearance":
-      return Languages;
+      return Palette;
     case "updates":
-      return RefreshCcw;
+      return CloudDownload;
     case "recovery":
       return ShieldCheck;
     case "office-addins":
@@ -105,8 +103,6 @@ export function getSettingsTabLabel(tab: SettingsTab) {
       return "AI Providers";
     case "preferences":
       return "Privacy";
-    case "shell":
-      return "Customization";
     case "permissions":
       return "Permissions";
     case "safety":
@@ -150,8 +146,6 @@ export function getSettingsTabDescription(tab: SettingsTab) {
       return "Connect services that provide AI models";
     case "preferences":
       return "Usage analytics and data sharing";
-    case "shell":
-      return "Branding and task suggestions";
     case "permissions":
       return "Authorized folders and file access";
     case "safety":
