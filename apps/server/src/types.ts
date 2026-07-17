@@ -1,4 +1,4 @@
-import type { WorkspaceWire } from "@legalwork/types/workspace";
+import type { WorkspaceWire } from "@counsel/types/workspace";
 
 export type WorkspaceType = "local" | "remote";
 
