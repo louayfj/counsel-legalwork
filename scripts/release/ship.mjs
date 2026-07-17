@@ -91,7 +91,7 @@ success(`Pushed ${tag}`);
 // ── Step 4: Print workflow URL ──────────────────────────────────────
 heading("GitHub Actions");
 
-const repo = "louayfj/axleo-legal-work";
+const repo = "louayfj/counsel-legalwork";
 const url = `https://github.com/${repo}/actions/workflows/release-macos-aarch64.yml`;
 log(`Pushing ${tag} auto-starts the build, which creates a DRAFT release.`);
 log(`Build:    ${url}`);

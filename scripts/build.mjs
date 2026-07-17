@@ -1,3 +1,3 @@
 import { execSync } from "node:child_process";
 
-execSync("pnpm --filter @legalwork/desktop build", { stdio: "inherit" });
+execSync("pnpm --filter @counsel/desktop build", { stdio: "inherit" });

@@ -6,7 +6,7 @@ import { isDesktopRuntime } from "../../app/utils";
 import { useBootState, useBootOverlayVisible } from "./boot-state";
 import { OwDotTicker } from "./dot-ticker";
 
-const RELEASES_URL = "https://github.com/louayfj/axleo-legal-work/releases";
+const RELEASES_URL = "https://github.com/louayfj/counsel-legalwork/releases";
 
 /**
  * One-click support-log collection for the boot error screen. The customer

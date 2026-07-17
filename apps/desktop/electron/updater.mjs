@@ -30,8 +30,8 @@ function resolveAppVersion(app) {
   return _cachedAppVersion;
 }
 const ELECTRON_UPDATER_FEEDS = Object.freeze({
-  stable: "https://github.com/louayfj/axleo-legal-work/releases/latest/download",
-  alpha: "https://github.com/louayfj/axleo-legal-work/releases/download/alpha-macos-latest",
+  stable: "https://github.com/louayfj/counsel-legalwork/releases/latest/download",
+  alpha: "https://github.com/louayfj/counsel-legalwork/releases/download/alpha-macos-latest",
 });
 const AXLEO_AUTO_UPDATES_ENABLED = true;
 

@@ -40,6 +40,12 @@ importers:
       '@codemirror/view':
         specifier: ^6.38.0
         version: 6.39.14
+      '@counsel/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+      '@counsel/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
       '@eigenpal/docx-editor-agents':
         specifier: ^1.8.3
         version: 1.8.3(ai@6.0.146(zod@4.3.6))(react@19.2.4)
@@ -55,12 +61,6 @@ importers:
       '@heroicons/react':
         specifier: ^2.2.0
         version: 2.2.0(react@19.2.4)
-      '@legalwork/types':
-        specifier: workspace:*
-        version: link:../../packages/types
-      '@legalwork/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       '@lexical/react':
         specifier: ^0.35.0
         version: 0.35.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(yjs@13.6.30)
@@ -279,7 +279,7 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
-      '@legalwork/types':
+      '@counsel/types':
         specifier: workspace:*
         version: link:../../packages/types
       electron:
@@ -396,7 +396,7 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
-      '@legalwork/types':
+      '@counsel/types':
         specifier: workspace:*
         version: link:../../packages/types
       '@types/better-sqlite3':

@@ -34,7 +34,7 @@ afterSign: scripts/electron-after-sign.cjs
 publish:
   - provider: github
     owner: louayfj
-    repo: axleo-legal-work
+    repo: counsel-legalwork
     releaseType: release
 mac:
   icon: resources/icons/icon.icns

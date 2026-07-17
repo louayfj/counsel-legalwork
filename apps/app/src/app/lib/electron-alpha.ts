@@ -11,10 +11,10 @@ export type ElectronAlphaArtifact = {
 };
 
 const ELECTRON_ALPHA_RELEASE_BASE_URL =
-  "https://github.com/louayfj/axleo-legal-work/releases/download/alpha-macos-latest";
+  "https://github.com/louayfj/counsel-legalwork/releases/download/alpha-macos-latest";
 
 export const ELECTRON_ALPHA_RELEASE_PAGE_URL =
-  "https://github.com/louayfj/axleo-legal-work/releases/tag/alpha-macos-latest";
+  "https://github.com/louayfj/counsel-legalwork/releases/tag/alpha-macos-latest";
 
 export const ELECTRON_ALPHA_LATEST_MAC_YML_URL = `${ELECTRON_ALPHA_RELEASE_BASE_URL}/latest-mac.yml`;
 
