@@ -43,7 +43,7 @@ function getComputerUseMcpCommand() {
   if (helperExecutable) return [helperExecutable, "mcp"];
 
   if (app.isPackaged) {
-    throw new Error("Axleo Computer Use is missing from this Axleo Legal Work build.");
+    throw new Error("Axleo Computer Use is missing from this Counsel build.");
   }
 
   if (process.env.LEGALWORK_DEV_MODE === "1") {
@@ -148,7 +148,7 @@ async function openComputerUseSetupApp() {
   // LaunchServices. Without LaunchServices, the Accessibility dialog never
   // appears and "Axleo Computer Use" is never added to the TCC database.
   const appPath = computerUseHelperAppPath();
-  if (!appPath) throw new Error("Axleo Computer Use helper app not found. Reinstall Axleo Legal Work.");
+  if (!appPath) throw new Error("Axleo Computer Use helper app not found. Reinstall Counsel.");
   const child = spawn("open", [appPath], { detached: true, stdio: "ignore" });
   child.unref();
 }

@@ -47,7 +47,7 @@ const DESKTOP_PROTOCOL_SCHEME = "legalwork";
 const isDevMode = process.env.LEGALWORK_DEV_MODE === "1";
 const APP_NAME =
   process.env.LEGALWORK_ELECTRON_APP_NAME?.trim() ||
-  (isDevMode ? "Axleo Legal Work - Dev" : "Axleo Legal Work");
+  (isDevMode ? "Counsel - Dev" : "Counsel");
 const APP_IDENTIFIER =
   process.env.LEGALWORK_ELECTRON_APP_IDENTIFIER?.trim() ||
   (isDevMode ? DEV_APP_IDENTIFIER : APP_BUNDLE_IDENTIFIER);
@@ -360,7 +360,7 @@ async function resolveArchitectureInfo() {
   const systemArch = resolveSystemArch();
   const version = app.getVersion();
   const targetArch = systemArch === "arm64" || systemArch === "x64" ? systemArch : appArch;
-  const assetName = `axleo-legal-work-${platformDownloadSlug()}-${downloadAssetArch(targetArch)}-${version}.${downloadAssetExtension()}`;
+  const assetName = `counsel-${platformDownloadSlug()}-${downloadAssetArch(targetArch)}-${version}.${downloadAssetExtension()}`;
   const latestDownloadUrl = await resolveCorrectArchitectureDownloadUrl(targetArch);
   const hasCorrectArchitectureDownload = Boolean(latestDownloadUrl);
   return {
@@ -654,7 +654,7 @@ function showShutdownScreen() {
   <body>
     <main>
       <div class="spinner" aria-hidden="true"></div>
-      <div class="title">Stopping LegalWork services</div>
+      <div class="title">Stopping Counsel services</div>
       <div class="body">Closing local workers and background services...</div>
     </main>
   </body>
@@ -677,13 +677,13 @@ async function disposeRuntimeBeforeQuit() {
 
 function assertLegalworkServerReady(info) {
   if (!info?.running) {
-    throw new Error("LegalWork server did not stay running after startup.");
+    throw new Error("Counsel server did not stay running after startup.");
   }
   if (!info.baseUrl) {
-    throw new Error("LegalWork server did not report a base URL after startup.");
+    throw new Error("Counsel server did not report a base URL after startup.");
   }
   if (!info.ownerToken && !info.clientToken) {
-    throw new Error("LegalWork server did not report an access token after startup.");
+    throw new Error("Counsel server did not report an access token after startup.");
   }
   return info;
 }
@@ -715,7 +715,7 @@ function describeRuntimeBootFailure(error) {
     mkdirSync(logsDir, { recursive: true });
     logPath = path.join(logsDir, "runtime-boot-failure.log");
     const dump = [
-      `LegalWork runtime boot failure`,
+      `Counsel runtime boot failure`,
       `error: ${message}`,
       error instanceof Error && error.stack ? `stack:\n${error.stack}` : null,
       `diagnostics:\n${JSON.stringify(diagnostics, null, 2)}`,
@@ -1241,7 +1241,7 @@ const desktopCommandHandlers = {
   },
   "checkComputerUsePermissions": async (event, ...args) => {
       const result = await checkComputerUsePermissions();
-      // Also check the main Electron process (Axleo Legal Work.app) via systemPreferences.
+      // Also check the main Electron process (Counsel.app) via systemPreferences.
       // On macOS, users may grant Accessibility to the main app rather than the helper;
       // this lets that grant satisfy the accessibility check so the UI doesn't stay stuck.
       const mainAppAX = process.platform === "darwin"

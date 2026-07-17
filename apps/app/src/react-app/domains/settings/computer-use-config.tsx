@@ -128,7 +128,7 @@ export function ComputerUseConfig({
   } = useMutation({
     mutationFn: async () => {
       if (!hasDesktopBridge()) {
-        throw new Error("Computer Use is Mac only and requires the Axleo Legal Work desktop app on macOS.");
+        throw new Error("Computer Use is Mac only and requires the Counsel desktop app on macOS.");
       }
 
       return parsePermissionResult(await desktopBridge.resetComputerUsePermissions());

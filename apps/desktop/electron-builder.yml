@@ -1,10 +1,10 @@
-# appId / productName define Axleo Legal Work's macOS bundle identity (keychain,
+# appId / productName define Counsel's macOS bundle identity (keychain,
 # Launchpad slot, TCC permissions). Keep in sync with the runtime identifiers
 # in apps/desktop/electron/main.mjs.
 appId: com.axleosystems.legalwork
-productName: Axleo Legal Work
+productName: Counsel
 protocols:
-  - name: Axleo Legal Work
+  - name: Counsel
     schemes:
       - legalwork
 directories:
@@ -45,7 +45,7 @@ mac:
   entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
   extendInfo:
-    NSMicrophoneUsageDescription: Axleo Legal Work uses the microphone when you start Voice Mode so you can speak commands to your agent.
+    NSMicrophoneUsageDescription: Counsel uses the microphone when you start Voice Mode so you can speak commands to your agent.
   extraResources:
     - from: resources/sidecars
       to: sidecars
