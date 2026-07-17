@@ -34,7 +34,7 @@ Use `--sidecar-source` to control where `legalwork-server` and `opencode-router`
 apply the same policies via env vars.
 
 By default the manifest is fetched from
-`https://github.com/eigenweltlabs/legalwork/releases/download/legalwork-orchestrator-v<version>/legalwork-orchestrator-sidecars.json`.
+`https://github.com/louayfj/counsel-legalwork/releases/download/legalwork-orchestrator-v<version>/legalwork-orchestrator-sidecars.json`.
 
 OpenCode Router is optional. If it exits, `legalwork` continues running unless you pass
 `--opencode-router-required` or set `LEGALWORK_OPENCODE_ROUTER_REQUIRED=1`.
