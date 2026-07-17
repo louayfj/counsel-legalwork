@@ -514,7 +514,7 @@ export const MCP_QUICK_CONNECT: McpDirectoryInfo[] = [
     command: ["npx", "-y", "legalwork-ui-mcp"],
     oauth: false,
     kind: "ui-control",
-    iconSrc: "/brand/logo/logo.png",
+    iconSrc: "/brand/logo/counsel-by-axleo-black.svg",
   },
   ...BUILT_IN_LEGALWORK_EXTENSION_MANIFESTS.map(extensionManifestToDirectoryInfo),
 ];
