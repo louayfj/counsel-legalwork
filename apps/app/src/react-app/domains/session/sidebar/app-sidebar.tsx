@@ -1,6 +1,5 @@
 /** @jsxImportSource react */
 import * as React from "react";
-import legalworkMarkDark from "@/assets/legalwork-mark-dark.svg";
 import {
   Archive,
   ArchiveRestore,
@@ -582,8 +581,8 @@ export function AppSidebar(props: AppSidebarProps) {
   const customSidebarBrandName = shellConfig.sidebarBrandName.trim();
   const customSidebarBrandLogo = shellConfig.sidebarBrandLogoDataUrl.trim();
   const isDefaultSidebarBrandLogo = customSidebarBrandLogo.length === 0;
-  const sidebarBrandLogoSrc = customSidebarBrandLogo || legalworkMarkDark;
-  const showSidebarBrandName = customSidebarBrandName.length > 0 || !customSidebarBrandLogo;
+  const sidebarBrandLogoSrc = customSidebarBrandLogo || "/brand/logo/counsel-by-axleo-black.svg";
+  const showSidebarBrandName = customSidebarBrandName.length > 0;
   const sidebarBrandName = showSidebarBrandName
     ? (customSidebarBrandName || DEFAULT_SHELL_CONFIG.sidebarBrandName)
     : "";
