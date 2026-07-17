@@ -1,6 +1,6 @@
 /** @jsxImportSource react */
 import * as React from "react";
-const legalworkMarkDark = `${import.meta.env.BASE_URL}brand/logo/counsel-by-axleo-black.svg`;
+import legalworkMarkDark from "@/assets/legalwork-mark-dark.svg";
 import {
   Archive,
   ArchiveRestore,
@@ -581,10 +581,8 @@ export function AppSidebar(props: AppSidebarProps) {
 
   const customSidebarBrandName = shellConfig.sidebarBrandName.trim();
   const customSidebarBrandLogo = shellConfig.sidebarBrandLogoDataUrl.trim();
-  const isDefaultSidebarBrandLogo = customSidebarBrandLogo.length === 0;
   const sidebarBrandLogoSrc = customSidebarBrandLogo || legalworkMarkDark;
-  // Only show text brand name when using a custom logo (the default logo already has "counsel by axleo" text baked in)
-  const showSidebarBrandName = customSidebarBrandName.length > 0 && !isDefaultSidebarBrandLogo;
+  const showSidebarBrandName = customSidebarBrandName.length > 0 || !customSidebarBrandLogo;
   const sidebarBrandName = showSidebarBrandName
     ? (customSidebarBrandName || DEFAULT_SHELL_CONFIG.sidebarBrandName)
     : "";

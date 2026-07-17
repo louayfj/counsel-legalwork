@@ -20,7 +20,7 @@ import {
 const WORD_TOOL_RULES = `Rules for word_* tools:
 - Call word_read_document before editing so anchors are exact.
 - Anchors are short snippets (under 200 characters) copied VERBATIM from the document — including punctuation and casing. Prefer distinctive phrases; if an anchor matches several places, the tool reports the count and you must pass "occurrence".
-- Every edit is applied as a tracked change. Never claim you changed text silently; the user reviews and accepts each change in Word.
+- Every edit is applied as a tracked change (redline). Never claim you changed text silently; the user reviews and accepts each change in Word.
 - After substantive edits, add a short word_add_comment on the edited text explaining the reasoning, like a careful colleague would.
 - word_run_code executes raw Office.js for anything the typed tools cannot do (formatting, styles, tables, headers/footers, sections). Prefer the typed tools when they fit; keep snippets small and return a compact summary.
 - If a tool answers "No Office pane is connected", tell the user to open the LegalWork pane in Word and retry.`;
@@ -35,10 +35,10 @@ ${WORD_TOOL_RULES}`;
 const wordModeInstruction = (documentUrl: string | null) => `## You are working inside Microsoft Word right now
 The user has the LegalWork pane open inside Microsoft Word with a document next to the chat. ${describeOpenDocument(documentUrl)} Behave accordingly:
 
-- Assume document-related requests refer to the open Word document. Read it with word_read_document before answering questions about "the document", "the agreement", "the response", or similar.
-- Prefer word_* tools for document work over editing files in the workspace. Apply changes as tracked changes (word_replace_text / word_insert_text) and attach a short word_add_comment rationale to each substantive edit.
+- Assume document-related requests refer to the open Word document. Read it with word_read_document before answering questions about "the document", "the contract", or similar.
+- Prefer word_* tools for document work over editing files in the workspace. Apply changes as tracked redlines (word_replace_text / word_insert_text) and attach a short word_add_comment rationale to each substantive edit.
 - The chat is a narrow sidebar: keep replies short and skimmable. Lead with what you did or found, avoid wide tables and long headed sections, and do not paste large document excerpts back into the chat — the user can see the document.
-- After editing, summarize the tracked changes in one or two sentences and remind the user to review and accept or reject them in Word.
+- After editing, summarize the redlines in one or two sentences and remind the user to review and accept or reject them in Word.
 
 ${WORD_TOOL_RULES}`;
 
@@ -113,7 +113,7 @@ export const LegalWorkWordTools = async () => ({
     word_read_document: {
       description:
         "Read the text of the Microsoft Word document currently open next to the LegalWork pane. Returns the document text (possibly truncated), its length, and the document URL. Use this before any edit so anchors are exact.",
-      args: (readDocumentArgs.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
+      args: readDocumentArgs.shape,
       async execute(rawArgs: unknown, context: OpenCodeContext) {
         const args = readDocumentArgs.parse(rawArgs ?? {});
         return callOfficeTool(context, "word_read_document", args);
@@ -129,7 +129,7 @@ export const LegalWorkWordTools = async () => ({
     word_search: {
       description:
         "Search the Word document for exact text and return each match with its surrounding paragraph, so you can pick the right occurrence before editing.",
-      args: (searchArgs.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
+      args: searchArgs.shape,
       async execute(rawArgs: unknown, context: OpenCodeContext) {
         const args = searchArgs.parse(rawArgs);
         return callOfficeTool(context, "word_search", args);
@@ -137,8 +137,8 @@ export const LegalWorkWordTools = async () => ({
     },
     word_replace_text: {
       description:
-        "Replace exact text in the Word document as a tracked change. The anchor must be copied verbatim from the document. If the anchor matches multiple places, the tool reports the count and you must pass occurrence. An empty replacement deletes the text.",
-      args: (replaceArgs.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
+        "Replace exact text in the Word document as a tracked change (redline). The anchor must be copied verbatim from the document. If the anchor matches multiple places, the tool reports the count and you must pass occurrence. An empty replacement deletes the text.",
+      args: replaceArgs.shape,
       async execute(rawArgs: unknown, context: OpenCodeContext) {
         const args = replaceArgs.parse(rawArgs);
         return callOfficeTool(context, "word_replace_text", args);
@@ -147,7 +147,7 @@ export const LegalWorkWordTools = async () => ({
     word_insert_text: {
       description:
         "Insert text into the Word document as a tracked change — at the start/end of the document, or before/after an exact anchor text.",
-      args: (insertArgs.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
+      args: insertArgs.shape,
       async execute(rawArgs: unknown, context: OpenCodeContext) {
         const args = insertArgs.parse(rawArgs);
         if ((args.location === "before_anchor" || args.location === "after_anchor") && !args.anchor) {
@@ -159,7 +159,7 @@ export const LegalWorkWordTools = async () => ({
     word_add_comment: {
       description:
         "Attach a Word comment to exact text in the document, e.g. to explain the rationale for a tracked change you just made.",
-      args: (commentArgs.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
+      args: commentArgs.shape,
       async execute(rawArgs: unknown, context: OpenCodeContext) {
         const args = commentArgs.parse(rawArgs);
         return callOfficeTool(context, "word_add_comment", args);
@@ -167,8 +167,8 @@ export const LegalWorkWordTools = async () => ({
     },
     word_run_code: {
       description:
-        "Escape hatch: run Office.js (Word JavaScript API) code against the open document for anything the typed word_* tools cannot do — character formatting (bold, fonts, colors, highlights), paragraph styles (headings, quotes), tables, headers/footers, sections, lists, page setup. Change tracking is forced on, so document edits appear as reviewable tracked changes. Errors return the Office.js debugInfo so you can fix the snippet and retry. Prefer the typed tools when they fit.",
-      args: (runCodeArgs.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
+        "Escape hatch: run Office.js (Word JavaScript API) code against the open document for anything the typed word_* tools cannot do — character formatting (bold, fonts, colors, highlights), paragraph styles (headings, quotes), tables, headers/footers, sections, lists, page setup. Change tracking is forced on, so document edits appear as reviewable redlines. Errors return the Office.js debugInfo so you can fix the snippet and retry. Prefer the typed tools when they fit.",
+      args: runCodeArgs.shape,
       async execute(rawArgs: unknown, context: OpenCodeContext) {
         const args = runCodeArgs.parse(rawArgs);
         return callOfficeTool(context, "word_run_code", args);

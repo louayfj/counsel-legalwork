@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * pdf-agent — headless PDF actions for the Axleo agent: inspect, annotate,
+ * pdf-agent — headless PDF actions for the firm's agent: inspect, annotate,
  * fill (AcroForm), sign. Thin CLI over ./pdf-ops.mjs (which imports the vendored
  * ./vendor/pdf-lib.mjs), so it runs in any seeded workspace with NO node_modules.
  *

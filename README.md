@@ -1,6 +1,6 @@
-# LegalWork
+# Counsel
 
-A local computer-use agent for law firms, from Eigenwelt Labs. Point it at a folder of documents and ask in plain English — it reads, drafts, and redlines them on your own machine, using the model you connect. Everything stays owned by the firm.
+A local AI agent for document work. Point it at a folder and ask in plain English — it reads, drafts, and redlines documents on your own machine, using the model you connect. Everything stays on your device.
 
 https://github.com/user-attachments/assets/4a576c3a-7c2a-46c6-9856-1254282b1b70
 
@@ -8,9 +8,9 @@ https://github.com/user-attachments/assets/4a576c3a-7c2a-46c6-9856-1254282b1b70
 
 ## What it does
 
-- **Review & redline** contracts as tracked changes, right in Word.
+- **Review & redline** documents as tracked changes, right in Word.
 - **Tabular review** — extract terms across many documents into a sourced grid.
-- **Draft** briefs, memos, contracts, and engagement letters.
+- **Draft** memos, contracts, and engagement letters.
 - **Bring your own model** — AWS Bedrock, Azure OpenAI, or any provider. Your data is only ever shared with the model you choose.
 - **Runs on this machine** by default; connect a remote worker only when you want to.
 - **Extend it** with skills, plugins, and MCP connectors, managed in **Settings → Extensions** and shared across every workspace.

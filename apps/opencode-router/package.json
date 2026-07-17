@@ -10,7 +10,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/eigenweltlabs/legalwork.git",
+    "url": "git+https://github.com/louayfj/counsel-legalwork.git",
     "directory": "apps/opencode-router"
   },
   "keywords": [

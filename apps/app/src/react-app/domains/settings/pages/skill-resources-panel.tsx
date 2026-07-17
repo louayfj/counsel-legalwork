@@ -141,7 +141,7 @@ export function StagedResourcesField(props: {
         <input
           ref={fileInputRef}
           type="file"
-          accept=".md,.markdown,.txt,.csv,.doc,.docx,.xls,.xlsx,.pdf"
+          accept=".md,.markdown,.txt,.csv,.docx,.pdf"
           className="hidden"
           onChange={(event) => {
             const file = event.currentTarget.files?.[0];
@@ -252,7 +252,7 @@ export function SkillResourcesPanel(props: {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".md,.markdown,.txt,.csv,.doc,.docx,.xls,.xlsx,.pdf"
+            accept=".md,.markdown,.txt,.csv,.docx,.pdf"
             className="hidden"
             onChange={(event) => {
               const file = event.currentTarget.files?.[0];

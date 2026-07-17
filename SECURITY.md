@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-LegalWork is under active development and we prioritize fixes on the latest release and
+Counsel is under active development and we prioritize fixes on the latest release and
 the current `dev` branch.
 
 ## Reporting a vulnerability
@@ -11,8 +11,8 @@ Please do not open public GitHub issues for security vulnerabilities.
 
 Instead, report vulnerabilities privately to:
 
-- Email: `chris@eigenweltlabs.com`
-- Subject: `[LegalWork security] <short summary>`
+- Email: `louayfaraj41@gmail.com`
+- Subject: `[Counsel security] <short summary>`
 
 Please include:
 

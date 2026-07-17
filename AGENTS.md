@@ -1,23 +1,23 @@
 # AGENTS.md
 
-LegalWork helps users run agents, skills, and MCP. It is an open-source alternative to Claude Cowork/Codex as a desktop app.
+Counsel helps users run agents, skills, and MCP. It is an open-source alternative to Claude Cowork/Codex as a desktop app.
 
-## What LegalWork Is
+## What Counsel Is
 
-LegalWork is a practical control surface for agentic work:
+Counsel is a practical control surface for agentic work:
 
 * Run local and remote agent workflows from one place.
-* Use OpenCode capabilities directly through LegalWork.
+* Use OpenCode capabilities directly through Counsel.
 * Compose desktop app, server, and messaging connectors without lock-in.
-* Treat the LegalWork app as a client of the LegalWork server API surface.
+* Treat the Counsel app as a client of the Counsel server API surface.
 * Connect to hosted workers through a simple user flow: `Add a worker` -> `Connect remote`.
 
 ## Core Philosophy
 
-* **Local-first, cloud-ready**: LegalWork runs on your machine in one click and can connect to cloud workflows when needed.
-* **Server-consumption first**: the app should consume LegalWork server surfaces (self-hosted or hosted), not invent parallel behavior.
+* **Local-first, cloud-ready**: Counsel runs on your machine in one click and can connect to cloud workflows when needed.
+* **Server-consumption first**: the app should consume Counsel server surfaces (self-hosted or hosted), not invent parallel behavior.
 * **Composable**: use the desktop app, WhatsApp/Slack/Telegram connectors, or server mode based on the task.
-* **Ejectable**: LegalWork is powered by OpenCode, so anything OpenCode can do is available in LegalWork, even before a dedicated UI exists.
+* **Ejectable**: Counsel is powered by OpenCode, so anything OpenCode can do is available in Counsel, even before a dedicated UI exists.
 * **Sharing is caring**: start solo, then share quickly; one CLI or desktop command can spin up an instantly shareable instance.
 
 
@@ -47,7 +47,7 @@ If you cannot run tests or capture the video, say so explicitly and explain why,
 
 - Use components from @/components when possible.
 - When creating new components, we prefer using shadcn/ui with (Base UI).
-- Assume most end users of LegalWork are non-technical.
+- Assume most end users of Counsel are non-technical.
 
 ### Tech Stack Preferences
 

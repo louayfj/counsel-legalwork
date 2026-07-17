@@ -207,6 +207,7 @@ function parseSettingsPath(pathname: string): {
     case "preferences":
     case "permissions":
     case "safety":
+    case "shell":
     case "advanced":
     case "appearance":
     case "environment":

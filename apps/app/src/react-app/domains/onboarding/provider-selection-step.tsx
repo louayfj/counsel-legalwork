@@ -152,7 +152,7 @@ export function ProviderSelectionStep({ onConnect, onSkip }: ProviderSelectionSt
                         Need your own model?
                       </span>
                       <p className="mt-2 text-[13px] leading-snug text-white/70">
-                        Eigenwelt Labs trains and hosts custom models for Axleo — fine-tuned on your
+                        Eigenwelt Labs trains and hosts custom models for your firm — fine-tuned on your
                         documents and run on infrastructure you control.
                       </p>
                       <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">

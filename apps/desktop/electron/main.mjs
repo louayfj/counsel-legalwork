@@ -51,8 +51,8 @@ const APP_NAME =
 const APP_IDENTIFIER =
   process.env.LEGALWORK_ELECTRON_APP_IDENTIFIER?.trim() ||
   (isDevMode ? DEV_APP_IDENTIFIER : APP_BUNDLE_IDENTIFIER);
-const RELEASE_DOWNLOAD_BASE_URL = "https://github.com/louayfj/axleo-legal-work/releases/latest/download";
-const RELEASE_PAGE_URL = "https://github.com/louayfj/axleo-legal-work/releases/latest";
+const RELEASE_DOWNLOAD_BASE_URL = "https://github.com/eigenweltlabs/legalwork/releases/latest/download";
+const RELEASE_PAGE_URL = "https://github.com/eigenweltlabs/legalwork/releases/latest";
 
 async function showSupportLogsProgressWindow(parent) {
   const dark = nativeTheme.shouldUseDarkColors;

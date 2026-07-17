@@ -9,9 +9,7 @@ import {
   CloudDownload,
   Cog,
   Container,
-  Cpu,
-  EyeOff,
-  FileSpreadsheet,
+  FileStack,
   FolderLock,
   KeyRound,
   Lock,
@@ -67,7 +65,7 @@ export function getSettingsTabIcon(tab: SettingsTab) {
     case "permissions":
       return FolderLock;
     case "safety":
-      return Lock;
+      return ShieldCheck;
     case "cloud-account":
       return UserCircle;
     case "cloud-marketplaces":
@@ -89,9 +87,9 @@ export function getSettingsTabIcon(tab: SettingsTab) {
     case "updates":
       return CloudDownload;
     case "recovery":
-      return RotateCcw;
+      return ShieldCheck;
     case "office-addins":
-      return FileSpreadsheet;
+      return FileStack;
     case "debug":
       return Bug;
     default:
@@ -195,7 +193,7 @@ export function getWorkspaceSettingsTabs(): SettingsTab[] {
 export function getGlobalSettingsTabs(developerMode: boolean): SettingsTab[] {
   // Appearance/Language and Recovery are hidden (theme is fixed to Light).
   // "preferences" is the Privacy tab (usage-analytics opt-in).
-  const tabs: SettingsTab[] = ["ai", "safety", "environment", "preferences", "updates"];
+  const tabs: SettingsTab[] = ["ai", "safety", "shell", "environment", "preferences", "updates"];
   // Office add-ins install into local desktop apps, so the tab is desktop-only.
   // Placed right after the first tab.
   if (isDesktopRuntime()) tabs.splice(1, 0, "office-addins");

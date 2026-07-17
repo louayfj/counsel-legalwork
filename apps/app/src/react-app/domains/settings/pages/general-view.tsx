@@ -28,6 +28,7 @@ const workspaceItems: SettingsItem[] = [
 const globalItems: SettingsItem[] = [
   { tab: "ai", icon: Zap, title: "AI Providers", desc: "Connect services that provide AI models." },
   { tab: "safety", icon: ShieldCheck, title: "Tool Permissions", desc: "Decide what LegalWork can do on its own across all workspaces." },
+  { tab: "shell", icon: Layout, title: "Customization", desc: "Branding and task suggestions." },
   { tab: "environment", icon: KeyRound, title: "Secrets", desc: "Store API keys and passwords for connected services." },
   { tab: "preferences", icon: ShieldCheck, title: "Privacy", desc: "Usage analytics and data sharing." },
   { tab: "updates", icon: RefreshCcw, title: "Updates", desc: "App version and update channel." },

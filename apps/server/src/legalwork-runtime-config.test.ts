@@ -117,12 +117,6 @@ describe("legalwork runtime config file", () => {
     expect(Array.isArray(parsed.plugin)).toBe(true);
     const agents = parsed.agent as Record<string, Record<string, unknown>>;
     expect(agents.reviewer?.model).toBe("opencode/big-pickle");
-    const plugins = parsed.plugin as string[];
-    expect(plugins.some((plugin) => plugin.includes("legalwork-axleo-reference-tools"))).toBe(true);
-    const permission = parsed.permission as Record<string, Record<string, unknown>>;
-    const externalDirectory = permission.external_directory ?? {};
-    expect(Object.keys(externalDirectory).some((key) => key.endsWith("/Documents/axleo-private-legal-reference/*"))).toBe(true);
-    expect(Object.keys(externalDirectory).some((key) => key.endsWith("/Documents/axleo-legal-reference/*"))).toBe(true);
   });
 
   test("keepLegalworkRuntimeConfigFileFresh rewrites the file on runtime-DB writes", async () => {
@@ -186,9 +180,6 @@ describe("legalwork runtime config file", () => {
     }
     // Global tool key + this workspace's own external_directory, merged.
     expect(permission.bash).toBe("ask");
-    expect(permission.external_directory).toMatchObject({ "/tmp/shared/*": "allow" });
-    expect(Object.keys(permission.external_directory as Record<string, unknown>).some((key) => (
-      key.endsWith("/Documents/axleo-legal-reference/*")
-    ))).toBe(true);
+    expect(permission.external_directory).toEqual({ "/tmp/shared/*": "allow" });
   });
 });
