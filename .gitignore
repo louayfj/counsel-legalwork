@@ -1,0 +1,52 @@
+node_modules/
+apps/desktop/dist-electron/
+packages/*/node_modules/
+apps/*/node_modules/
+.next/
+out/
+dist/
+.vite/
+apps/*/.vite/
+packages/*/dist/
+apps/*/dist/
+apps/app/dist-word-addin/
+tmp/
+
+# Local git worktrees
+_worktrees/
+
+# Desktop sidecars
+apps/desktop/resources/sidecars/
+apps/desktop/server/
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.dev
+
+# Bun build artifacts
+*.bun-build
+apps/server/cli
+
+# pnpm store
+.pnpm-store/
+
+# OS
+.DS_Store
+
+# OpenCode mirror
+vendor/opencode/
+
+# OpenCode (entire local dir is runtime-generated)
+.opencode/
+
+# LegalWork workspace-local artifacts
+opencode.jsonc
+.vercel
+.env*.local
+.claude/*
+.security
+transcript-analysis
+
+.gstack/

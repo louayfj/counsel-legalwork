@@ -1,0 +1,108 @@
+# appId / productName define Axleo Legal Work's macOS bundle identity (keychain,
+# Launchpad slot, TCC permissions). Keep in sync with the runtime identifiers
+# in apps/desktop/electron/main.mjs.
+appId: com.axleosystems.legalwork
+productName: Axleo Legal Work
+protocols:
+  - name: Axleo Legal Work
+    schemes:
+      - legalwork
+directories:
+  output: dist-electron
+files:
+  - electron/**/*
+  - server/**/*
+  - "!server/dist/opencode-plugins/**"
+  - package.json
+extraResources:
+  - from: ../app/dist
+    to: app-dist
+  - from: ../app/dist-word-addin
+    to: word-addin-dist
+  - from: server/dist/opencode-plugins
+    to: opencode-plugins
+    filter:
+      - "*.js"
+asar: true
+asarUnpack:
+  - node_modules/.pnpm/@lydell+node-pty*/**
+  - node_modules/node-pty/**
+npmRebuild: false
+afterPack: scripts/electron-after-pack.cjs
+afterSign: scripts/electron-after-sign.cjs
+# electron-updater feed target.
+publish:
+  - provider: github
+    owner: louayfj
+    repo: axleo-legal-work
+    releaseType: release
+mac:
+  icon: resources/icons/icon.icns
+  category: public.app-category.developer-tools
+  hardenedRuntime: false
+  gatekeeperAssess: false
+  notarize: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  extendInfo:
+    NSMicrophoneUsageDescription: Axleo Legal Work uses the microphone when you start Voice Mode so you can speak commands to your agent.
+  extraResources:
+    - from: resources/sidecars
+      to: sidecars
+      filter:
+        - opencode
+        - opencode-aarch64-apple-darwin
+        - opencode-x86_64-apple-darwin
+        - legalwork-orchestrator
+        - legalwork-orchestrator-aarch64-apple-darwin
+        - legalwork-orchestrator-x86_64-apple-darwin
+        - versions.json
+        - versions.json-aarch64-apple-darwin
+        - versions.json-x86_64-apple-darwin
+    - from: resources/helpers
+      to: helpers
+      filter:
+        - "Axleo Computer Use.app/**"
+  target:
+    - dmg
+    - zip
+linux:
+  icon: resources/icons/icon.png
+  extraResources:
+    - from: resources/sidecars
+      to: sidecars
+      filter:
+        - opencode
+        - opencode-aarch64-unknown-linux-gnu
+        - opencode-x86_64-unknown-linux-gnu
+        - legalwork-orchestrator
+        - legalwork-orchestrator-aarch64-unknown-linux-gnu
+        - legalwork-orchestrator-x86_64-unknown-linux-gnu
+        - versions.json
+        - versions.json-aarch64-unknown-linux-gnu
+        - versions.json-x86_64-unknown-linux-gnu
+  target:
+    - AppImage
+    - tar.gz
+win:
+  icon: resources/icons/icon.ico
+  extraResources:
+    - from: resources/sidecars
+      to: sidecars
+      filter:
+        - opencode.exe
+        - opencode-aarch64-pc-windows-msvc.exe
+        - opencode-x86_64-pc-windows-msvc.exe
+        - legalwork-orchestrator.exe
+        - legalwork-orchestrator-aarch64-pc-windows-msvc.exe
+        - legalwork-orchestrator-x86_64-pc-windows-msvc.exe
+        - versions.json
+        - versions.json-aarch64-pc-windows-msvc.exe
+        - versions.json-x86_64-pc-windows-msvc.exe
+  target:
+    - nsis
+# Uninstall cleanup for the Office add-in (registry sideload entries and the
+# trusted local CA) — see build/installer.nsh.
+nsis:
+  include: build/installer.nsh
+artifactName: legalwork-${os}-${arch}-${version}.${ext}
