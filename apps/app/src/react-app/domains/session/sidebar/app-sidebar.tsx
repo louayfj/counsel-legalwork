@@ -632,8 +632,8 @@ export function AppSidebar(props: AppSidebarProps) {
                 "object-contain",
                 showSidebarBrandName
                   ? "h-6 w-6 shrink-0 rounded-md"
-                  // ponytail: 32px (h-8) was too small for 940px square SVG text logo on Windows 100% DPI
-                  : "h-12 w-auto max-w-full rounded-sm object-left",
+                  // ponytail: square SVG needs room to breathe — h-8/h-12 were microscopic
+                  : "h-24 w-auto max-w-[180px] rounded-sm object-left object-contain",
               )}
             />
             {showSidebarBrandName ? (
