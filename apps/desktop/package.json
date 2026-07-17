@@ -1,11 +1,11 @@
 {
-  "name": "@legalwork/desktop",
+  "name": "@counsel/desktop",
   "private": true,
   "version": "0.0.0",
   "description": "LegalWork desktop shell",
   "author": {
     "name": "LegalWork",
-    "email": "chris@eigenweltlabs.com"
+    "email": "louayfaraj41@gmail.com"
   },
   "main": "electron/main.mjs",
   "type": "module",
@@ -39,7 +39,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@legalwork/types": "workspace:*",
+    "@counsel/types": "workspace:*",
     "electron": "^35.0.0",
     "electron-builder": "^25.1.8",
     "electron-devtools-installer": "^4.0.0"

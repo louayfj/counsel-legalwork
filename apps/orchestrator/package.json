@@ -25,12 +25,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/eigenweltlabs/legalwork.git",
+    "url": "git+https://github.com/louayfj/counsel-legalwork.git",
     "directory": "apps/orchestrator"
   },
-  "homepage": "https://github.com/eigenweltlabs/legalwork/tree/dev/apps/orchestrator",
+  "homepage": "https://github.com/louayfj/counsel-legalwork/tree/dev/apps/orchestrator",
   "bugs": {
-    "url": "https://github.com/eigenweltlabs/legalwork/issues"
+    "url": "https://github.com/louayfj/counsel-legalwork/issues"
   },
   "keywords": [
     "legalwork",

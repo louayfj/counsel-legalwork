@@ -1,5 +1,5 @@
 {
-  "name": "@legalwork/app",
+  "name": "@counsel/app",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -48,8 +48,8 @@
     "@heroicons/react": "^2.2.0",
     "@lexical/react": "^0.35.0",
     "@opencode-ai/sdk": "^1.17.3",
-    "@legalwork/types": "workspace:*",
-    "@legalwork/ui": "workspace:*",
+    "@counsel/types": "workspace:*",
+    "@counsel/ui": "workspace:*",
     "@paper-design/shaders-react": "0.0.72",
     "@radix-ui/colors": "^3.0.0",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
