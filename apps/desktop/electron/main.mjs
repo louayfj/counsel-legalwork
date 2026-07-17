@@ -1111,7 +1111,7 @@ function applyNativeTheme(mode) {
 // DesktopCommandMap contract (packages/types/src/desktop-ipc.ts): a missing,
 // extra, or renamed command fails `pnpm --filter @counsel/desktop
 // typecheck:electron`.
-/** @type {import("@legalwork/types/desktop-ipc").DesktopCommandHandlers<import("electron").IpcMainInvokeEvent>} */
+/** @type {import("@counsel/types/desktop-ipc").DesktopCommandHandlers<import("electron").IpcMainInvokeEvent>} */
 const desktopCommandHandlers = {
   "workspaceBootstrap": async (event, ...args) => {
       return workspaceStore.readWorkspaceState();

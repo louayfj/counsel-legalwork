@@ -4,6 +4,7 @@ import {
   FileStack,
   FolderLock,
   KeyRound,
+  Layout,
   RefreshCcw,
   ShieldCheck,
   Sparkles,

@@ -1,7 +1,7 @@
 /** @jsxImportSource react */
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ChevronDown, ChevronRight, Loader2, Mic2, MicOff, Radio, SendHorizontal, Sparkles, Square, X } from "lucide-react";
-import { PaperGrainGradient } from "@legalwork/ui/react";
+import { PaperGrainGradient } from "@counsel/ui/react";
 
 import { desktopFetch } from "@/app/lib/desktop";
 import type { LegalworkServerClient, LegalworkSessionMessage } from "@/app/lib/legalwork-server";

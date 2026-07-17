@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import { PaperGrainGradient } from "@legalwork/ui/react";
+import { PaperGrainGradient } from "@counsel/ui/react";
 
 import { t } from "../../../i18n";
 import { Page, PageBackground, PageTitlebarRegion } from "@/components/page";

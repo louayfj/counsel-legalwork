@@ -270,7 +270,7 @@ const webProcess = spawnLogged(
   "pnpm",
   [
     "--filter",
-    "@legalwork/app",
+    "@counsel/app",
     "exec",
     "vite",
     "--host",

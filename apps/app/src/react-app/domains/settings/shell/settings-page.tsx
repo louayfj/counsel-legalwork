@@ -9,6 +9,8 @@ import {
   CloudDownload,
   Cog,
   Container,
+  Cpu,
+  EyeOff,
   FileStack,
   FolderLock,
   KeyRound,

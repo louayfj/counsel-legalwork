@@ -3,7 +3,7 @@
 // packages/types/src/desktop-ipc.ts (shared with the Electron main process);
 // this module re-exports them as the app-side import path.
 
-import type { WorkspaceWire } from "@legalwork/types/workspace";
+import type { WorkspaceWire } from "@counsel/types/workspace";
 
 export type {
   AppBuildInfo,
@@ -37,7 +37,7 @@ export type {
   WorkspaceList,
   WorkspaceLegalworkConfig,
   WorkspaceUpdateRemoteInput,
-} from "@legalwork/types/desktop-ipc";
+} from "@counsel/types/desktop-ipc";
 
 // Canonical wire shape shared with legalwork-server and the desktop bridge.
 // Single source of truth: packages/types/src/workspace.ts.

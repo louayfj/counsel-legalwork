@@ -49,7 +49,7 @@ function getComputerUseMcpCommand() {
   if (process.env.LEGALWORK_DEV_MODE === "1") {
     return ["node", path.resolve(__dirname, "../../..", "packages/handsfree/bin/legalwork-handsfree-computer-use.mjs"), "mcp"];
   }
-  return ["npx", "-y", "@legalwork/handsfree", "mcp"];
+  return ["npx", "-y", "@counsel/handsfree", "mcp"];
 }
 
 // ---------------------------------------------------------------------------

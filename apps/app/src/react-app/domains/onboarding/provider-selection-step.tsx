@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import { PaperGrainGradient } from "@legalwork/ui/react";
+import { PaperGrainGradient } from "@counsel/ui/react";
 import { ArrowRightIcon, GithubIcon, SearchIcon, SparklesIcon, TriangleAlertIcon } from "lucide-react";
 
 import { Page, PageBackground, PageTitlebarRegion } from "@/components/page";

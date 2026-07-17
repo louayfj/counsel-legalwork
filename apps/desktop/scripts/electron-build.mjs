@@ -37,7 +37,7 @@ run(pnpmCmd, ["--filter", "legalwork-server", "build"], repoRoot);
 // LEGALWORK_ELECTRON_BUILD tells Vite to emit relative asset paths so
 // index.html resolves /assets/* correctly when loaded via file:// from
 // inside the packaged .app bundle.
-run(pnpmCmd, ["--filter", "@legalwork/app", "build"], repoRoot, {
+run(pnpmCmd, ["--filter", "@counsel/app", "build"], repoRoot, {
   LEGALWORK_ELECTRON_BUILD: "1",
 });
 // Office task pane bundle — electron-builder.yml ships apps/app/dist-word-addin
@@ -45,7 +45,7 @@ run(pnpmCmd, ["--filter", "@legalwork/app", "build"], repoRoot, {
 // silently skips a missing extraResources source, so build it here and fail
 // loudly if the entry point is absent (the packaged add-in would otherwise
 // 503 with word_addin_bundle_missing).
-run(pnpmCmd, ["--filter", "@legalwork/app", "build:word-addin"], repoRoot);
+run(pnpmCmd, ["--filter", "@counsel/app", "build:word-addin"], repoRoot);
 const wordAddinDistDir = resolve(repoRoot, "apps", "app", "dist-word-addin");
 if (!existsSync(resolve(wordAddinDistDir, "taskpane.html"))) {
   console.error(`Word add-in bundle missing after build: ${wordAddinDistDir}/taskpane.html`);

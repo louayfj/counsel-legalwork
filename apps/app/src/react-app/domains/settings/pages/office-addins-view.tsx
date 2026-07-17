@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, CheckCircle2, Info, TriangleAlert, XCircle } from "lucide-react";
 
-import type { OfficeAddinAppId, OfficeAddinStatus } from "@legalwork/types/desktop-ipc";
+import type { OfficeAddinAppId, OfficeAddinStatus } from "@counsel/types/desktop-ipc";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {

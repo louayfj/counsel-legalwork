@@ -149,7 +149,7 @@ function updaterChannelState(app, channel) {
     feedUrl: electronUpdaterFeedUrl(normalized),
     currentVersion: resolveAppVersion(app),
     supported: AXLEO_AUTO_UPDATES_ENABLED,
-    reason: AXLEO_AUTO_UPDATES_ENABLED ? null : AXLEO_AUTO_UPDATES_DISABLED_REASON,
+    reason: null,
   };
 }
 

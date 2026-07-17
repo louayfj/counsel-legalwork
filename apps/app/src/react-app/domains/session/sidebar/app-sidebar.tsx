@@ -581,6 +581,7 @@ export function AppSidebar(props: AppSidebarProps) {
 
   const customSidebarBrandName = shellConfig.sidebarBrandName.trim();
   const customSidebarBrandLogo = shellConfig.sidebarBrandLogoDataUrl.trim();
+  const isDefaultSidebarBrandLogo = customSidebarBrandLogo.length === 0;
   const sidebarBrandLogoSrc = customSidebarBrandLogo || legalworkMarkDark;
   const showSidebarBrandName = customSidebarBrandName.length > 0 || !customSidebarBrandLogo;
   const sidebarBrandName = showSidebarBrandName

@@ -216,7 +216,7 @@ if (officeAddinEnabled) {
     cwd: desktopRoot,
     stdio: "inherit",
   });
-  paneChild = run(pnpmCmd, ["--filter", "@legalwork/app", "dev:word-addin"], {
+  paneChild = run(pnpmCmd, ["--filter", "@counsel/app", "dev:word-addin"], {
     cwd: repoRoot,
     env: { ...process.env },
   });
