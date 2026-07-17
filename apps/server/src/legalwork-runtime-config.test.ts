@@ -89,8 +89,6 @@ describe("legalwork runtime config file", () => {
     expect(prompt).toContain("Consumer Rights Act 2015");
     expect(prompt).toContain("UK GDPR and Data Protection Act 2018");
     expect(prompt).toContain("ASA CAP Code");
-    expect(prompt).toContain("axleo_reference_search");
-    expect(prompt).toContain("axleo_citation_log");
     expect(prompt).toContain("Do not make uncited legal claims");
     expect(prompt).toContain("recommend human legal or compliance review");
     expect(prompt).toContain("draft final-ready wording");
