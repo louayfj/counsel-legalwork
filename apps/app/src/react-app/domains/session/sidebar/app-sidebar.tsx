@@ -580,7 +580,6 @@ export function AppSidebar(props: AppSidebarProps) {
 
   const customSidebarBrandName = shellConfig.sidebarBrandName.trim();
   const customSidebarBrandLogo = shellConfig.sidebarBrandLogoDataUrl.trim();
-  const isDefaultSidebarBrandLogo = customSidebarBrandLogo.length === 0;
   const sidebarBrandLogoSrc = customSidebarBrandLogo || "/brand/logo/counsel-by-axleo-black.svg";
   const showSidebarBrandName = customSidebarBrandName.length > 0;
   const sidebarBrandName = showSidebarBrandName
@@ -626,26 +625,17 @@ export function AppSidebar(props: AppSidebarProps) {
         <div className="flex flex-[2] min-h-0 flex-col">
         <div className="px-2 pb-1 mac:titlebar-no-drag">
           <div className={cn("flex gap-2 px-3", showSidebarBrandName ? "items-center py-1" : "items-center py-0") }>
-            {!showSidebarBrandName && isDefaultSidebarBrandLogo ? (
-              <div className="relative h-9 w-[7.5rem] max-w-full shrink-0 overflow-hidden rounded-sm">
-                <img
-                  src={sidebarBrandLogoSrc}
-                  alt={`${sidebarBrandAlt} logo`}
-                  className="absolute -left-[8px] -top-[36px] size-32 max-w-none"
-                />
-              </div>
-            ) : (
-              <img
-                src={sidebarBrandLogoSrc}
-                alt={`${sidebarBrandAlt} logo`}
-                className={cn(
-                  "object-contain",
-                  showSidebarBrandName
-                    ? "h-6 w-6 shrink-0 rounded-md"
-                    : "h-8 w-auto max-w-full rounded-sm object-left",
-                )}
-              />
-            )}
+            <img
+              src={sidebarBrandLogoSrc}
+              alt={`${sidebarBrandAlt} logo`}
+              className={cn(
+                "object-contain",
+                showSidebarBrandName
+                  ? "h-6 w-6 shrink-0 rounded-md"
+                  // ponytail: object-contain fits any logo shape; old absolute-position hack removed
+                  : "h-8 w-auto max-w-full rounded-sm object-left",
+              )}
+            />
             {showSidebarBrandName ? (
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium leading-tight">{sidebarBrandName}</div>
