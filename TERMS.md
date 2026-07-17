@@ -1,20 +1,20 @@
-# LegalWork — Terms & Conditions
+# Counsel — Terms & Conditions
 
-**Last updated: 26 June 2026**
+**Last updated: 17 July 2026**
 
-LegalWork is a local-first desktop application published by **Eigenwelt Labs**
-(Berlin, Germany) ("Eigenwelt", "we", "us"). These Terms & Conditions ("Terms")
-govern your use of the LegalWork desktop application and its official builds (the
+Counsel is a local-first desktop application published by **Louay Faraj**
+(Bangkok, Thailand) ("Louay", "we", "us"). These Terms & Conditions ("Terms")
+govern your use of the Counsel desktop application and its official builds (the
 "App"). By installing or using the App, you agree to these Terms. If you do not
 agree, do not use the App.
 
-## 1. What LegalWork is
+## 1. What Counsel is
 
-LegalWork is a desktop "cowork" application for legal work — document review,
+Counsel is a desktop "cowork" application for document work — document review,
 drafting, and related tasks. It runs on your own computer. You bring your own AI
 model: you can run open-source models locally, or connect a hosted model using
 your own API keys. The App is free for individual use. Enterprise deployment and
-the Eigenwelt continual-learning training platform are offered separately under a
+the Counsel continual-learning training platform are offered separately under a
 commercial agreement.
 
 ## 2. Your account and your data stay local
@@ -34,7 +34,7 @@ obligations. If you run a model locally, no inference content leaves your device
 
 To understand which features are used and to improve the product, the App can
 send **anonymous product-usage analytics** to [PostHog](https://posthog.com), our
-analytics provider. LegalWork uses PostHog's EU ingestion endpoint.
+analytics provider. Counsel uses PostHog's EU ingestion endpoint.
 
 **This is off by default.** The App sends analytics only after you explicitly
 enable **Settings → Privacy → "Share anonymous usage data."** You can turn it off
@@ -62,7 +62,7 @@ never blocks or slows the App.
 
 ## 4. License
 
-The LegalWork source code is made available under the license described in the
+The Counsel source code is made available under the license described in the
 [`LICENSE`](./LICENSE) file. These Terms govern your use of the official App
 builds we distribute and do not limit any rights granted to you under the
 open-source license.
@@ -77,10 +77,10 @@ applicable law.
 
 ## 6. No legal advice
 
-LegalWork is a software tool that assists with legal work. It does not provide
+Counsel is a software tool that assists with document work. It does not provide
 legal advice, and it is not a substitute for the professional judgment of a
-qualified lawyer. AI models can produce incorrect or incomplete output. You are
-responsible for reviewing and verifying any output before relying on it.
+qualified professional. AI models can produce incorrect or incomplete output. You
+are responsible for reviewing and verifying any output before relying on it.
 
 ## 7. No warranty
 
@@ -92,7 +92,7 @@ purpose.
 
 ## 8. Limitation of liability
 
-To the maximum extent permitted by law, Eigenwelt Labs will not be liable for any
+To the maximum extent permitted by law, Louay Faraj will not be liable for any
 indirect, incidental, special, consequential, or punitive damages, or for any loss
 of data, profits, or business, arising out of or in connection with your use of
 the App. Nothing in these Terms excludes liability that cannot be excluded under
@@ -107,13 +107,12 @@ revised Terms.
 
 ## 10. Governing law
 
-These Terms are governed by the laws of Germany, without regard to conflict-of-law
-rules. The courts of Berlin, Germany have jurisdiction over any dispute, to the
+These Terms are governed by the laws of Thailand, without regard to conflict-of-law
+rules. The courts of Bangkok, Thailand have jurisdiction over any dispute, to the
 extent permitted by applicable law.
 
 ## 11. Contact
 
 Questions about these Terms or about analytics:
 
-- Web: https://eigenweltlabs.com/contact
-- Email: chris@eigenweltlabs.com
+- Email: louayfaraj41@gmail.com
