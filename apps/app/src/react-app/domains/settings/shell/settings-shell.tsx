@@ -53,7 +53,7 @@ export function SettingsShell(props: SettingsShellProps) {
 
   if (props.compact) {
     return (
-      <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-background">
+      <div className="lw-settings-compact flex h-full min-h-0 w-full flex-col overflow-hidden bg-background">
         <header className="flex h-11 shrink-0 items-center justify-between gap-2 border-b border-dls-border px-3 mac:titlebar-drag">
           <div className="flex min-w-0 items-center gap-2 mac:titlebar-no-drag">
             <SettingsSectionMenu
@@ -97,8 +97,8 @@ export function SettingsShell(props: SettingsShellProps) {
   }
 
   return (
-    <div className="flex h-dvh min-h-screen w-full overflow-hidden">
-      <SidebarProvider open={true} className="relative min-h-0 flex-1">
+    <div className="lw-settings-stage flex h-dvh min-h-screen w-full overflow-hidden">
+      <SidebarProvider open={true} className="lw-settings-window relative min-h-0 flex-1">
         <SettingsSidebar
           activeTab={props.activeTab}
           onSelectTab={props.onSelectTab}
@@ -110,16 +110,13 @@ export function SettingsShell(props: SettingsShellProps) {
           workspaces={props.workspaces}
           onSelectWorkspace={props.onSelectWorkspace}
         />
-        <SidebarInset className="min-h-0 overflow-hidden bg-background mac:bg-background/80 mac:[&_header]:transition-[padding-left] mac:[&_header]:duration-200 mac:[&_header]:ease-linear mac:peer-data-[state=collapsed]:[&_header]:pl-16 [&_header]:pl-16 md:[&_header]:pl-6">
+        <SidebarInset className="lw-settings-content min-h-0 overflow-hidden mac:[&_header]:transition-[padding-left] mac:[&_header]:duration-200 mac:[&_header]:ease-linear mac:peer-data-[state=collapsed]:[&_header]:pl-16 [&_header]:pl-16 md:[&_header]:pl-6">
           <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
-            <header className="shrink-0 flex h-10 items-center justify-between border-b border-dls-border px-4 md:px-6 mac:titlebar-drag">
+            <header className="lw-titlebar shrink-0 flex h-12 items-center justify-between px-4 md:px-6 mac:titlebar-drag">
               <div className="flex min-w-0 items-center gap-3">
                 <SidebarTrigger className="mac:titlebar-no-drag md:hidden" />
                 {props.headerLeadingSlot}
                 <h1 className="truncate text-[15px] font-semibold text-dls-text">{title}</h1>
-                <span className="hidden truncate text-[13px] text-dls-secondary lg:inline">
-                  {props.selectedWorkspaceName}
-                </span>
                 {props.developerMode && props.headerStatus ? (
                   <span className="hidden text-[12px] text-dls-secondary lg:inline">
                     {props.headerStatus}
@@ -162,7 +159,6 @@ export function SettingsShell(props: SettingsShellProps) {
 
 function SettingsSectionMenu(props: Pick<SettingsPageFrameProps, "activeTab" | "developerMode" | "onSelectTab">) {
   const allSections: Array<{ label: string | null; tabs: SettingsTab[] }> = [
-    { label: null, tabs: ["general"] },
     { label: t("settings.group_workspace"), tabs: getWorkspaceSettingsTabs() },
     { label: t("settings.group_global"), tabs: getGlobalSettingsTabs(props.developerMode) },
   ];

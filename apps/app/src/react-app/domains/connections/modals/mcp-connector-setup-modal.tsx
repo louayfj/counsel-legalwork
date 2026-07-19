@@ -59,6 +59,7 @@ export function McpConnectorSetupModal(props: McpConnectorSetupModalProps) {
   // Token-authed connectors (e.g. iManage) whose OAuth the local engine can't do:
   // collect an access token and connect via Authorization: Bearer instead.
   const needsToken = entry?.requiresToken === true;
+  const requiredEnvironment = entry?.requiredEnvironment ?? [];
 
   const [values, setValues] = useState<Record<string, string>>({});
   const [clientId, setClientId] = useState("");
@@ -66,6 +67,10 @@ export function McpConnectorSetupModal(props: McpConnectorSetupModalProps) {
   const [scope, setScope] = useState("");
   const [token, setToken] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  const setEnvironmentValue = (key: string, value: string) => {
+    setValues((previous) => ({ ...previous, [key]: value }));
+  };
 
   const reset = () => {
     setValues({});
@@ -84,7 +89,8 @@ export function McpConnectorSetupModal(props: McpConnectorSetupModalProps) {
   const allPlaceholdersFilled = placeholders.every((p) => (values[p] ?? "").trim().length > 0);
   const credsOk = !needsCreds || (clientId.trim().length > 0 && (clientIdOnly || clientSecret.trim().length > 0));
   const tokenOk = !needsToken || token.trim().length > 0;
-  const canSubmit = Boolean(entry) && allPlaceholdersFilled && credsOk && tokenOk;
+  const environmentOk = requiredEnvironment.every((field) => (values[field.key] ?? "").trim().length > 0);
+  const canSubmit = Boolean(entry) && allPlaceholdersFilled && credsOk && tokenOk && environmentOk;
 
   const previewUrl = (entry?.url ?? "").replace(PLACEHOLDER_RE, (_, key: string) =>
     (values[key]?.trim() ? values[key].trim() : `{${key}}`),
@@ -109,7 +115,17 @@ export function McpConnectorSetupModal(props: McpConnectorSetupModalProps) {
     const headers = needsToken && token.trim()
       ? { Authorization: `Bearer ${token.trim()}` }
       : entry.headers;
-    props.onConnect({ ...entry, url, oauthConfig, ...(headers ? { headers } : {}) });
+    const environment = { ...entry.environment };
+    for (const field of requiredEnvironment) {
+      environment[field.key] = (values[field.key] ?? "").trim();
+    }
+    props.onConnect({
+      ...entry,
+      url,
+      oauthConfig,
+      ...(headers ? { headers } : {}),
+      ...(Object.keys(environment).length > 0 ? { environment } : {}),
+    });
     close();
   };
 
@@ -133,6 +149,8 @@ export function McpConnectorSetupModal(props: McpConnectorSetupModalProps) {
               ? "This service has no automatic app registration, so enter your organization's OAuth app details. Then connect."
               : needsToken
               ? "This service's OAuth isn't supported by the local engine — paste an access token to connect instead."
+              : requiredEnvironment.length > 0
+              ? "Enter the credential required by this local connector. It is saved only in your local Counsel MCP configuration."
               : "Enter your instance details, then connect."}
           </DialogDescription>
         </DialogHeader>
@@ -147,7 +165,7 @@ export function McpConnectorSetupModal(props: McpConnectorSetupModalProps) {
               <span className="text-xs font-medium text-dls-text">{labelFor(p)}</span>
               <input
                 value={values[p] ?? ""}
-                onChange={(event) => setValues((prev) => ({ ...prev, [p]: event.currentTarget.value }))}
+                onChange={(event) => setEnvironmentValue(p, event.currentTarget.value)}
                 placeholder={`{${p}}`}
                 spellCheck={false}
                 className={inputClass}
@@ -198,6 +216,25 @@ export function McpConnectorSetupModal(props: McpConnectorSetupModalProps) {
               </span>
             </label>
           ) : null}
+
+          {requiredEnvironment.map((field) => (
+            <label key={field.key} className="block space-y-1.5">
+              <span className="text-xs font-medium text-dls-text">{field.label}</span>
+              <input
+                type={field.secret ? "password" : "text"}
+                value={values[field.key] ?? ""}
+                onChange={(event) => setEnvironmentValue(field.key, event.currentTarget.value)}
+                placeholder={field.placeholder}
+                spellCheck={false}
+                className={inputClass}
+              />
+              {field.description ? (
+                <span className="block text-[11px] leading-relaxed text-dls-secondary">
+                  {field.description}
+                </span>
+              ) : null}
+            </label>
+          ))}
 
           {entry?.url ? (
             <div className="break-all rounded-xl border border-dls-border bg-dls-hover px-3 py-2 font-mono text-[11px] text-dls-secondary">

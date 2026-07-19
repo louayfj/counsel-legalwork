@@ -52,6 +52,16 @@ export type McpDirectoryInfo = {
   iconSrc?: string;
   /** Prompt inserted from the composer extension picker. */
   composerPrompt?: string;
+  /** Environment values collected locally before starting a local MCP. */
+  environment?: Record<string, string>;
+  /** Environment values the connector setup form must collect before connecting. */
+  requiredEnvironment?: Array<{
+    key: string;
+    label: string;
+    description?: string;
+    placeholder?: string;
+    secret?: boolean;
+  }>;
   /** Whether LegalWork should show this extension as enabled before user setup. */
   defaultEnabled?: boolean;
   /** Whether LegalWork should hide this extension from the default catalog view. */
@@ -216,6 +226,48 @@ export const MCP_QUICK_CONNECT: McpDirectoryInfo[] = [
     requiresToken: true,
     kind: "mcp",
     preview: true,
+  },
+  {
+    name: "OpenLaw",
+    serverName: "openlaw",
+    description: "UK and EU statutes, judgments, ICO material, FCA links, HMRC manuals, and citation tools from official open sources.",
+    url: "https://openlawmcp.legalaispace.com/v1/mcp",
+    type: "remote",
+    oauth: false,
+    kind: "mcp",
+    composerPrompt: "Use OpenLaw to ",
+    // Community-hosted, best-effort endpoint with no API key or uptime SLA.
+    preview: true,
+  },
+  {
+    name: "Companies House",
+    serverName: "companies-house",
+    description: "Search UK companies, officers, ownership, filings, charges, insolvency, and due-diligence signals from Companies House.",
+    type: "local",
+    command: ["npx", "-y", "companies-house-mcp"],
+    oauth: false,
+    kind: "mcp",
+    composerPrompt: "Use Companies House to ",
+    requiredEnvironment: [
+      {
+        key: "COMPANIES_HOUSE_API_KEY",
+        label: "Companies House API key",
+        description: "Create a free key in the Companies House Developer Hub.",
+        placeholder: "Paste your Companies House API key",
+        secret: true,
+      },
+    ],
+  },
+  {
+    name: "Playwright",
+    serverName: "playwright",
+    description: "Inspect and automate websites through structured browser controls for repeatable journey and disclosure checks.",
+    type: "local",
+    command: ["npx", "-y", "@playwright/mcp@latest"],
+    oauth: false,
+    kind: "mcp",
+    iconSlug: "playwright",
+    composerPrompt: "Use Playwright to ",
   },
   {
     name: "Midpage",

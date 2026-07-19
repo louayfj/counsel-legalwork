@@ -22,7 +22,7 @@ export const BUNDLED_PLUGINS: BundledPlugin[] = [
     id: "tabular-review",
     name: "Tabular Review",
     description:
-      "Axleo compliance review grid — extract structured, source-cited columns across many documents into an interactive table.",
+      "UK automotive compliance review grid — extract structured, source-cited columns across many documents into an interactive table.",
     command: "/review-docs",
     components: [
       "tabular-review skill",

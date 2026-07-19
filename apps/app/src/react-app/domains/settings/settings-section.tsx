@@ -61,7 +61,7 @@ export interface SettingsLayoutProps {
 }
 
 export function SettingsStack({ children, className }: SettingsLayoutProps) {
-  return <div className={cn("@container/settings flex w-full max-w-3xl flex-col gap-y-6", className)}>{children}</div>;
+  return <div className={cn("@container/settings flex w-full max-w-4xl flex-col gap-y-5", className)}>{children}</div>;
 }
 
 interface SettingsSectionProps {
@@ -71,7 +71,7 @@ interface SettingsSectionProps {
 
 export function SettingsSection({ children, className }: SettingsSectionProps) {
   return (
-    <div className={cn("flex flex-col gap-6", className)}>
+    <div data-settings-section className={cn("flex flex-col gap-3", className)}>
       {children}
     </div>
   );
@@ -84,7 +84,7 @@ interface SettingsInsetProps {
 
 export function SettingsInset({ children, className }: SettingsInsetProps) {
   return (
-    <div className={cn("border border-dls-border rounded-2xl p-4", className)}>
+    <div className={cn("rounded-xl border border-dls-border p-3.5", className)}>
       {children}
     </div>
   );
@@ -99,7 +99,7 @@ export function SettingsPill({ children, className }: SettingsPillProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border border-dls-border bg-dls-hover px-2.5 py-1 text-xs font-medium text-muted-foreground",
+        "inline-flex items-center gap-1.5 rounded-full border border-dls-border bg-dls-hover px-2.5 py-1 text-[11px] font-medium text-muted-foreground",
         className,
       )}
     >
@@ -129,7 +129,7 @@ export function SettingsStatusBadge({ label, tone, className }: SettingsStatusBa
   return (
     <div
       className={cn(
-        "flex min-h-8 items-center justify-start gap-2 text-center font-medium rounded-xl px-3 py-0 text-xs text-muted-foreground shrink-0",
+        "flex min-h-7 shrink-0 items-center justify-start gap-1.5 rounded-lg px-2.5 py-0 text-center text-[11px] font-medium text-muted-foreground",
         className,
       )}
     >
@@ -151,7 +151,7 @@ export function SettingsNotice({
   return (
     <div
       className={cn(
-        "rounded-xl border border-dls-border bg-dls-hover px-3 py-2 text-xs text-muted-foreground",
+        "rounded-xl border border-dls-border bg-dls-hover px-3 py-2 text-[11.5px] leading-[1.45] text-muted-foreground",
         tone === "error" && "border-red-7/30 bg-red-1/40 text-red-11",
         className,
       )}
@@ -165,7 +165,7 @@ export type SectionItemHeaderProps = SettingsLayoutProps;
 
 export function SettingsSectionHeader({ children, className }: SectionItemHeaderProps) {
   return (
-    <div className={cn("flex flex-col gap-3 md:flex-row md:items-start justify-between", className)}>
+    <div className={cn("flex flex-col justify-between gap-2 md:flex-row md:items-start", className)}>
       {children}
     </div>
   );
@@ -177,7 +177,7 @@ interface SectionItemHeaderContentProps {
 }
 
 export function SettingsSectionHeaderContent({ children, className }: SectionItemHeaderContentProps) {
-  return <div className={cn("flex flex-col gap-1", className)}>{children}</div>;
+  return <div className={cn("flex flex-col gap-0.5", className)}>{children}</div>;
 }
 
 interface SettingsItemHeaderTitleProps {
@@ -187,7 +187,7 @@ interface SettingsItemHeaderTitleProps {
 
 export function SettingsSectionHeaderTitle({ children, className }: SettingsItemHeaderTitleProps) {
   return (
-    <div className={cn("flex items-center gap-2 text-base font-medium text-dls-text", className)}>
+    <div className={cn("flex items-center gap-2 text-[13px] font-medium leading-5 text-dls-text", className)}>
       {children}
     </div>
   );
@@ -199,7 +199,7 @@ interface SectionItemHeaderDescriptionProps {
 }
 
 export function SettingsSectionHeaderDescription({ children, className }: SectionItemHeaderDescriptionProps) {
-  return <div className={cn("text-sm text-muted-foreground", className)}>{children}</div>;
+  return <div className={cn("text-[12px] leading-[1.45] text-muted-foreground", className)}>{children}</div>;
 }
 
 
@@ -209,7 +209,7 @@ interface SectionItemHintProps {
 }
 
 export function SettingsSectionHint({ children, className }: SectionItemHintProps) {
-  return <div className={cn("text-xs text-muted-foreground", className)}>{children}</div>;
+  return <div className={cn("text-[11.5px] leading-[1.45] text-muted-foreground", className)}>{children}</div>;
 }
 
 interface SectionItemHeaderActionsProps {
@@ -218,5 +218,5 @@ interface SectionItemHeaderActionsProps {
 }
 
 export function SettingsSectionHeaderActions({ children, className }: SectionItemHeaderActionsProps) {
-  return <div className={cn("flex flex-wrap items-center gap-2", className)}>{children}</div>;
+  return <div className={cn("flex flex-wrap items-center gap-1.5", className)}>{children}</div>;
 }

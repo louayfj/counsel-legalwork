@@ -1,7 +1,7 @@
 ---
 name: docx-edit
 description: >-
-  Axleo Word (.docx) reading + editing. Use whenever the user wants to work with
+  Counsel Word (.docx) reading + editing. Use whenever the user wants to work with
   a Word document: read/answer questions about a finance agreement, complaint response,
   policy, disclosure, or advert, check a value against a threshold, propose edits or comment on wording,
   or accept/adopt or reject tracked changes. Reads the FULL document — including clauses
@@ -12,7 +12,7 @@ description: >-
 
 # Word (.docx) reading + editing
 
-This skill is how Axleo reads and edits Word documents with AI. It is **self-contained**:
+This skill is how Counsel reads and edits Word documents with AI. It is **self-contained**:
 `assets/docx-agent.mjs` imports a vendored copy of the OOXML engine
 (`assets/vendor/docx-engine.mjs`) — the same engine behind the in-app `.docx` viewer — so it
 runs in any workspace with no install. **Do not hand-parse the document's XML with python** —
@@ -99,7 +99,7 @@ the `index` from `inspect`** (the same index works for body paragraphs and table
   viewer. Default to a copy; overwrite in place only on request.
 - **Never fabricate** a value, party, number, or a "done." If `search` won't match or there are no
   changes to adopt, say so.
-- **Open models, Axleo-owned workflow.** Don't hardcode a model; the `docx-redliner` subagent inherits the
+- **Open models, organisation-owned workflow.** Don't hardcode a model; the `docx-redliner` subagent inherits the
   configured model.
 - **Distribution.** Bundled-core: seeded into every workspace via `core-skills.ts`
   (`scripts/gen-core-skills.mjs`), alongside the in-app viewer it feeds.

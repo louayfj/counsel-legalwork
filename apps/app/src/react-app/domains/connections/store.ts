@@ -300,7 +300,7 @@ export function createConnectionsStore(options: {
     return { next, nextStatuses, engineSync };
   };
 
-  const resolveDesktopCommand = async (commandName: "getComputerUseMcpCommand" | "getLegalworkUiMcpCommand", fallbackOnError = true) => {
+  const resolveDesktopCommand = async (commandName: "getComputerUseMcpCommand" | "getOfficeCliMcpCommand" | "getLegalworkUiMcpCommand", fallbackOnError = true) => {
     try {
       const command = await window.__LEGALWORK_ELECTRON__?.invokeDesktop?.(commandName);
       if (Array.isArray(command) && command.every((part) => typeof part === "string") && command.length > 0) {
@@ -310,7 +310,7 @@ export function createConnectionsStore(options: {
       if (!fallbackOnError) {
         throw error instanceof Error
           ? error
-          : new Error("Computer Use helper app is unavailable. Restart LegalWork or reinstall the app.");
+          : new Error("The bundled MCP runtime is unavailable. Restart Counsel or reinstall the app.");
       }
       // Fall through to the published package command in the manifest/catalog.
     }
@@ -323,6 +323,10 @@ export function createConnectionsStore(options: {
       const command = await resolveDesktopCommand("getComputerUseMcpCommand", false);
       return command ?? entry.command;
     }
+    if (mcpResource?.localCommandRef === "legalwork.officeCliMcp") {
+      const command = await resolveDesktopCommand("getOfficeCliMcpCommand", false);
+      return command ?? entry.command;
+    }
     if (mcpResource?.localCommandRef === "legalwork.uiMcp" || entry.serverName === "legalwork-ui") {
       const command = await resolveDesktopCommand("getLegalworkUiMcpCommand");
       return command ?? entry.command;
@@ -331,9 +335,14 @@ export function createConnectionsStore(options: {
   };
 
   const resolveLocalMcpEnvironment = async (entry: McpDirectoryInfo) => {
-    if (entry.serverName !== "legalwork-ui") return undefined;
+    const commandName = entry.serverName === "legalwork-ui"
+      ? "getLegalworkUiMcpEnvironment"
+      : entry.serverName === "officecli"
+        ? "getOfficeCliMcpEnvironment"
+        : null;
+    if (!commandName) return undefined;
     try {
-      const environment = await window.__LEGALWORK_ELECTRON__?.invokeDesktop?.("getLegalworkUiMcpEnvironment");
+      const environment = await window.__LEGALWORK_ELECTRON__?.invokeDesktop?.(commandName);
       if (environment && typeof environment === "object" && !Array.isArray(environment)) {
         return Object.fromEntries(
           Object.entries(environment).filter((entry): entry is [string, string] =>
@@ -669,8 +678,12 @@ export function createConnectionsStore(options: {
           throw new Error("Missing MCP command.");
         }
         mcpEntryConfig["command"] = await resolveLocalMcpCommand(entry);
-        const environment = await resolveLocalMcpEnvironment(entry);
-        if (environment) {
+        const resolvedEnvironment = await resolveLocalMcpEnvironment(entry);
+        const environment = {
+          ...entry.environment,
+          ...resolvedEnvironment,
+        };
+        if (Object.keys(environment).length > 0) {
           mcpEntryConfig["environment"] = environment;
         }
       }
@@ -713,6 +726,17 @@ export function createConnectionsStore(options: {
         if (!writeResult.ok) {
           throw new Error(writeResult.stderr || writeResult.stdout || "Failed to write global opencode.json");
         }
+
+        // The desktop engine runs from the LegalWork server's derived runtime
+        // config, not directly from the user-level opencode.json. Keep both
+        // stores in sync so a built-in MCP remains available to new tasks
+        // after the best-effort live registration or an engine restart.
+        if (canUseLegalworkServer && legalworkClient && legalworkWorkspaceId) {
+          await legalworkClient.addMcp(legalworkWorkspaceId, {
+            name: slug,
+            config: mcpEntryConfig,
+          });
+        }
       } else if (canUseLegalworkServer && legalworkClient && legalworkWorkspaceId) {
         await legalworkClient.addMcp(legalworkWorkspaceId, {
           name: slug,
@@ -736,10 +760,13 @@ export function createConnectionsStore(options: {
                 ...(!resolvedHeaders && entry.oauthConfig ? { oauth: entry.oauthConfig } : {}),
                 ...(!resolvedHeaders && !entry.oauthConfig && entry.oauth ? { oauth: {} } : {}),
               }
-            : {
+              : {
                 type: "local" as const,
                 command: (mcpEntryConfig["command"] as string[]) ?? entry.command!,
                 enabled: true,
+                ...(mcpEntryConfig["environment"]
+                  ? { environment: mcpEntryConfig["environment"] as Record<string, string> }
+                  : {}),
               };
 
         try {

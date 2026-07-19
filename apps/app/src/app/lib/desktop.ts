@@ -155,6 +155,7 @@ declare global {
         initialDeepLinks?: string[];
         platform?: "darwin" | "linux" | "windows";
         version?: string;
+        windowRole?: "main" | "settings";
       };
     };
   }
@@ -437,6 +438,7 @@ const {
   engineStop,
   engineRestart,
   appBuildInfo,
+  settingsWindowOpen,
   getDesktopBootstrapConfig,
   setDesktopBootstrapConfig,
   nukeLegalworkAndOpencodeConfigAndExit,
@@ -495,6 +497,7 @@ export {
   engineStop,
   engineRestart,
   appBuildInfo,
+  settingsWindowOpen,
   getDesktopBootstrapConfig,
   setDesktopBootstrapConfig,
   nukeLegalworkAndOpencodeConfigAndExit,

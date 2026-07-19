@@ -1,24 +1,24 @@
 ---
-name: axleo-dpa-privacy-review
+name: uk-privacy-review
 description: >-
-  Use when reviewing Axleo data protection, DPA, privacy notice, call recording,
+  Use when reviewing organisation data protection, DPA, privacy notice, call recording,
   transcript, CRM, AI processing, subprocessors, retention, DSAR, or GDPR/PECR
   issues.
 ---
 
-# Axleo DPA And Privacy Review
+# UK Privacy Review
 
-Use this for internal Axleo privacy, data protection, and call-recording legal
+Use this for the active organisation's privacy, data protection, and call-recording legal
 work.
 
 ## Required grounding
 
-1. Search Axleo's private/team legal reference folder for Axleo's DPA, privacy
+1. Search the active organisation's authorised reference folder for its DPA, privacy
    policy, terms, subprocessor list, call-recording wording, DPIA/LIA notes, and
    approved client responses.
 2. Use UK GDPR, Data Protection Act 2018, PECR, ICO guidance/decisions, and
    relevant FCA/customer-outcome sources where applicable.
-3. Cite every legal/regulatory point and call `axleo_citation_log` before the
+3. Cite every legal/regulatory point and call `compliance_citation_log` before the
    final answer.
 
 ## Workflow

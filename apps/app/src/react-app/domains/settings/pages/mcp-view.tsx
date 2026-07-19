@@ -885,7 +885,8 @@ function entryNeedsSetup(entry: McpDirectoryInfo): boolean {
   return (
     (typeof entry.url === "string" && /\{[^}]+\}/.test(entry.url)) ||
     entry.requiresOauthClient === true ||
-    entry.requiresToken === true
+    entry.requiresToken === true ||
+    Boolean(entry.requiredEnvironment?.length)
   );
 }
 

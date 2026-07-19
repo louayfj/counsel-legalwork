@@ -3,7 +3,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { resolveAxleoReferenceRoots } from "./axleo-reference.js";
+import { resolveOrganisationReferenceRoots } from "./axleo-reference.js";
 import { LegalWorkAxleoReferenceTools } from "./opencode-plugins/legalwork-axleo-reference-tools.js";
 
 const roots: string[] = [];
@@ -41,9 +41,10 @@ describe("Axleo reference helpers", () => {
     previousReferenceDir = process.env.AXLEO_LEGAL_REFERENCE_DIR;
     process.env.AXLEO_LEGAL_REFERENCE_DIR = configured;
 
-    const roots = resolveAxleoReferenceRoots();
+    const roots = resolveOrganisationReferenceRoots();
     expect(roots[0]).toBe(configured);
-    expect(roots.some((root) => root.endsWith("Documents/axleo-legal-reference"))).toBe(true);
+    expect(roots.some((root) => root.endsWith("Documents/axleo-private-legal-reference"))).toBe(false);
+    expect(roots.some((root) => root.endsWith("resources/axleo-legal-reference"))).toBe(true);
   });
 
   test("reference search finds text files in the standing folder", async () => {
@@ -57,7 +58,7 @@ describe("Axleo reference helpers", () => {
     );
 
     const plugin = await LegalWorkAxleoReferenceTools();
-    const searchTool = plugin.tool.axleo_reference_search;
+    const searchTool = plugin.tool.organisation_reference_search;
     const result = await searchTool.execute({ query: "CONC 4.2.5 disclosure", max_results: 3 }, {});
 
     expect(result.results[0]?.source).toBe("conc-notes.md");
@@ -67,7 +68,7 @@ describe("Axleo reference helpers", () => {
   test("exports plain JSON Schema properties for the OpenCode tool registry", async () => {
     const plugin = await LegalWorkAxleoReferenceTools();
 
-    expect(plugin.tool.axleo_reference_search.args).toMatchObject({
+    expect(plugin.tool.organisation_reference_search.args).toMatchObject({
       query: {
         type: "string",
         minLength: 2,
@@ -79,7 +80,7 @@ describe("Axleo reference helpers", () => {
         maximum: 10,
       },
     });
-    expect(JSON.stringify(plugin.tool.axleo_reference_search.args)).not.toContain("_zod");
+    expect(JSON.stringify(plugin.tool.organisation_reference_search.args)).not.toContain("_zod");
   });
 
   test("plugin injects citation and escalation discipline", async () => {
@@ -89,8 +90,8 @@ describe("Axleo reference helpers", () => {
     await plugin["experimental.chat.system.transform"](null, output);
 
     const system = output.system.join("\n");
-    expect(system).toContain("axleo_reference_search");
-    expect(system).toContain("axleo_citation_log");
+    expect(system).toContain("organisation_reference_search");
+    expect(system).toContain("compliance_citation_log");
     expect(system).toContain("human compliance/legal review");
   });
 
@@ -109,7 +110,7 @@ describe("Axleo reference helpers", () => {
     process.env.LEGALWORK_SERVER_TOKEN = "test-token";
 
     const plugin = await LegalWorkAxleoReferenceTools();
-    const result = await plugin.tool.axleo_citation_log.execute({
+    const result = await plugin.tool.compliance_citation_log.execute({
       answer_summary: "Draft complaint response",
       risk_level: "high",
       escalation_required: true,
@@ -145,7 +146,7 @@ describe("Axleo reference helpers", () => {
     process.env.LEGALWORK_SERVER_TOKEN = "test-token";
 
     const plugin = await LegalWorkAxleoReferenceTools();
-    await plugin.tool.axleo_citation_log.execute({
+    await plugin.tool.compliance_citation_log.execute({
       answerSummary: "Used car rejection response",
       riskLevel: "HIGH",
       citations: [

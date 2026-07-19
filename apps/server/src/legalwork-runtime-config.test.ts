@@ -10,6 +10,7 @@ import {
   writeLegalworkRuntimeConfigFile,
 } from "./legalwork-runtime-config.js";
 import { GLOBAL_TOOL_PERMISSIONS_ID, writeRuntimeOpencodeConfig } from "./runtime-opencode-config-store.js";
+import { writeLegalworkWorkspaceConfig } from "./legalwork-workspace-config-store.js";
 import type { ServerConfig } from "./types.js";
 
 const roots: string[] = [];
@@ -67,18 +68,18 @@ function stringValue(value: unknown, label: string): string {
 }
 
 describe("legalwork runtime config file", () => {
-  test("injects the Axleo internal legal and compliance persona into the default agent", async () => {
+  test("injects an organisation-neutral UK automotive compliance persona by default", async () => {
     const parsed = await buildLegalworkRuntimeConfigObject();
     const agents = recordValue(parsed.agent, "agent");
     const legalwork = recordValue(agents.legalwork, "agent.legalwork");
     const prompt = stringValue(legalwork.prompt, "agent.legalwork.prompt");
 
     expect(stringValue(legalwork.description, "agent.legalwork.description")).toBe(
-      "Axleo internal legal and compliance assistant",
+      "Legal and UK automotive compliance assistant for your organisation",
     );
-    expect(prompt).toContain("Leo, Axleo Systems' internal legal and compliance assistant");
-    expect(prompt).toContain("Axleo company legal operations");
-    expect(prompt).toContain("SaaS client contracts");
+    expect(prompt).toContain("assistant for your organisation");
+    expect(prompt).toContain("Organisation legal operations");
+    expect(prompt).toContain("Client and supplier contracts");
     expect(prompt).toContain("DPAs");
     expect(prompt).toContain("NDAs");
     expect(prompt).toContain("call recording/transcription");
@@ -89,12 +90,43 @@ describe("legalwork runtime config file", () => {
     expect(prompt).toContain("Consumer Rights Act 2015");
     expect(prompt).toContain("UK GDPR and Data Protection Act 2018");
     expect(prompt).toContain("ASA CAP Code");
+    expect(prompt).toContain("OpenLaw MCP");
+    expect(prompt).toContain("OpenLaw's FCA tools are link-only");
     expect(prompt).toContain("Do not make uncited legal claims");
     expect(prompt).toContain("recommend human legal or compliance review");
     expect(prompt).toContain("draft final-ready wording");
+    expect(prompt).toContain("organisation approval");
+    expect(prompt).not.toContain("You work for Axleo Systems");
+    expect(prompt).not.toContain("Axleo's private");
     expect(prompt).not.toContain("inside a law firm");
     expect(prompt).not.toContain("litigation");
     expect(prompt).not.toContain("engagement letters");
+  });
+
+  test("resolves an Axleo internal profile from workspace configuration", async () => {
+    const { config } = await setup();
+    await writeLegalworkWorkspaceConfig(config, "ws_1", (current) => ({
+      ...current,
+      organisation: {
+        name: "Axleo Systems",
+        mode: "axleo-internal",
+        description: "a UK automotive technology company",
+        approvalLabel: "Axleo approval",
+        instructions: "Use the approved SaaS contracting playbook.",
+      },
+    }));
+
+    const parsed = await buildLegalworkRuntimeConfigObject(config, "ws_1");
+    const agents = recordValue(parsed.agent, "agent");
+    const legalwork = recordValue(agents.legalwork, "agent.legalwork");
+    const prompt = stringValue(legalwork.prompt, "agent.legalwork.prompt");
+
+    expect(stringValue(legalwork.description, "agent.legalwork.description")).toBe(
+      "Legal and UK automotive compliance assistant for Axleo Systems",
+    );
+    expect(prompt).toContain("This workspace is for Axleo internal legal operations");
+    expect(prompt).toContain("Use the approved SaaS contracting playbook.");
+    expect(prompt).toContain("requiring Axleo approval before sending/signature");
   });
 
   test("writes runtime-DB MCPs and legalwork defaults into the file", async () => {
@@ -178,6 +210,20 @@ describe("legalwork runtime config file", () => {
     }
     // Global tool key + this workspace's own external_directory, merged.
     expect(permission.bash).toBe("ask");
+    expect(permission.officecli).toBe("ask");
     expect(permission.external_directory).toEqual({ "/tmp/shared/*": "allow" });
+  });
+
+  test("OfficeCLI asks for approval by default and preserves an explicit override", async () => {
+    const { config } = await setup();
+    const defaults = await buildLegalworkRuntimeConfigObject(config, "ws_1");
+    expect((defaults.permission as Record<string, unknown>).officecli).toBe("ask");
+
+    await writeRuntimeOpencodeConfig(config, GLOBAL_TOOL_PERMISSIONS_ID, (current) => ({
+      ...current,
+      permission: { officecli: "deny" },
+    }));
+    const overridden = await buildLegalworkRuntimeConfigObject(config, "ws_1");
+    expect((overridden.permission as Record<string, unknown>).officecli).toBe("deny");
   });
 });

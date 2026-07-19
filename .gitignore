@@ -11,12 +11,15 @@ packages/*/dist/
 apps/*/dist/
 apps/app/dist-word-addin/
 tmp/
+output/
+.playwright-cli/
 
 # Local git worktrees
 _worktrees/
 
 # Desktop sidecars
 apps/desktop/resources/sidecars/
+apps/desktop/resources/officecli/
 apps/desktop/server/
 
 # Env

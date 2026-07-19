@@ -8,6 +8,7 @@ import {
   Loader2,
   PenLine,
   Puzzle,
+  Settings,
   Workflow,
   MoreHorizontal,
   Pencil,
@@ -19,7 +20,6 @@ import {
   Tag,
 } from "lucide-react";
 import { LazyMotion, Reorder, domMax, m, useDragControls } from "motion/react";
-import { useNavigate } from "react-router-dom";
 
 import { getDisplaySessionTitle } from "../../../../app/lib/session-title";
 import type { WorkspaceInfo } from "../../../../app/lib/desktop";
@@ -454,6 +454,7 @@ export type AppSidebarProps = {
   onRevealWorkspace: (workspaceId: string) => void;
   onForgetWorkspace: (workspaceId: string) => void;
   onOpenCreateWorkspace: () => void;
+  onOpenSettings: (route?: string) => void;
   onShowWorkflows?: () => void;
   onShowExtensions?: () => void;
   /** Which main-pane nav tab is currently shown (shades it like hover). */
@@ -478,14 +479,6 @@ function isSessionActivityStatus(status: string | undefined): status is SessionA
 
 export function AppSidebar(props: AppSidebarProps) {
   const { config: shellConfig } = useShellConfig();
-  const navigate = useNavigate();
-  const goSettings = React.useCallback(
-    (tab: string) => {
-      const ws = props.selectedWorkspaceId.trim();
-      navigate(ws ? `/workspace/${encodeURIComponent(ws)}/settings/${tab}` : `/settings/${tab}`);
-    },
-    [navigate, props.selectedWorkspaceId],
-  );
   const [expandedWorkspaceIds, setExpandedWorkspaceIds] = React.useState<Set<string>>(
     () => new Set(),
   );
@@ -617,25 +610,30 @@ export function AppSidebar(props: AppSidebarProps) {
   return (
     <SidebarContext.Provider value={contextValue}>
       <Sidebar
+        variant="floating"
         collapsible="offcanvas"
-        className="mac:**:data-[sidebar=sidebar]:bg-transparent"
+        className="lw-primary-sidebar mac:**:data-[sidebar=sidebar]:bg-transparent"
       >
-        <div className="hidden h-12 mac:block mac:titlebar-drag"/>
-        {/* Top nav — fixed top 40% */}
-        <div className="flex flex-[2] min-h-0 flex-col">
-        <div className="px-2 pb-1 mac:titlebar-no-drag">
-          <div className={cn("flex gap-2 px-3", showSidebarBrandName ? "items-center py-1" : "items-center py-0") }>
-            <img
-              src={sidebarBrandLogoSrc}
-              alt={`${sidebarBrandAlt} logo`}
-              className={cn(
-                "object-contain",
-                showSidebarBrandName
-                  ? "h-6 w-6 shrink-0 rounded-md"
-                  // ponytail: square SVG needs room to breathe — h-8/h-12 were microscopic
-                  : "h-24 w-auto max-w-[180px] rounded-sm object-left object-contain",
-              )}
-            />
+        <div className="hidden h-10 mac:block mac:titlebar-drag"/>
+        {/* Compact primary navigation; history owns the remaining height. */}
+        <div className="flex shrink-0 flex-col">
+        <div className="lw-sidebar-brand px-3 pb-2 mac:titlebar-no-drag">
+          <div className="flex min-w-0 items-center gap-2.5 px-2 py-1.5">
+            {showSidebarBrandName ? (
+              <img
+                src={sidebarBrandLogoSrc}
+                alt={`${sidebarBrandAlt} logo`}
+                className="h-6 w-6 shrink-0 rounded-md object-contain"
+              />
+            ) : (
+              <div className="lw-sidebar-logo-crop relative h-9 w-[118px] shrink-0" role="img" aria-label={`${sidebarBrandAlt} logo`}>
+                <img
+                  src={sidebarBrandLogoSrc}
+                  alt=""
+                  className="absolute left-0 top-0 size-[118px] max-w-none object-contain"
+                />
+              </div>
+            )}
             {showSidebarBrandName ? (
               <div className="min-w-0">
                 <div className="truncate text-sm font-medium leading-tight">{sidebarBrandName}</div>
@@ -643,18 +641,23 @@ export function AppSidebar(props: AppSidebarProps) {
             ) : null}
           </div>
         </div>
-        <SidebarMenu className={cn("gap-0.5 px-2 mac:titlebar-no-drag", showSidebarBrandName ? "pt-4" : "pt-3")}>
+        <SidebarMenu className="lw-sidebar-primary-nav gap-1 px-3 mac:titlebar-no-drag">
           <SidebarMenuItem>
-            <SidebarMenuButton className="h-9 gap-4 text-sidebar-foreground/80 [&_svg]:size-[18px]" onClick={props.onOpenCreateWorkspace}>
+            <SidebarMenuButton
+              className="h-10 gap-3 text-sidebar-foreground/80 [&_svg]:size-[18px]"
+              isActive={!props.selectedSessionId && !props.activeNav}
+              onClick={() => props.onCreateTaskInWorkspace(props.selectedWorkspaceId)}
+              disabled={props.newTaskDisabled || !props.selectedWorkspaceId}
+            >
               <PenLine className="size-[18px]" strokeWidth={1.5} />
               <span>New Task</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="h-9 gap-4 text-sidebar-foreground/80 [&_svg]:size-[18px]"
+              className="h-10 gap-3 text-sidebar-foreground/80 [&_svg]:size-[18px]"
               isActive={props.activeNav === "workflows"}
-              onClick={() => (props.onShowWorkflows ? props.onShowWorkflows() : goSettings("general"))}
+              onClick={() => (props.onShowWorkflows ? props.onShowWorkflows() : props.onOpenSettings("/settings/ai"))}
             >
               <Workflow className="size-[18px]" strokeWidth={1.5} />
               <span>Workflows</span>
@@ -662,9 +665,9 @@ export function AppSidebar(props: AppSidebarProps) {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
-              className="h-9 gap-4 text-sidebar-foreground/80 [&_svg]:size-[18px]"
+              className="h-10 gap-3 text-sidebar-foreground/80 [&_svg]:size-[18px]"
               isActive={props.activeNav === "extensions"}
-              onClick={() => (props.onShowExtensions ? props.onShowExtensions() : goSettings("extensions/mcp"))}
+              onClick={() => (props.onShowExtensions ? props.onShowExtensions() : props.onOpenSettings("/settings/extensions/mcp"))}
             >
               <Puzzle className="size-[18px]" strokeWidth={1.5} />
               <span>Integrations</span>
@@ -673,10 +676,20 @@ export function AppSidebar(props: AppSidebarProps) {
         </SidebarMenu>
         </div>
 
-        {/* Folders — fixed bottom 60% (top edge at 40% from top). */}
-        <div className="flex flex-[3] min-h-0 flex-col border-t border-[color:var(--glass-border)] pt-1">
-          <div className="flex items-baseline gap-2 px-3.5 pt-2 pb-1 mac:titlebar-no-drag">
+        {/* Folders and task history fill the remaining sidebar. */}
+        <div className="lw-sidebar-history flex min-h-0 flex-1 flex-col pt-4">
+          <div className="flex items-center justify-between gap-2 px-4 pb-2 mac:titlebar-no-drag">
             <span className="lw-section-eyebrow">Folders</span>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              className="lw-sidebar-add-folder size-7 rounded-lg"
+              onClick={props.onOpenCreateWorkspace}
+              title="Add folder"
+              aria-label="Add folder"
+            >
+              <Plus className="size-3.5" />
+            </Button>
           </div>
           <LazyMotion features={domMax}>
             <m.div
@@ -705,11 +718,17 @@ export function AppSidebar(props: AppSidebarProps) {
               </Reorder.Group>
             </m.div>
           </LazyMotion>
-          <SidebarUpdateBadge onOpenUpdatesSettings={() => navigate("/settings/updates")} />
-          <SidebarFooter>
-            <SidebarMenu>
+          <SidebarUpdateBadge onOpenUpdatesSettings={() => props.onOpenSettings("/settings/updates")} />
+          <SidebarFooter className="lw-sidebar-footer px-3 pb-3 pt-2">
+            <SidebarMenu className="gap-1">
               <SidebarMenuItem>
-                <SidebarMenuButton onClick={props.onOpenCreateWorkspace}>
+                <SidebarMenuButton className="h-9 gap-3" onClick={() => props.onOpenSettings("/settings/ai")}>
+                  <Settings className="size-4" />
+                  Settings
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton className="h-9 gap-3" onClick={props.onOpenCreateWorkspace}>
                   <FolderPlus className="size-4" />
                   Add folder
                 </SidebarMenuButton>

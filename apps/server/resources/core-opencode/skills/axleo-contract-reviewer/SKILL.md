@@ -1,18 +1,18 @@
 ---
-name: axleo-contract-reviewer
+name: commercial-contract-reviewer
 description: >-
-  Use when reviewing, summarizing, negotiating, or risk-scoring Axleo client,
+  Use when reviewing, summarizing, negotiating, or risk-scoring organisation client,
   supplier, partner, SaaS, NDA, DPA, order form, terms, or commercial contract
   documents.
 ---
 
-# Axleo Contract Reviewer
+# Commercial Contract Reviewer
 
-Use this for internal Axleo legal/commercial contract review.
+Use this for the active organisation's legal/commercial contract review.
 
 ## Required grounding
 
-1. Search Axleo's private/team legal reference folder first for relevant
+1. Search the active organisation's authorised reference folder first for relevant
    templates, playbooks, prior positions, DPAs, NDAs, terms, privacy materials,
    and approved fallback wording.
 2. Use authoritative UK sources where the issue turns on law or regulation,
@@ -20,7 +20,7 @@ Use this for internal Axleo legal/commercial contract review.
    sector-specific dealership compliance.
 3. Cite every legal/regulatory point and cite private source documents by file
    name/location where used.
-4. Call `axleo_citation_log` before the final answer when legal/compliance
+4. Call `compliance_citation_log` before the final answer when legal/compliance
    claims are made.
 
 ## Workflow

@@ -127,8 +127,9 @@ const Tool = ({ title, toolPart, defaultOpen = false, className }: ToolProps) =>
   const Icon = toolIcon(toolPart)
 
   return (
-    <Collapsible className={className} defaultOpen={defaultOpen}>
+    <Collapsible data-slot="tool-activity" className={className} defaultOpen={defaultOpen}>
       <CollapsibleTrigger
+        data-slot="tool-activity-trigger"
         className="group text-muted-foreground hover:text-foreground flex w-full min-w-0 cursor-pointer items-center justify-start gap-2 overflow-hidden text-start text-sm transition-colors"
       >
         <span className="relative inline-flex size-4 shrink-0 items-center justify-center">
@@ -148,7 +149,7 @@ const Tool = ({ title, toolPart, defaultOpen = false, className }: ToolProps) =>
           <span className="text-destructive shrink-0 text-xs">failed</span>
         ) : null}
       </CollapsibleTrigger>
-      <CollapsibleContent className="h-(--collapsible-panel-height) overflow-hidden text-sm transition-[height] duration-150 ease-out data-starting-style:h-0 data-ending-style:h-0 [&[hidden]:not([hidden='until-found'])]:hidden">
+      <CollapsibleContent data-slot="tool-activity-content" className="h-(--collapsible-panel-height) overflow-hidden text-sm transition-[height] duration-150 ease-out data-starting-style:h-0 data-ending-style:h-0 [&[hidden]:not([hidden='until-found'])]:hidden">
         <div className="bg-muted mt-2 flex flex-col gap-2 rounded-lg p-2 text-xs">
           {hasInput ? (
             inputDiff !== null ? (

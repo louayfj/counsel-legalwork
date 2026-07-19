@@ -779,6 +779,12 @@ export function createBrowserPanel({ getWindow, remoteDebugPort }) {
       if (event.sender === menuOverlayView?.webContents) return;
       hideMenuOverlay();
     });
+    ipcMain.on("legalwork:browser:focus-content", (event) => {
+      const browserTab = Array.from(browserTabs.values()).find(
+        (tab) => tab.view.webContents === event.sender,
+      );
+      browserTab?.view.webContents.focus();
+    });
   }
 
   return {

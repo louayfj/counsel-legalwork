@@ -7,7 +7,7 @@ export interface LayoutStackProps {
 }
 
 export function LayoutStack({ children, className }: LayoutStackProps) {
-  return <div className={cn("@container/settings flex w-full max-w-3xl flex-col gap-y-6", className)}>{children}</div>;
+  return <div className={cn("@container/settings flex w-full max-w-4xl flex-col gap-y-5", className)}>{children}</div>;
 }
 
 interface LayoutSectionProps {
@@ -16,7 +16,7 @@ interface LayoutSectionProps {
 
 export function LayoutSection({ children }: LayoutSectionProps) {
   return (
-    <div data-section className="group/section flex flex-col gap-6">
+    <div data-section className="group/section flex flex-col gap-3">
       {children}
     </div>
   );
@@ -28,7 +28,7 @@ interface LayoutSectionHeaderProps {
 
 export function LayoutSectionHeader({ children }: LayoutSectionHeaderProps) {
   return (
-    <div className="flex flex-col gap-1">
+    <div data-settings-section-header className="flex flex-col gap-0.5 px-0.5">
       {children}
     </div>
   );
@@ -41,7 +41,7 @@ interface LayoutSectionTitleProps {
 
 export function LayoutSectionTitle({ children, className }: LayoutSectionTitleProps) {
   return (
-    <h3 className={cn("flex items-center gap-2 text-base font-medium text-foreground", className)}>
+    <h3 className={cn("flex items-center gap-2 text-[13px] font-semibold leading-5 text-foreground", className)}>
       {children}
     </h3>
   );
@@ -54,7 +54,7 @@ interface LayoutSectionDescriptionProps {
 
 export function LayoutSectionDescription({ children, className }: LayoutSectionDescriptionProps) {
   return (
-    <p className={cn("text-sm text-muted-foreground", className)}>
+    <p className={cn("text-[12px] leading-[1.45] text-muted-foreground", className)}>
       {children}
     </p>
   );
@@ -67,7 +67,7 @@ interface LayoutSectionContentProps {
 
 export function LayoutSectionContent({ children, className }: LayoutSectionContentProps) {
   return (
-    <div className={cn("flex flex-col gap-1", className)}>
+    <div data-settings-section-content className={cn("flex flex-col gap-px", className)}>
       {children}
     </div>
   );
@@ -80,7 +80,7 @@ interface LayoutSectionItemProps {
 
 export function LayoutSectionItem({ children, className }: LayoutSectionItemProps) {
   return (
-    <div className={cn("flex flex-col gap-3", className)}>
+    <div data-settings-row className={cn("flex flex-col gap-2.5", className)}>
       {children}
     </div>
   );
@@ -93,7 +93,7 @@ interface LayoutSectionItemHeaderProps {
 
 export function LayoutSectionItemHeader({ children, className }: LayoutSectionItemHeaderProps) {
   return (
-    <div className={cn("grid auto-rows-min items-start gap-y-1 gap-x-3 has-data-[slot=item-header-actions]:grid-cols-[1fr_auto]", className)}>
+    <div className={cn("grid auto-rows-min items-start gap-x-3 gap-y-0.5 has-data-[slot=item-header-actions]:grid-cols-[1fr_auto]", className)}>
       {children}
     </div>
   );
@@ -106,7 +106,7 @@ interface LayoutSectionItemTitleProps {
 
 export function LayoutSectionItemTitle({ children, className }: LayoutSectionItemTitleProps) {
   return (
-    <h4 data-slot="item-title" className={cn("flex items-center gap-2 text-base font-medium text-foreground group-data-section/section:text-sm", className)}>
+    <h4 data-slot="item-title" className={cn("flex items-center gap-2 text-[13px] font-medium leading-5 text-foreground", className)}>
       {children}
     </h4>
   );
@@ -119,7 +119,7 @@ interface LayoutSectionItemDescriptionProps {
 
 export function LayoutSectionItemDescription({ children, className }: LayoutSectionItemDescriptionProps) {
   return (
-    <p data-slot="item-description" className={cn("text-sm text-muted-foreground", className)}>
+    <p data-slot="item-description" className={cn("text-[12px] leading-[1.45] text-muted-foreground", className)}>
       {children}
     </p>
   );
@@ -132,7 +132,7 @@ interface LayoutSectionItemHeaderActionsProps {
 
 export function LayoutSectionItemHeaderActions({ children, className }: LayoutSectionItemHeaderActionsProps) {
   return (
-    <div data-slot="item-header-actions" className={cn("col-start-2 row-span-2 row-start-1 flex flex-wrap items-center gap-2 self-start justify-self-end", className)}>
+    <div data-slot="item-header-actions" className={cn("col-start-2 row-span-2 row-start-1 flex flex-wrap items-center gap-1.5 self-start justify-self-end", className)}>
       {children}
     </div>
   );
@@ -158,7 +158,7 @@ interface LayoutSectionItemFootnoteProps {
 
 export function LayoutSectionItemFootnote({ children, className }: LayoutSectionItemFootnoteProps) {
   return (
-    <p className={cn("text-xs text-muted-foreground", className)}>
+    <p className={cn("px-0.5 text-[11.5px] leading-[1.45] text-muted-foreground", className)}>
       {children}
     </p>
   );

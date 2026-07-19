@@ -179,6 +179,7 @@ export type OnboardingStep = "welcome" | "local" | "server" | "connecting";
 
 export const SETTINGS_TAB_VALUES = [
   "general",
+  "organisation",
   "ai",
   "preferences",
   "permissions",
@@ -273,6 +274,13 @@ export type WorkspaceLegalworkConfig = {
     preset?: string | null;
   } | null;
   authorizedRoots: string[];
+  organisation?: {
+    name?: string | null;
+    mode?: "dealership" | "dealer-group" | "axleo-internal" | null;
+    description?: string | null;
+    approvalLabel?: string | null;
+    instructions?: string | null;
+  } | null;
   blueprint?: WorkspaceBlueprint | null;
   reload?: {
     auto?: boolean;

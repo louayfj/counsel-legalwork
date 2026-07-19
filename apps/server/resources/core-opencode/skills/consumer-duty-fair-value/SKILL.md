@@ -12,10 +12,10 @@ Consumer Duty guidance.
 
 ## Required grounding
 
-1. Search Axleo's reference folder for `PRIN 2A fair value`, `Consumer Duty
+1. Search the active organisation's authorised reference material for `PRIN 2A fair value`, `Consumer Duty
    fair value`, and the product/service terms.
 2. Cite PRIN 2A rules, FCA guidance, PS/FG documents, or the user's product evidence.
-3. Call `axleo_citation_log` before the final answer.
+3. Call `compliance_citation_log` before the final answer.
 
 ## Workflow
 

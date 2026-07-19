@@ -3,6 +3,7 @@ import type * as React from "react";
 import {
   ArrowLeft,
   BookOpen,
+  Building2,
   Bug,
   ChevronDown,
   CloudCog,
@@ -60,6 +61,8 @@ import { WorkspaceIcon } from "../../../design-system/workspace-icon";
 
 export function getSettingsTabIcon(tab: SettingsTab) {
   switch (tab) {
+    case "organisation":
+      return Building2;
     case "ai":
       return Cpu;
     case "preferences":
@@ -101,6 +104,8 @@ export function getSettingsTabIcon(tab: SettingsTab) {
 
 export function getSettingsTabLabel(tab: SettingsTab) {
   switch (tab) {
+    case "organisation":
+      return "Organisation";
     case "ai":
       return "AI Providers";
     case "preferences":
@@ -144,6 +149,8 @@ export function getSettingsTabLabel(tab: SettingsTab) {
 
 export function getSettingsTabDescription(tab: SettingsTab) {
   switch (tab) {
+    case "organisation":
+      return "Who Leo works for, workspace mode, and organisation instructions";
     case "ai":
       return "Connect services that provide AI models";
     case "preferences":
@@ -189,13 +196,15 @@ export function getWorkspaceSettingsTabs(): SettingsTab[] {
   // Skills now live in the Integrations page (as a tab between Connectors and
   // Plugins); Workflows and Integrations (extensions) are top-level pages in the
   // main app shell. Preferences (Model) and Advanced are hidden.
-  return ["permissions"];
+  return ["organisation", "permissions"];
 }
 
 export function getGlobalSettingsTabs(developerMode: boolean): SettingsTab[] {
   // Appearance/Language and Recovery are hidden (theme is fixed to Light).
-  // "preferences" is the Privacy tab (usage-analytics opt-in).
-  const tabs: SettingsTab[] = ["ai", "safety", "shell", "environment", "preferences", "updates"];
+  // "preferences" is the Privacy tab (usage-analytics opt-in). Shell settings
+  // remain route-accessible, but are intentionally omitted from this focused
+  // navigation because they duplicate controls already exposed in the app.
+  const tabs: SettingsTab[] = ["ai", "safety", "environment", "preferences", "updates"];
   // Office add-ins install into local desktop apps, so the tab is desktop-only.
   // Placed right after the first tab.
   if (isDesktopRuntime()) tabs.splice(1, 0, "office-addins");
@@ -233,7 +242,7 @@ export function SettingsSidebar(props: SettingsSidebarProps) {
   const globalTabs = getGlobalSettingsTabs(props.developerMode);
 
   return (
-    <Sidebar className="mac:**:data-[sidebar=sidebar]:bg-transparent">
+    <Sidebar variant="floating" className="lw-settings-sidebar mac:**:data-[sidebar=sidebar]:bg-transparent">
       <div className="hidden h-10 mac:block mac:titlebar-drag" />
       <SidebarHeader>
         <SidebarMenu>
@@ -271,24 +280,6 @@ export function SettingsSidebar(props: SettingsSidebarProps) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {/* Top-level hub entry */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  type="button"
-                  isActive={props.activeTab === "general"}
-                  onClick={() => props.onSelectTab("general")}
-                >
-                  <Cog />
-                  <span>{getSettingsTabLabel("general")}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         <SidebarGroup>
           <SidebarGroupLabel>{t("settings.group_workspace")}</SidebarGroupLabel>
           <SidebarGroupContent>

@@ -565,11 +565,11 @@ function textToPdf(text: string, title: string, markdown = false) {
 
   const drawPageChrome = (pageIndex: number) => [
     `q 1 1 1 rg 0 0 ${pageWidth} ${pageHeight} re f Q`,
-    `BT ${color(colors.muted)} rg /F2 9 Tf ${margin} ${pageHeight - 36} Td (axleo legal work) Tj ET`,
+    `BT ${color(colors.muted)} rg /F2 9 Tf ${margin} ${pageHeight - 36} Td (Counsel) Tj ET`,
     `BT ${color(colors.muted)} rg /F1 8.5 Tf ${pageWidth - margin - 66} ${pageHeight - 36} Td (PDF export) Tj ET`,
     `q ${color(colors.accent)} RG 1.2 w ${margin} ${pageHeight - 50} m ${pageWidth - margin} ${pageHeight - 50} l S Q`,
     `q ${color(colors.border)} RG 0.5 w ${margin} 47 m ${pageWidth - margin} 47 l S Q`,
-    `BT ${color(colors.muted)} rg /F1 8.5 Tf ${margin} 31 Td (Generated from Axleo canvas) Tj ET`,
+    `BT ${color(colors.muted)} rg /F1 8.5 Tf ${margin} 31 Td (Generated from Counsel canvas) Tj ET`,
     `BT ${color(colors.muted)} rg /F1 8.5 Tf ${pageWidth - margin - 38} 31 Td (Page ${pageIndex + 1}) Tj ET`,
   ];
 

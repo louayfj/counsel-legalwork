@@ -11,11 +11,13 @@ Use this for UK automotive advertising and finance-promotion review.
 
 ## Required grounding
 
-1. Search Axleo's reference folder for `ASA CAP Code`, `vehicle advertising`,
+1. Search the active organisation's authorised reference material for `ASA CAP Code`, `vehicle advertising`,
    `finance promotion`, `price claims`, and the claim type.
-2. Use Legal Data Hunter MCP for ASA rulings and FCA enforcement examples where helpful.
+2. Use OpenLaw MCP for relevant UK legislation, judgments, ICO material, and FCA
+   deep links. Use the CAP Code, ASA rulings, and FCA publications themselves for
+   the controlling advertising and financial-promotion text.
 3. Cite CAP Code rules, ASA rulings, FCA/CONC sources, and exact ad text.
-4. Call `axleo_citation_log` before final.
+4. Call `compliance_citation_log` before final.
 
 ## Workflow
 

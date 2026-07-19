@@ -1,5 +1,5 @@
 /** @jsxImportSource react */
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { UIMessage } from "ai";
 import { useQuery } from "@tanstack/react-query";
 import type { SessionStatus } from "@opencode-ai/sdk/v2/client";
@@ -73,6 +73,7 @@ import { MessageList } from "@/components/chat/message-list";
 import { MessageListProvider, type DispatchAction } from "@/components/chat/message-list-provider";
 import { FusionIntroDialog, markFusionIntroSeen, shouldShowFusionIntro } from "@/react-app/domains/session/fusion/fusion-intro-dialog";
 import { useFusionStore } from "@/react-app/domains/session/fusion/fusion-store";
+import { takePendingSessionFiles } from "@/react-app/domains/session/sync/draft-store";
 import { OpenTargetProvider, type OpenTargetOptions } from "@/lib/target-provider";
 import type { ThreadStatus } from "@/lib/messages";
 import {
@@ -415,6 +416,7 @@ function mergeDrafts(drafts: ComposerDraft[]): ComposerDraft | null {
 }
 
 export function SessionSurface(props: SessionSurfaceProps) {
+  const sessionSurfaceRef = useRef<HTMLDivElement>(null);
   const local = useLocal();
   const { config: shellConfig } = useShellConfig();
   const showThinking = local.prefs.showThinking;
@@ -950,12 +952,17 @@ export function SessionSurface(props: SessionSurfaceProps) {
     setComposerAttachments(props.sessionId, [...attachments, ...next]);
   };
 
-  const handleRemoveAttachment = (id: string) => {
-    const target = attachments.find((item) => item.id === id);
-    if (target?.previewUrl) {
-      URL.revokeObjectURL(target.previewUrl);
+  useEffect(() => {
+    const pendingFiles = takePendingSessionFiles(props.workspaceId, props.sessionId);
+    if (pendingFiles.length > 0) handleAttachFiles(pendingFiles);
+  }, [props.sessionId, props.workspaceId]);
+
+  const handleRemoveAttachments = (ids: string[]) => {
+    const removed = new Set(ids);
+    for (const attachment of attachments) {
+      if (removed.has(attachment.id) && attachment.previewUrl) URL.revokeObjectURL(attachment.previewUrl);
     }
-    setComposerAttachments(props.sessionId, attachments.filter((item) => item.id !== id));
+    setComposerAttachments(props.sessionId, attachments.filter((item) => !removed.has(item.id)));
   };
 
   const handleInsertMention = (kind: ComposerMentionKind, value: string) => {
@@ -1265,9 +1272,50 @@ export function SessionSurface(props: SessionSurfaceProps) {
   }), [props.sessionId, renderedMessages]);
   useControlAction(sessionReadTranscriptControlAction);
 
+  const showNewTaskHome = renderedMessages.length === 0 &&
+    effectiveActivityStatus === "idle" &&
+    !pendingSessionLoad &&
+    !snapshotQuery.isError &&
+    !error;
+
+  useLayoutEffect(() => {
+    if (!showNewTaskHome) return;
+    const surface = sessionSurfaceRef.current;
+    const composer = composerShellRef.current;
+    const scroll = scrollRef.current;
+    if (!surface || !composer || !scroll) return;
+
+    const positionSuggestionsBelowComposer = () => {
+      const surfaceTop = surface.getBoundingClientRect().top;
+      const composerBottom = composer.getBoundingClientRect().bottom;
+      scroll.style.paddingTop = `${Math.ceil(composerBottom - surfaceTop + 16)}px`;
+    };
+
+    positionSuggestionsBelowComposer();
+    const observer = new ResizeObserver(positionSuggestionsBelowComposer);
+    observer.observe(surface);
+    observer.observe(composer);
+
+    return () => {
+      observer.disconnect();
+      scroll.style.removeProperty("padding-top");
+    };
+  }, [showNewTaskHome]);
+
   return (
     <DevProfiler id="SessionSurface">
-    <div className="flex h-full min-h-0 flex-col">
+    <div
+      ref={sessionSurfaceRef}
+      className="lw-session-surface relative flex h-full min-h-0 flex-col"
+      data-new-task-home={showNewTaskHome ? "true" : "false"}
+    >
+      {showNewTaskHome ? (
+        <div className="lw-new-task-heading pointer-events-none absolute inset-x-6 z-10 text-center">
+          <p>LegalWork</p>
+          <h2>What can Leo help you with?</h2>
+          <span>UK automotive retail compliance, grounded in your sources.</span>
+        </div>
+      ) : null}
       {fusionAvailable ? <FusionIntroDialog open={fusionIntroOpen} onOpenChange={setFusionIntroOpen} /> : null}
       {model.transitionState === "switching" && showDelayedLoading ? (
         <div className="flex justify-center px-6 pt-4">
@@ -1294,7 +1342,7 @@ export function SessionSurface(props: SessionSurfaceProps) {
             sessionScroll.markScrollGesture(event.currentTarget);
           }}
           onScroll={sessionScroll.handleScroll}
-          className="absolute inset-0 overflow-x-hidden overflow-y-auto overscroll-y-contain px-3 py-4 sm:px-5"
+          className={`lw-session-scroll absolute inset-0 overflow-x-hidden overscroll-y-contain px-3 py-4 sm:px-5 ${showNewTaskHome ? "overflow-y-hidden" : "overflow-y-auto"}`}
         >
           {/* Chat column: tighter than the composer (800px) so messages
                keep a comfortable reading width and don't feel "too big". */}
@@ -1367,15 +1415,17 @@ export function SessionSurface(props: SessionSurfaceProps) {
             )}
           </div>
         </div>
-        <SessionScrollOverlay
-          sessionId={props.sessionId}
-          isStreaming={chatStreaming}
-          onJumpToLatest={sessionScroll.jumpToLatest}
-          onJumpToStartOfMessage={sessionScroll.jumpToStartOfMessage}
-        />
+        {!showNewTaskHome ? (
+          <SessionScrollOverlay
+            sessionId={props.sessionId}
+            isStreaming={chatStreaming}
+            onJumpToLatest={sessionScroll.jumpToLatest}
+            onJumpToStartOfMessage={sessionScroll.jumpToStartOfMessage}
+          />
+        ) : null}
       </div>
 
-      <div ref={composerShellRef} className="shrink-0 px-0 pb-2 pt-2">
+      <div ref={composerShellRef} className="lw-composer-shell shrink-0 px-0 pb-2 pt-2">
         {(props.providerConnectedCount ?? 0) === 0 ? (
           <button
             type="button"
@@ -1418,7 +1468,7 @@ export function SessionSurface(props: SessionSurfaceProps) {
         onModelChange={props.onModelChange}
         attachments={attachments}
         onAttachFiles={handleAttachFiles}
-        onRemoveAttachment={handleRemoveAttachment}
+        onRemoveAttachments={handleRemoveAttachments}
         attachmentsEnabled={props.attachmentsEnabled}
         attachmentsDisabledReason={props.attachmentsDisabledReason}
         modelVariantLabel={props.modelVariantLabel}

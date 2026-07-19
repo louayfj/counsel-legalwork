@@ -65,7 +65,7 @@ export function WelcomePage({
               <div className="flex w-full max-w-md flex-col gap-11">
                 <div>
                   <span className="lw-section-eyebrow uppercase text-dls-secondary">Local computer-use agent</span>
-                  <h1 className="mt-4 text-[40px] font-medium leading-[1.02] tracking-[-0.04em] text-dls-text">
+                  <h1 className="mt-4 font-[family-name:var(--lw-serif)] text-[44px] font-medium leading-[1.02] tracking-[-0.045em] text-dls-text">
                     {t("welcome.title")}
                   </h1>
                   <p className="mt-4 max-w-sm text-[15px] leading-[1.6] text-dls-secondary">
@@ -93,7 +93,7 @@ export function WelcomePage({
                 </div>
 
                 <div className="space-y-3">
-                  <Button size="lg" className="w-full" onClick={onGetStarted} disabled={busy}>
+                  <Button size="lg" className="w-full bg-[var(--lw-teal)] text-white hover:bg-[var(--lw-teal-deep)]" onClick={onGetStarted} disabled={busy}>
                     {busy ? t("welcome.creating_workspace") : getStartedLabel || t("welcome.get_started")}
                   </Button>
                   {error ? <p className="text-center text-xs text-destructive">{error}</p> : null}
@@ -105,10 +105,10 @@ export function WelcomePage({
               </div>
             </div>
 
-            {/* ---- Right: the "lab" showcase — dark panel, Eigenwelt blue grain ---- */}
+            {/* ---- Right: a quiet material panel using LegalWork's teal field. ---- */}
             <div className="hidden lg:flex lg:w-[54%] lg:items-center lg:justify-center lg:p-6">
-              <div className="relative h-full max-h-[780px] w-full overflow-hidden rounded-[28px] bg-[#05080f] shadow-[0_30px_80px_-40px_rgba(5,12,40,0.6)]">
-                {/* Eigenwelt paper-grain gradient, deep navy → electric blue */}
+              <div className="relative h-full max-h-[780px] w-full overflow-hidden rounded-[28px] bg-[#e9eee9] shadow-[0_30px_80px_-48px_rgba(47,77,70,0.34)]">
+                {/* LegalWork paper-grain gradient, warm parchment → soft teal. */}
                 <div className="absolute inset-0 z-0">
                   <PaperGrainGradient
                     className="size-full"
@@ -118,39 +118,39 @@ export function WelcomePage({
                     offsetX={0}
                     offsetY={0}
                     softness={0.75}
-                    intensity={0.55}
-                    noise={0.16}
+                    intensity={0.34}
+                    noise={0.1}
                     shape="corners"
                     frame={37706.748}
-                    colors={["#0a1633", "#18498B", "#2352DE", "#05080f"]}
-                    colorBack="#05080f"
+                    colors={["#edf3ef", "#cfe1db", "#8ebeb5", "#f3eee5"]}
+                    colorBack="#e9eee9"
                   />
                 </div>
                 {/* subtle inner ring */}
-                <div className="pointer-events-none absolute inset-0 z-10 rounded-[28px] ring-1 ring-inset ring-white/10" />
+                <div className="pointer-events-none absolute inset-0 z-10 rounded-[28px] ring-1 ring-inset ring-black/5" />
 
                 {/* Content */}
                 <div className="relative z-20 flex h-full flex-col justify-between gap-10 p-10">
                   <div>
-                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/45">What it does</span>
-                    <h2 className="mt-4 max-w-[16ch] text-[28px] font-medium leading-[1.08] tracking-[-0.035em] text-white">
+                    <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#486a63]">What it does</span>
+                    <h2 className="mt-4 max-w-[16ch] font-[family-name:var(--lw-serif)] text-[32px] font-medium leading-[1.04] tracking-[-0.04em] text-[#24312d]">
                       Built for your documents.
                     </h2>
                   </div>
 
-                  <div className="divide-y divide-white/10 border-y border-white/10">
+                  <div className="divide-y divide-black/7 border-y border-black/7">
                     {capabilities.map((cap) => (
                       <div key={cap.title} className="group flex items-baseline gap-4 py-3.5">
-                        <span className="mt-1 size-1.5 shrink-0 translate-y-1.5 rounded-full bg-[#2352DE]" />
+                        <span className="mt-1 size-1.5 shrink-0 translate-y-1.5 rounded-full bg-[#147a73]" />
                         <div className="min-w-0">
-                          <div className="text-[14px] font-medium tracking-[-0.01em] text-white">{cap.title}</div>
-                          <div className="mt-0.5 text-[12.5px] leading-snug text-white/55">{cap.desc}</div>
+                          <div className="text-[14px] font-medium tracking-[-0.01em] text-[#24312d]">{cap.title}</div>
+                          <div className="mt-0.5 text-[12.5px] leading-snug text-[#53645f]">{cap.desc}</div>
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#486a63]/75">
                     Runs locally · Your model · Your data
                   </p>
                 </div>

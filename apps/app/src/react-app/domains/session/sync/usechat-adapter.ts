@@ -10,6 +10,7 @@ import {
   parseStructuredOutputUIPart,
   STRUCTURED_OUTPUT_TOOL,
 } from "./parse-tool-parts";
+import { stagedWorkspaceAttachmentUIParts } from "./staged-attachments";
 
 function recordValue(value: unknown, key: string) {
   if (!value || typeof value !== "object") return undefined;
@@ -195,6 +196,8 @@ export function snapshotToUIMessages(snapshot: LegalworkSessionSnapshot): UIMess
       parts: message.parts.flatMap<UIMessage["parts"][number]>((part) => {
         if (part.type === "text") {
           if (part.synthetic || part.ignored) return [];
+          const stagedAttachments = stagedWorkspaceAttachmentUIParts(part.text, part.id);
+          if (stagedAttachments) return stagedAttachments;
           return [{
             type: "text",
             text: getTextPartValue(part),

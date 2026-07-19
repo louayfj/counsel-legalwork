@@ -10,6 +10,8 @@ import {
   type ReactNode,
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { settingsWindowOpen } from "@/app/lib/desktop";
+import { isDesktopRuntime } from "@/app/lib/runtime-env";
 
 export type LegalworkControlSideEffect = "none" | "navigation" | "mutation" | "external";
 
@@ -452,6 +454,14 @@ const SETTINGS_TABS: ReadonlySet<string> = new Set<string>(SETTINGS_TAB_VALUES);
 export function LegalworkRouteControlActions() {
   const navigate = useNavigate();
 
+  const openSettingsRoute = useCallback(async (route: string) => {
+    if (isDesktopRuntime()) {
+      await settingsWindowOpen(route);
+      return;
+    }
+    navigate(route);
+  }, [navigate]);
+
   const actions = useMemo<LegalworkControlAction[]>(() => [
     {
       id: "route.session",
@@ -465,42 +475,42 @@ export function LegalworkRouteControlActions() {
       label: "Open general settings",
       description: "Navigate to general settings.",
       sideEffect: "navigation",
-      execute: () => navigate("/settings/general"),
+      execute: () => openSettingsRoute("/settings/ai"),
     },
     {
       id: "route.settings.extensions",
       label: "Open MCP and extension settings",
       description: "Navigate to extension and MCP settings.",
       sideEffect: "navigation",
-      execute: () => navigate("/settings/extensions"),
+      execute: () => openSettingsRoute("/settings/extensions"),
     },
     {
       id: "route.settings.skills",
       label: "Open skills settings",
       description: "Navigate to skills settings.",
       sideEffect: "navigation",
-      execute: () => navigate("/settings/skills"),
+      execute: () => openSettingsRoute("/settings/skills"),
     },
     {
       id: "route.settings.providers",
       label: "Open provider settings",
       description: "Navigate to AI provider settings.",
       sideEffect: "navigation",
-      execute: () => navigate("/settings/ai"),
+      execute: () => openSettingsRoute("/settings/ai"),
     },
     {
       id: "route.settings.authorized_folders",
       label: "Open authorized folder settings",
       description: "Navigate to authorized folders and file access settings.",
       sideEffect: "navigation",
-      execute: () => navigate("/settings/permissions"),
+      execute: () => openSettingsRoute("/settings/permissions"),
     },
     {
       id: "route.settings.appearance",
       label: "Open appearance settings",
       description: "Navigate to appearance settings.",
       sideEffect: "navigation",
-      execute: () => navigate("/settings/appearance"),
+      execute: () => openSettingsRoute("/settings/appearance"),
     },
     {
       id: "settings.panel.open",
@@ -518,7 +528,7 @@ export function LegalworkRouteControlActions() {
         },
       ],
       previewArgs: { panel: "ai" },
-      execute: (args) => {
+      execute: async (args) => {
         const requested = (args as { panel?: unknown } | undefined)?.panel;
         const panel = typeof requested === "string" ? requested.trim() : "";
         if (!SETTINGS_TABS.has(panel)) {
@@ -527,7 +537,7 @@ export function LegalworkRouteControlActions() {
             error: `Unknown settings panel: ${panel || "(empty)"}. Expected one of ${Array.from(SETTINGS_TABS).join(", ")}.`,
           };
         }
-        navigate(`/settings/${panel}`);
+        await openSettingsRoute(`/settings/${panel}`);
         return { ok: true, panel };
       },
     },
@@ -566,7 +576,7 @@ export function LegalworkRouteControlActions() {
         hint: "Use settings.panel.open to configure any of these. For example: settings.panel.open({panel:'ai'}) for providers, settings.panel.open({panel:'extensions'}) for MCPs.",
       }),
     },
-  ], [navigate]);
+  ], [navigate, openSettingsRoute]);
 
   useControlActions(actions);
   return null;

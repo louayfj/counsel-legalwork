@@ -14,6 +14,7 @@ const MAX_DRAFT_COUNT = 100;
 let draftCache: Map<string, SessionDraftSnapshot> | null = null;
 
 const listeners = new Set<() => void>();
+const pendingSessionFiles = new Map<string, File[]>();
 
 export const sessionDraftScopeKey = (
   workspaceId: string,
@@ -110,6 +111,27 @@ export const saveSessionDraft = (
   }
   persistDraftCache();
   emitDraftStoreChange();
+};
+
+export const savePendingSessionFiles = (
+  workspaceId: string,
+  sessionId: string,
+  files: File[],
+) => {
+  const key = sessionDraftScopeKey(workspaceId, sessionId);
+  if (!key || files.length === 0) return;
+  pendingSessionFiles.set(key, files);
+};
+
+export const takePendingSessionFiles = (
+  workspaceId: string,
+  sessionId: string,
+) => {
+  const key = sessionDraftScopeKey(workspaceId, sessionId);
+  if (!key) return [];
+  const files = pendingSessionFiles.get(key) ?? [];
+  pendingSessionFiles.delete(key);
+  return files;
 };
 
 export const clearSessionDraft = (

@@ -31,6 +31,7 @@ import {
   openComputerUseSetupApp,
   resetComputerUsePermissions,
 } from "./computer-use.mjs";
+import { getOfficeCliMcpCommand, getOfficeCliMcpEnvironment, getOfficeCliStatus } from "./officecli.mjs";
 import { createUiControlServer } from "./ui-control-server.mjs";
 import { createApplicationMenu } from "./app-menu.mjs";
 import { createBrowserPanel } from "./browser-panel.mjs";
@@ -495,6 +496,7 @@ const IDLE_ROUTER_INFO = Object.freeze({
 });
 
 let mainWindow = null;
+let settingsWindow = null;
 const pendingDeepLinks = [];
 
 const browserPanel = createBrowserPanel({
@@ -1100,6 +1102,8 @@ function applyNativeTheme(mode) {
 
   mainWindow?.setVibrancy(macosVibrancyForCurrentTheme());
   mainWindow?.setBackgroundColor("#00000001");
+  settingsWindow?.setVibrancy(macosVibrancyForCurrentTheme());
+  settingsWindow?.setBackgroundColor("#00000001");
 
   return true;
 }
@@ -1222,6 +1226,10 @@ const desktopCommandHandlers = {
         legalworkDevMode: process.env.LEGALWORK_DEV_MODE === "1",
       };
   },
+  "settingsWindowOpen": async (event, ...args) => {
+      await openSettingsWindow(args[0]);
+      return true;
+  },
   "getUiControlBridgeInfo": async (event, ...args) => {
       try {
         const raw = await readFile(path.join(app.getPath("userData"), "legalwork-ui-control.json"), "utf8");
@@ -1238,6 +1246,15 @@ const desktopCommandHandlers = {
   },
   "getComputerUseMcpCommand": async (event, ...args) => {
       return getComputerUseMcpCommand();
+  },
+  "getOfficeCliMcpCommand": async (event, ...args) => {
+      return getOfficeCliMcpCommand();
+  },
+  "getOfficeCliMcpEnvironment": async (event, ...args) => {
+      return getOfficeCliMcpEnvironment();
+  },
+  "getOfficeCliStatus": async (event, ...args) => {
+      return getOfficeCliStatus();
   },
   "checkComputerUsePermissions": async (event, ...args) => {
       const result = await checkComputerUsePermissions();
@@ -1796,6 +1813,91 @@ async function handleDesktopInvoke(event, command, ...args) {
     throw new Error(`Electron desktop bridge method is not implemented yet: ${command}`);
   }
   return handler(event, ...args);
+}
+
+function normalizeSettingsWindowRoute(value) {
+  const route = String(value ?? "").trim();
+  if (/^\/(?:workspace\/[^/]+\/)?settings(?:\/.*)?$/.test(route)) {
+    return route;
+  }
+  return "/settings/ai";
+}
+
+function settingsWindowTargetUrl(sourceUrl, route) {
+  const target = new URL(sourceUrl);
+  target.hash = `#${normalizeSettingsWindowRoute(route)}`;
+  return target.toString();
+}
+
+async function openSettingsWindow(route = "/settings/ai") {
+  const sourceWindow = await createMainWindow();
+  const targetUrl = settingsWindowTargetUrl(sourceWindow.webContents.getURL(), route);
+
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    if (settingsWindow.webContents.getURL() !== targetUrl) {
+      await settingsWindow.loadURL(targetUrl);
+    }
+    if (settingsWindow.isMinimized()) settingsWindow.restore();
+    settingsWindow.show();
+    settingsWindow.focus();
+    return settingsWindow;
+  }
+
+  const preloadPath = path.join(__dirname, "preload.mjs");
+  const appearance = { backgroundColor: "#fbfaf7" };
+  if (process.platform === "darwin") {
+    Object.assign(appearance, {
+      backgroundColor: "#00000001",
+      titleBarStyle: "hiddenInset",
+      trafficLightPosition: { x: 18, y: 18 },
+      vibrancy: macosVibrancyForCurrentTheme(),
+      visualEffectState: "active",
+    });
+  }
+
+  settingsWindow = new BrowserWindow({
+    width: 980,
+    height: 720,
+    minWidth: 760,
+    minHeight: 560,
+    title: `Settings — ${APP_NAME}`,
+    show: false,
+    fullscreenable: false,
+    ...appearance,
+    ...(APP_ICON_IMAGE && !APP_ICON_IMAGE.isEmpty() ? { icon: APP_ICON_IMAGE } : {}),
+    webPreferences: {
+      backgroundThrottling: false,
+      preload: preloadPath,
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: false,
+      plugins: true,
+      additionalArguments: ["--legalwork-window-role=settings"],
+    },
+  });
+  applicationMenu.applyVisibility(settingsWindow);
+  settingsWindow.center();
+
+  settingsWindow.on("page-title-updated", (event) => {
+    event.preventDefault();
+    settingsWindow?.setTitle(`Settings — ${APP_NAME}`);
+  });
+  settingsWindow.once("ready-to-show", () => {
+    settingsWindow?.show();
+    settingsWindow?.focus();
+  });
+  settingsWindow.on("closed", () => {
+    settingsWindow = null;
+  });
+  settingsWindow.webContents.setWindowOpenHandler(({ url }) => {
+    const local = url.startsWith("http://127.0.0.1") || url.startsWith("http://localhost");
+    if (local) return { action: "allow" };
+    void shell.openExternal(url);
+    return { action: "deny" };
+  });
+
+  await settingsWindow.loadURL(targetUrl);
+  return settingsWindow;
 }
 
 

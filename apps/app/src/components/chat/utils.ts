@@ -42,11 +42,16 @@ export function getFileTitle(part: FileUIPart) {
 }
 
 export function getMediaBadge(part: FileUIPart) {
+  const extension = part.filename?.split(".").pop()?.trim().toUpperCase()
+  if (extension && extension.length <= 8) {
+    return extension
+  }
+
   if (part.mediaType && part.mediaType !== "application/octet-stream") {
     return part.mediaType.replace(/^application\//, "").replace(/^text\//, "").toUpperCase()
   }
 
-  return part.filename?.split(".").pop()?.toUpperCase() ?? null
+  return null
 }
 
 export function getMessageCreated(message: UIMessage): number | null {

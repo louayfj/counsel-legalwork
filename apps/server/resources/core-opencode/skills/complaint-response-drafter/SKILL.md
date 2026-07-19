@@ -12,11 +12,12 @@ Use this for UK automotive retail complaint triage and response drafting.
 
 ## Required grounding
 
-1. Search Axleo's reference folder for the relevant source: DISP/complaints,
+1. Search the active organisation's authorised reference material for the relevant source: DISP/complaints,
    CONC, PRIN 2A, Consumer Rights Act 2015, UK GDPR/DPA, ASA CAP Code, or PS26/3.
-2. Use Legal Data Hunter MCP for current legislation, FCA/ICO/ASA decisions, and
-   enforcement examples where needed.
-3. Cite every legal/regulatory point and call `axleo_citation_log` before final.
+2. Use OpenLaw MCP for current UK legislation, judgments, ICO material, and FCA
+   deep links where needed. Use the FCA and ASA primary sources for the actual
+   FCA rule, notice, CAP Code, or ASA ruling text.
+3. Cite every legal/regulatory point and call `compliance_citation_log` before final.
 
 ## Workflow
 

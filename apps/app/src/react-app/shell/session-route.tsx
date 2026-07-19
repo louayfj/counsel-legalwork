@@ -36,6 +36,7 @@ import {
   revealDesktopItemInDir,
   pickDirectory,
   resolveWorkspaceListSelectedId,
+  settingsWindowOpen,
   workspaceBootstrap,
   workspaceForget,
   workspaceSetRuntimeActive,
@@ -88,7 +89,10 @@ import {
 import { useLocal } from "@/react-app/kernel/local-provider";
 import { usePlatform } from "@/react-app/kernel/platform";
 import { SessionPage, type OpenSessionTab } from "@/react-app/domains/session/chat/session-page";
-import { resolveModelReadableAttachmentMime } from "@/react-app/domains/session/sync/attachment-support";
+import {
+  resolveModelReadableAttachmentMime,
+  shouldStageAttachmentInWorkspace,
+} from "@/react-app/domains/session/sync/attachment-support";
 import { ReactSessionRuntime } from "@/react-app/domains/session/sync/runtime-sync";
 import { useSessionActivityStore } from "@/react-app/domains/session/status/session-activity-store";
 import { buildLegalworkEnvSystemContext } from "@/react-app/domains/session/sync/env-context";
@@ -96,10 +100,11 @@ import {
   applySessionRevert,
 } from "@/react-app/domains/session/sync/session-sync";
 import { firstLineLocalFileParts } from "@/react-app/domains/session/sync/prompt-file-parts";
+import { buildStagedWorkspaceAttachmentContext } from "@/react-app/domains/session/sync/staged-attachments";
 import { useSessionInteractions } from "@/react-app/domains/session/sync/use-session-interactions";
 import { useModelBehavior } from "@/react-app/domains/session/surface/use-model-behavior";
 import { runFusionSend } from "@/react-app/domains/session/fusion/fusion-controller";
-import { getFusionSelectedModels, isFusionEnabled } from "@/react-app/domains/session/fusion/fusion-store";
+import { getFusionSelectedModels, isFusionEnabled, useFusionStore } from "@/react-app/domains/session/fusion/fusion-store";
 import { useModelPicker } from "@/react-app/domains/session/modals/use-model-picker";
 import { appMentionInstruction } from "@/react-app/domains/session/surface/composer/app-mentions";
 import { CreateWorkspaceModal } from "@/react-app/domains/workspace/create-workspace-modal";
@@ -128,7 +133,7 @@ import {
   publishInspectorSlice,
   recordInspectorEvent,
 } from "../../app/lib/app-inspector";
-import { saveSessionDraft } from "@/react-app/domains/session/sync/draft-store";
+import { savePendingSessionFiles, saveSessionDraft } from "@/react-app/domains/session/sync/draft-store";
 import { useControlAction, type LegalworkControlAction } from "./control/control-provider";
 import { useReactRenderWatchdog } from "./react-render-watchdog";
 
@@ -682,6 +687,12 @@ export function SessionRoute() {
     const tab = route.replace(/^\/settings\/?/, "").replace(/^\/+|\/+$/g, "") || "general";
     const target = workspaceId ? workspaceSettingsRoute(workspaceId, tab) : route;
     writeActiveWorkspaceId(workspaceId || null);
+    if (isDesktopRuntime()) {
+      void settingsWindowOpen(target).catch(() => {
+        navigate(target, { state: { workspaceId, sessionId } });
+      });
+      return;
+    }
     navigate(target, { state: { workspaceId, sessionId } });
   }, [navigate, selectedSessionId, sidebarActiveWorkspaceId]);
 
@@ -777,7 +788,39 @@ export function SessionRoute() {
           return;
         }
 
-        const parts = await draftToParts(draft, selectedWorkspaceRoot);
+        const workspaceDocuments = draft.attachments.filter((attachment) =>
+          shouldStageAttachmentInWorkspace(attachment.mimeType, attachment.name),
+        );
+        const directAttachments = draft.attachments.filter((attachment) =>
+          !shouldStageAttachmentInWorkspace(attachment.mimeType, attachment.name),
+        );
+        const parts = await draftToParts(
+          { ...draft, attachments: directAttachments },
+          selectedWorkspaceRoot,
+        );
+
+        if (workspaceDocuments.length > 0) {
+          const workspaceClient = selectedWorkspaceEndpoint?.client ?? client;
+          if (!workspaceClient) {
+            throw new Error("The workspace file service is unavailable. Reconnect the workspace and try again.");
+          }
+          const uploads = await Promise.all(
+            workspaceDocuments.map(async (attachment) => ({
+              attachment,
+              result: await workspaceClient.uploadInbox(selectedWorkspaceId, attachment.file),
+            })),
+          );
+          parts.push({
+            type: "text",
+            text: buildStagedWorkspaceAttachmentContext(
+              uploads.map(({ attachment, result }) => ({
+                name: attachment.name,
+                path: `.opencode/legalwork/inbox/${result.path}`,
+                mimeType: attachmentMime(attachment),
+              })),
+            ),
+          });
+        }
         const envSystemContext = await buildLegalworkEnvSystemContext(client, {
           cacheKey: targetSessionId,
           runtimeKey: environmentRuntimeKey,
@@ -1533,6 +1576,11 @@ export function SessionRoute() {
       hasUsableModel={hasUsableModel}
       providers={providers}
       mcpConnectedCount={mcpConnectedCount}
+      modelLabel={modelLabel}
+      onOpenModelPicker={() => {
+        modelPicker.setQuery("");
+        modelPicker.setOpen(true);
+      }}
       onOpenSettings={() => handleOpenSettings("/settings/general")}
       onOpenProviderAuth={() => sessionProviderAuthStore.openProviderAuthModal({ returnFocusTarget: "composer" })}
       providerAuthModal={sessionProviderAuthSnapshot.providerAuthModalOpen ? {
@@ -1659,7 +1707,7 @@ export function SessionRoute() {
         onCreateTaskInWorkspace: (workspaceId) => {
           void handleCreateTaskInWorkspace(workspaceId);
         },
-        onCreateTaskWithPrompt: (workspaceId, prompt) => {
+        onCreateTaskWithPrompt: (workspaceId, prompt, options) => {
           void (async () => {
             const workspace = workspaces.find((item) => item.id === workspaceId);
             if (!workspace) return;
@@ -1675,6 +1723,14 @@ export function SessionRoute() {
                 await workspaceClient.session.create({ directory: workspace.path?.trim() || undefined }),
               );
               saveSessionDraft(workspaceId, session.id, { text: prompt, mode: "prompt" });
+              if (options?.files?.length) {
+                savePendingSessionFiles(workspaceId, session.id, options.files);
+              }
+              if (options?.fusion) {
+                const fusionStore = useFusionStore.getState();
+                fusionStore.setSelectedModels(session.id, local.prefs.fusionModels ?? []);
+                fusionStore.setEnabled(session.id, true);
+              }
               writeActiveWorkspaceId(workspaceId || null);
               writeLastSessionFor(workspaceId, session.id);
               rememberPendingCreatedSession(workspaceId, session.id);
