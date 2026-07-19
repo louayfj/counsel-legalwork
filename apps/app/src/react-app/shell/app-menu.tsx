@@ -2,6 +2,8 @@
 import { useEffect, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { settingsWindowOpen } from "@/app/lib/desktop";
+import { isDesktopRuntime } from "@/app/lib/runtime-env";
 import { useUpdateCheckRequestStore } from "../domains/settings/state/update-check-request";
 import { useUiStateStore } from "./ui-state-store";
 
@@ -14,10 +16,17 @@ export function AppMenuProvider({ children }: { children: ReactNode }) {
   const toggleSidebar = useUiStateStore((state) => state.toggleSidebar);
 
   useEffect(() => {
-    const openSettings = () => navigate("/settings/general");
+    const openSettingsRoute = (route: string) => {
+      if (isDesktopRuntime()) {
+        void settingsWindowOpen(route).catch(() => navigate(route));
+        return;
+      }
+      navigate(route);
+    };
+    const openSettings = () => openSettingsRoute("/settings/ai");
     const checkUpdates = () => {
       useUpdateCheckRequestStore.getState().requestUpdateCheck();
-      navigate("/settings/updates");
+      openSettingsRoute("/settings/updates");
     };
 
     window.addEventListener(NATIVE_MENU_OPEN_SETTINGS_EVENT, openSettings);

@@ -64,6 +64,7 @@ const MessageContent = ({
   if (markdown) {
     return (
       <MarkdownBlock
+        data-slot="message-content"
         className={cn(messageContentClassName, className)}
         text={children as string}
         streaming={isStreaming}
@@ -74,6 +75,7 @@ const MessageContent = ({
 
   return (
     <motion.div
+      data-slot="message-content"
       className={cn(messageContentClassName, className)}
       {...props}
     >

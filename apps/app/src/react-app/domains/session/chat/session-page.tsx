@@ -2,7 +2,7 @@
 import type { CSSProperties } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePanelRef } from "react-resizable-panels";
-import { Columns2, FileText, Folder, Globe, Mic2, ScrollText, Settings2, SquarePen, X, Zap } from "lucide-react";
+import { ArrowUp, ChevronDown, Columns2, FileText, Folder, Globe, Mic2, Orbit, Paperclip, ScrollText, Settings2, SlidersHorizontal, Sparkles, SquarePen, X, Zap } from "lucide-react";
 
 import { t } from "../../../../i18n";
 import { LEGALWORK_EXTENSION_CATALOG } from "../../../../app/constants";
@@ -67,6 +67,7 @@ import { useWorkspaceShellLayout } from "../../../shell/workspace-shell-layout";
 import { useControlAction, type LegalworkControlAction } from "../../../shell/control/control-provider";
 import { getExtensionId, isLegalWorkExtensionEnabled, LEGALWORK_EXTENSION_STATE_CHANGED } from "../../settings/extension-state";
 import { cn } from "@/lib/utils";
+import { AttachmentPreviewList } from "../surface/composer/attachment-preview-list";
 
 const STARTUP_SKELETON_ROWS = [
   { id: "intro", titleWidth: "42%", bodyWidth: "88%" },
@@ -75,6 +76,177 @@ const STARTUP_SKELETON_ROWS = [
 ];
 const GLOBAL_VOICE_SIDE_PANEL_KEY = "__legalwork_voice__";
 const EMPTY_TRANSCRIPT_TARGETS: OpenTarget[] = [];
+
+const NEW_TASK_SUGGESTIONS = [
+  {
+    title: "Build a compliance grid",
+    description: "Check evidence across many documents",
+    icon: Columns2,
+    prompt: "Review the motor finance files in this folder and build a compliance grid — one row per document, with columns for disclosure evidence, CONC references, Consumer Duty risks, customer communications, and missing documents. Cite each source and flag anything requiring human review.",
+  },
+  {
+    title: "Review a finance document",
+    description: "Propose tracked changes with citations",
+    icon: SquarePen,
+    prompt: "Review this customer-facing finance document: propose tracked changes for unclear, incomplete, or risky wording, cite the relevant FCA or consumer-law source, and flag anything that needs human compliance review.",
+  },
+  {
+    title: "Summarize compliance files",
+    description: "Get a cited overview of every file",
+    icon: ScrollText,
+    prompt: "Summarize the compliance documents in this folder. For each one, identify what it is, the FCA or consumer-law issue it relates to, the source citations, and anything that appears missing, stale, or high risk.",
+  },
+] as const;
+
+function newTaskFileId(file: File, index: number) {
+  return `${file.webkitRelativePath || file.name}:${file.lastModified}:${file.size}:${index}`;
+}
+
+function NewTaskLanding(props: {
+  workspaceId: string;
+  providerCount: number;
+  modelLabel: string;
+  onCreateTaskWithPrompt?: (
+    workspaceId: string,
+    prompt: string,
+    options?: { files?: File[]; fusion?: boolean },
+  ) => void;
+  onOpenProviderAuth?: () => void;
+  onOpenModelPicker?: () => void;
+  onOpenSettings?: () => void;
+}) {
+  const [draft, setDraft] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [fusionEnabled, setFusionEnabled] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentPreviews = useMemo(
+    () => files.map((file, index) => ({
+      id: newTaskFileId(file, index),
+      name: file.name,
+      mimeType: file.type || "application/octet-stream",
+      size: file.size,
+    })),
+    [files],
+  );
+  const canRun = Boolean(props.workspaceId && (draft.trim() || files.length > 0) && props.onCreateTaskWithPrompt);
+  const run = () => {
+    const prompt = draft.trim();
+    if ((!prompt && files.length === 0) || !props.workspaceId || !props.onCreateTaskWithPrompt) return;
+    props.onCreateTaskWithPrompt(props.workspaceId, prompt, { files, fusion: fusionEnabled });
+  };
+
+  return (
+    <div className="lw-empty-task-home mx-auto flex h-full min-h-0 w-full max-w-[900px] flex-col items-center overflow-hidden px-6 py-10">
+      <div className="lw-empty-task-heading text-center">
+        <p>LegalWork</p>
+        <h2>What can Leo help you with?</h2>
+        <span>UK automotive retail compliance, grounded in your sources.</span>
+      </div>
+
+      <div className="lw-empty-task-composer w-full max-w-[800px]">
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept=".pdf,.md,.doc,.docx,.xls,.xlsx,image/*"
+          className="hidden"
+          onChange={(event) => {
+            const selected = Array.from(event.currentTarget.files ?? []);
+            if (selected.length > 0) setFiles((current) => [...current, ...selected]);
+            event.currentTarget.value = "";
+          }}
+        />
+        <textarea
+          value={draft}
+          onChange={(event) => setDraft(event.currentTarget.value)}
+          onKeyDown={(event) => {
+            if (event.key !== "Enter" || event.shiftKey) return;
+            event.preventDefault();
+            run();
+          }}
+          placeholder="Ask Leo to review, draft, compare, or investigate…"
+          aria-label="New task prompt"
+          rows={2}
+        />
+        {files.length > 0 ? (
+          <AttachmentPreviewList
+            className="px-4 pb-2"
+            items={attachmentPreviews}
+            onRemove={(ids) => {
+              const removed = new Set(ids);
+              setFiles((current) => current.filter((file, index) => !removed.has(newTaskFileId(file, index))));
+            }}
+          />
+        ) : null}
+        <div className="lw-empty-task-actions">
+          <div className="lw-empty-task-toolbar">
+            <button type="button" className="lw-empty-task-icon-button" onClick={() => fileInputRef.current?.click()} title="Attach files" aria-label="Attach files">
+              <Paperclip size={17} />
+            </button>
+            <button type="button" className="lw-empty-task-icon-button" onClick={props.onOpenSettings} title="Configure tools" aria-label="Configure tools">
+              <SlidersHorizontal size={17} />
+            </button>
+            {props.providerCount === 0 ? (
+              <button type="button" onClick={props.onOpenProviderAuth} className="lw-empty-task-model lw-empty-task-model-warning">
+                Connect a model
+              </button>
+            ) : (
+              <button type="button" onClick={props.onOpenModelPicker} className="lw-empty-task-model" title="Choose model">
+                <span>{props.modelLabel}</span><ChevronDown size={13} />
+              </button>
+            )}
+            <button
+              type="button"
+              className="lw-empty-task-fusion"
+              data-active={fusionEnabled}
+              aria-pressed={fusionEnabled}
+              onClick={() => setFusionEnabled((enabled) => !enabled)}
+              title={fusionEnabled ? "Turn Fusion off" : "Turn Fusion on"}
+            >
+              <Orbit size={16} strokeWidth={1.7} /><span>Fusion</span>
+            </button>
+          </div>
+          <button
+            type="button"
+            className="lw-empty-task-run"
+            onClick={run}
+            disabled={!canRun}
+            aria-label="Run task"
+            title="Run task"
+          >
+            <ArrowUp size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className="lw-empty-task-suggestions w-full max-w-[800px]">
+        <div className="lw-empty-task-suggestion-label"><Sparkles size={13} /> Suggested tasks</div>
+        <div className="lw-empty-task-suggestion-grid">
+          {NEW_TASK_SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion.title}
+              type="button"
+              onClick={() => props.onCreateTaskWithPrompt?.(props.workspaceId, suggestion.prompt)}
+            >
+              <suggestion.icon size={17} />
+              <span>
+                <strong>{suggestion.title}</strong>
+                <small>{suggestion.description}</small>
+              </span>
+            </button>
+          ))}
+          <button type="button" onClick={props.onOpenSettings}>
+            <Settings2 size={17} />
+            <span>
+              <strong>Connect an integration</strong>
+              <small>Add connectors, skills, and plugins</small>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export type OpenSessionTab = {
   workspaceId: string;
@@ -114,7 +286,11 @@ export type SessionPageSidebarProps = {
   onOpenSession: (workspaceId: string, sessionId: string) => void;
   onPrefetchSession?: (workspaceId: string, sessionId: string) => void;
   onCreateTaskInWorkspace: (workspaceId: string) => void;
-  onCreateTaskWithPrompt?: (workspaceId: string, prompt: string) => void;
+  onCreateTaskWithPrompt?: (
+    workspaceId: string,
+    prompt: string,
+    options?: { files?: File[]; fusion?: boolean },
+  ) => void;
   onOpenRenameWorkspace: (workspaceId: string) => void;
   onRevealWorkspace: (workspaceId: string) => void;
   onForgetWorkspace: (workspaceId: string) => void;
@@ -159,7 +335,9 @@ export type SessionPageProps = {
   hasUsableModel?: boolean;
   providers?: ProviderListItem[];
   mcpConnectedCount: number;
-  onOpenSettings: () => void;
+  modelLabel: string;
+  onOpenModelPicker: () => void;
+  onOpenSettings: (route?: string) => void;
   sidebar: SessionPageSidebarProps;
   surface?: SessionPageSurfaceProps | null;
   history?: SessionPageHistoryControls | null;
@@ -296,8 +474,9 @@ export function SessionPage(props: SessionPageProps) {
   const transcriptTargets = usePanelTabStore((state) => (
     props.selectedSessionId ? state.transcriptArtifactTargets[props.selectedSessionId] ?? EMPTY_TRANSCRIPT_TARGETS : EMPTY_TRANSCRIPT_TARGETS
   ));
-  const sessionPanelState = useSessionPanelState(props.selectedSessionId ?? "");
-  const activePanelTab = useActivePanelTab(props.selectedSessionId ?? "");
+  const sidePanelSessionId = props.selectedSessionId ?? `workspace:${props.selectedWorkspaceId}`;
+  const sessionPanelState = useSessionPanelState(sidePanelSessionId);
+  const activePanelTab = useActivePanelTab(sidePanelSessionId);
   const [hiddenTargetRevision, setHiddenTargetRevision] = useState(0);
   const [, setExtensionStateVersion] = useState(0);
   const hiddenAccessibleTargetIds = useMemo(
@@ -586,8 +765,7 @@ export function SessionPage(props: SessionPageProps) {
       }
       return;
     }
-    if (!props.selectedSessionId) return;
-    openTab(props.selectedSessionId, {
+    openTab(sidePanelSessionId, {
       id: `file:${entry.path.toLowerCase()}`,
       type: "artifact",
       label: entry.name,
@@ -598,7 +776,7 @@ export function SessionPage(props: SessionPageProps) {
     });
     preserveSidePanelOnPanelOpenRef.current = true;
     setCurrentSidePanel("panel");
-  }, [downloadOpenTarget, openTab, props.selectedSessionId, props.selectedWorkspaceDisplay.workspaceType, props.selectedWorkspaceRoot, setCurrentSidePanel]);
+  }, [downloadOpenTarget, openTab, props.selectedWorkspaceDisplay.workspaceType, props.selectedWorkspaceRoot, setCurrentSidePanel, sidePanelSessionId]);
   const openExtensionsRailPane = useCallback(() => {
     toggleCurrentSidePanel("extensions");
   }, [toggleCurrentSidePanel]);
@@ -848,7 +1026,7 @@ export function SessionPage(props: SessionPageProps) {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col bg-[radial-gradient(circle_at_top,rgba(74,111,255,0.12),transparent_42%),var(--app-bg,#0b1020)] text-dls-text mac:bg-transparent">
+    <div className="lw-app-shell flex h-full min-h-0 flex-col text-dls-text">
       <SidebarProvider
         open={sidebarOpen}
         onOpenChange={setSidebarOpen}
@@ -892,6 +1070,7 @@ export function SessionPage(props: SessionPageProps) {
           onRevealWorkspace={props.sidebar.onRevealWorkspace}
           onForgetWorkspace={props.sidebar.onForgetWorkspace}
           onOpenCreateWorkspace={props.sidebar.onOpenCreateWorkspace}
+          onOpenSettings={props.onOpenSettings}
           onShowWorkflows={props.sidebar.onShowWorkflows}
           onShowExtensions={props.sidebar.onShowExtensions}
           activeNav={props.sidebar.activeNav}
@@ -902,9 +1081,9 @@ export function SessionPage(props: SessionPageProps) {
           // Top-level pages (Workflows / Integrations): keep the app chrome the
           // chat has — the draggable top header and the bottom StatusBar (with the
           // settings gear) — and swap only the center content.
-          <SidebarInset className="min-h-0 overflow-hidden bg-background mac:bg-background/80 mac:[&_header]:transition-[padding-left] mac:[&_header]:duration-200 mac:[&_header]:ease-linear mac:peer-data-[state=collapsed]:[&_header]:pl-28 mac:max-md:[&_header]:pl-28">
+          <SidebarInset className="lw-workspace-pane min-h-0 overflow-hidden mac:[&_header]:transition-[padding-left] mac:[&_header]:duration-200 mac:[&_header]:ease-linear mac:peer-data-[state=collapsed]:[&_header]:pl-28 mac:max-md:[&_header]:pl-28">
             <main className="flex h-full min-w-0 flex-1 flex-col overflow-hidden">
-              <header className="z-10 flex h-10 shrink-0 items-center justify-between border-b border-border px-4 md:px-6 mac:titlebar-drag mac:backdrop-blur-2xl mac:backdrop-saturate-150">
+              <header className="lw-titlebar z-10 flex h-12 shrink-0 items-center justify-between px-4 md:px-6 mac:titlebar-drag">
                 <div className="flex min-w-0 items-center gap-3">
                   {shellConfig.sidebar ? (
                 <SidebarTrigger className="mac:hidden" />
@@ -935,7 +1114,7 @@ export function SessionPage(props: SessionPageProps) {
             </main>
           </SidebarInset>
         ) : (
-        <SidebarInset className="min-h-0 overflow-hidden bg-background mac:bg-background/80 mac:[&_header]:transition-[padding-left] mac:[&_header]:duration-200 mac:[&_header]:ease-linear mac:peer-data-[state=collapsed]:[&_header]:pl-28 mac:max-md:[&_header]:pl-28">
+        <SidebarInset className="lw-workspace-pane min-h-0 overflow-hidden mac:[&_header]:transition-[padding-left] mac:[&_header]:duration-200 mac:[&_header]:ease-linear mac:peer-data-[state=collapsed]:[&_header]:pl-28 mac:max-md:[&_header]:pl-28">
           <div className="flex min-h-0 flex-1">
           <ResizablePanelGroup
             orientation="horizontal"
@@ -943,8 +1122,8 @@ export function SessionPage(props: SessionPageProps) {
             className="min-h-0 flex-1"
           >
             <ResizablePanel minSize="360px" className="min-w-0">
-              <main className="flex h-full min-w-0 flex-col overflow-hidden border-r border-border">
-          <header className="z-10 flex h-10 shrink-0 items-center justify-between border-b border-border px-4 md:px-6 mac:titlebar-drag  mac:backdrop-blur-2xl mac:backdrop-saturate-150 @container/titlebar">
+              <main className="flex h-full min-w-0 flex-col overflow-hidden">
+          <header className="lw-titlebar z-10 flex h-12 shrink-0 items-center justify-between px-4 md:px-6 mac:titlebar-drag @container/titlebar">
             <div className="flex min-w-0 items-center gap-3">
               {shellConfig.sidebar ? (
                 <SidebarTrigger className="mac:hidden" />
@@ -953,14 +1132,17 @@ export function SessionPage(props: SessionPageProps) {
                 // Word pane back button) when the sidebar trigger is hidden.
                 <span aria-hidden className="w-6 shrink-0" />
               )}
-              <h1 className="truncate text-[15px] font-semibold text-dls-text">
+              <h1 className="lw-titlebar-title truncate text-[15px] font-semibold text-dls-text">
                 {showWorkspaceSetupEmptyState
                   ? t("session.create_or_connect_workspace")
-                  : selectedSessionTitle || t("session.default_title")}
+                  : selectedSessionTitle || (props.selectedWorkspaceId ? "New task" : t("session.default_title"))}
               </h1>
-              <span className="hidden truncate text-[13px] text-dls-secondary lg:inline">
-                {workspaceName}
-              </span>
+              {workspaceName ? (
+                <span className="lw-titlebar-workspace hidden min-w-0 items-center gap-1.5 truncate text-[12px] text-dls-secondary lg:flex">
+                  <Folder className="size-3.5 shrink-0" strokeWidth={1.6} />
+                  <span className="truncate">{workspaceName}</span>
+                </span>
+              ) : null}
               {props.developerMode ? (
                 <span className="hidden text-[12px] text-dls-secondary lg:inline">
                   {props.headerStatus}
@@ -996,7 +1178,7 @@ export function SessionPage(props: SessionPageProps) {
 
           <ResizablePanelGroup orientation="vertical" className="min-h-0 flex-1 overflow-hidden">
             <ResizablePanel minSize="180px" className="min-h-0">
-            <div className="relative h-full min-w-0 overflow-hidden bg-dls-surface mac:bg-dls-surface/85 mac:backdrop-blur-2xl mac:backdrop-saturate-150">
+            <div className="lw-session-canvas relative h-full min-w-0 overflow-hidden">
               {showStartupSkeleton ? (
                 <div className="px-6 py-14" role="status" aria-live="polite">
                   <div className="mx-auto max-w-2xl space-y-6">
@@ -1139,7 +1321,13 @@ export function SessionPage(props: SessionPageProps) {
               ) : null}
 
               {!showDelayedSessionLoadingState && !canRenderReactSurface && !showStartupSkeleton ? (
-                <div className={`mx-auto max-w-[800px] px-6 ${showWorkspaceSetupEmptyState ? "pt-20" : "pt-10"}`}>
+                <div
+                  className={cn(
+                    !props.selectedSessionId && !props.notFoundMessage && !showWorkspaceSetupEmptyState && !showSelectedWorkspaceError
+                      ? "h-full w-full"
+                      : `mx-auto max-w-[800px] px-6 ${showWorkspaceSetupEmptyState ? "pt-20" : "pt-10"}`,
+                  )}
+                >
                   {props.notFoundMessage ? (
                     <div className="px-6 py-16 text-center">
                       <div className="mx-auto max-w-md rounded-2xl border border-dls-border bg-dls-card px-5 py-6 shadow-[var(--dls-card-shadow)]">
@@ -1185,100 +1373,15 @@ export function SessionPage(props: SessionPageProps) {
                       {t("session.loading_detail")}
                     </div>
                   ) : (
-                    <div className="flex flex-1 items-center justify-center px-6 py-16">
-                      <div className="w-full max-w-md space-y-6">
-                        <div className="space-y-1 text-center">
-                          <h2 className="text-lg font-semibold text-dls-text">
-                            {providerCount === 0
-                              ? t("session.connect_model_to_start")
-                              : t("session.select_or_create_session")}
-                          </h2>
-                          <p className="text-xs text-dls-secondary">
-                            {providerCount === 0
-                              ? "Add an AI model provider so your tasks can run."
-                              : "Try one of these to get started:"}
-                          </p>
-                        </div>
-                        <div className="space-y-2">
-                          {providerCount === 0 ? (
-                            <button
-                              type="button"
-                              className="flex w-full items-start gap-3 rounded-xl border border-blue-7/50 bg-blue-2/40 p-3.5 text-left transition-colors hover:bg-blue-3/50"
-                              onClick={() => props.onOpenProviderAuth?.()}
-                            >
-                              <Zap className="mt-0.5 size-5 shrink-0 text-blue-10" />
-                              <div>
-                                <div className="text-[13px] font-medium text-dls-text">Connect a model provider</div>
-                                <div className="mt-0.5 text-[11px] text-dls-secondary">
-                                  Add an API key for Anthropic, OpenAI, Google, or other providers
-                                </div>
-                              </div>
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            className="flex w-full items-start gap-3 rounded-xl border border-dls-border bg-dls-surface p-3.5 text-left transition-colors hover:bg-dls-hover"
-                            onClick={() => {
-                              props.sidebar.onCreateTaskWithPrompt?.(
-                                props.selectedWorkspaceId,
-                                "Review the motor finance files in this folder and build a compliance grid — one row per document, with columns for disclosure evidence, CONC references, Consumer Duty risks, customer communications, and missing documents. Cite each source and flag anything requiring human review.",
-                              );
-                            }}
-                          >
-                            <Columns2 className="mt-0.5 size-5 shrink-0 text-dls-secondary" />
-                            <div>
-                              <div className="text-[13px] font-medium text-dls-text">Build a compliance grid</div>
-                              <div className="mt-0.5 text-[11px] text-dls-secondary">Check evidence across many documents</div>
-                            </div>
-                          </button>
-                          <button
-                            type="button"
-                            className="flex w-full items-start gap-3 rounded-xl border border-dls-border bg-dls-surface p-3.5 text-left transition-colors hover:bg-dls-hover"
-                            onClick={() => {
-                              props.sidebar.onCreateTaskWithPrompt?.(
-                                props.selectedWorkspaceId,
-                                "Review this customer-facing finance document: propose tracked changes for unclear, incomplete, or risky wording, cite the relevant FCA or consumer-law source, and flag anything that needs human compliance review.",
-                              );
-                            }}
-                          >
-                            <SquarePen className="mt-0.5 size-5 shrink-0 text-dls-secondary" />
-                            <div>
-                              <div className="text-[13px] font-medium text-dls-text">Review a finance document</div>
-                              <div className="mt-0.5 text-[11px] text-dls-secondary">Propose tracked changes with citations</div>
-                            </div>
-                          </button>
-                          <button
-                            type="button"
-                            className="flex w-full items-start gap-3 rounded-xl border border-dls-border bg-dls-surface p-3.5 text-left transition-colors hover:bg-dls-hover"
-                            onClick={() => {
-                              props.sidebar.onCreateTaskWithPrompt?.(
-                                props.selectedWorkspaceId,
-                                "Summarize the compliance documents in this folder. For each one, identify what it is, the FCA or consumer-law issue it relates to, the source citations, and anything that appears missing, stale, or high risk.",
-                              );
-                            }}
-                          >
-                            <ScrollText className="mt-0.5 size-5 shrink-0 text-dls-secondary" />
-                            <div>
-                              <div className="text-[13px] font-medium text-dls-text">Summarize compliance files</div>
-                              <div className="mt-0.5 text-[11px] text-dls-secondary">Get a cited overview of every file</div>
-                            </div>
-                          </button>
-                          <button
-                            type="button"
-                            className="flex w-full items-start gap-3 rounded-xl border border-dls-border bg-dls-surface p-3.5 text-left transition-colors hover:bg-dls-hover"
-                            onClick={() => {
-                              props.onOpenSettings?.();
-                            }}
-                          >
-                            <img src="https://cdn.simpleicons.org/hackthebox" alt="" width={20} height={20} className="mt-0.5 shrink-0" />
-                            <div>
-                              <div className="text-[13px] font-medium text-dls-text">Connect an extension</div>
-                              <div className="mt-0.5 text-[11px] text-dls-secondary">Add MCP servers, plugins, and integrations</div>
-                            </div>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                    <NewTaskLanding
+                      workspaceId={props.selectedWorkspaceId}
+                      providerCount={providerCount}
+                      modelLabel={props.modelLabel}
+                      onCreateTaskWithPrompt={props.sidebar.onCreateTaskWithPrompt}
+                      onOpenProviderAuth={props.onOpenProviderAuth}
+                      onOpenModelPicker={props.onOpenModelPicker}
+                      onOpenSettings={props.onOpenSettings}
+                    />
                   )}
                 </div>
               ) : null}
@@ -1298,7 +1401,7 @@ export function SessionPage(props: SessionPageProps) {
             ) : null}
           </ResizablePanelGroup>
 
-          {shellConfig.statusBar ? (
+          {shellConfig.statusBar && props.selectedWorkspaceId ? (
             <StatusBar
               clientConnected={props.clientConnected}
               legalworkServerStatus={props.legalworkServerStatus}
@@ -1321,7 +1424,7 @@ export function SessionPage(props: SessionPageProps) {
                   defaultSize={`${activeSidePanel === "extensions" ? Math.max(browserPanelDefaultWidth, 480) : browserPanelDefaultWidth}px`}
                   minSize={activeSidePanel === "extensions" ? "420px" : "320px"}
                   maxSize="70%"
-                  className="min-h-0 overflow-hidden lg:flex lg:flex-col"
+                  className="lw-side-panel-host min-h-0 overflow-hidden lg:flex lg:flex-col"
                 >
                   {activeSidePanel === "extensions" && props.settingsSlot ? (
                     <div className="flex h-full min-h-0 flex-col overflow-y-auto bg-background">
@@ -1343,9 +1446,9 @@ export function SessionPage(props: SessionPageProps) {
                       onOpenFile={openWorkspaceFileEntry}
                       onClose={closeRightPane}
                     />
-                  ) : activeSidePanel === "panel" && props.selectedSessionId ? (
+                  ) : activeSidePanel === "panel" ? (
                     <SidePanel
-                      sessionId={props.selectedSessionId}
+                      sessionId={sidePanelSessionId}
                       client={props.legalworkServerClient}
                       workspaceId={props.runtimeWorkspaceId}
                       workspaceRoot={props.selectedWorkspaceRoot}
@@ -1357,8 +1460,8 @@ export function SessionPage(props: SessionPageProps) {
               </>
             ) : null}
           </ResizablePanelGroup>
-          {shellConfig.panelRail ? (
-          <aside className="flex w-11 shrink-0 flex-col items-center gap-1 border-l border-border bg-background/95 px-1 py-2 text-muted-foreground mac:titlebar-no-drag">
+          {shellConfig.panelRail && props.selectedWorkspaceId ? (
+          <aside className="lw-tool-rail flex w-12 shrink-0 flex-col items-center gap-1 px-1.5 py-2 text-muted-foreground mac:titlebar-no-drag" aria-label="Workspace tools">
             {isElectronRuntime() ? (
               <Button
                 variant="ghost"
@@ -1399,8 +1502,8 @@ export function SessionPage(props: SessionPageProps) {
                 panelRailActive && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
               )}
               onClick={openArtifactRailPane}
-              title={hasArtifactTargets ? `Artifacts (${artifactTargetCount})` : "No artifacts yet"}
-              aria-label={hasArtifactTargets ? `Artifacts (${artifactTargetCount})` : "No artifacts yet"}
+              title={hasArtifactTargets ? `Canvas (${artifactTargetCount})` : "Canvas — available when a task creates a document"}
+              aria-label={hasArtifactTargets ? `Canvas (${artifactTargetCount})` : "Canvas"}
               aria-pressed={panelRailActive}
               disabled={!hasArtifactTargets}
             >
@@ -1422,7 +1525,7 @@ export function SessionPage(props: SessionPageProps) {
               title="Workspace files"
               aria-label="Workspace files"
               aria-pressed={filesRailActive}
-              disabled={!props.selectedSessionId || !props.legalworkServerClient || !props.runtimeWorkspaceId}
+              disabled={!props.legalworkServerClient || !props.runtimeWorkspaceId}
             >
               <Folder size={17} />
             </Button>
@@ -1433,7 +1536,7 @@ export function SessionPage(props: SessionPageProps) {
                 "rounded-xl transition-colors hover:bg-muted hover:text-foreground",
                 extensionsRailActive && "bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary",
               )}
-              onClick={props.settingsSlot ? openExtensionsRailPane : props.onOpenSettings}
+              onClick={props.settingsSlot ? openExtensionsRailPane : () => props.onOpenSettings()}
               title="Extensions"
               aria-label="Extensions"
               aria-pressed={extensionsRailActive}

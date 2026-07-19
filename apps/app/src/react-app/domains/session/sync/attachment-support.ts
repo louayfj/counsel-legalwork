@@ -1,8 +1,9 @@
 /**
- * Which attachment media types can be sent to the model as file parts.
+ * Which attachment media types the composer accepts.
  *
- * Providers (via opencode + the AI SDK) accept images, PDFs, text, and the
- * Office formats this app knows how to route through LegalWork document tools.
+ * Providers (via opencode + the AI SDK) consistently accept images and text.
+ * Office files and PDFs are accepted too, but are staged in the workspace and
+ * routed through LegalWork document tools before the model sees them.
  * Anything else (e.g. Keynote `application/x-iwork-keynote-sffkey`) is rejected by the provider with an UnsupportedFunctionalityError
  * — and because the file part lives in server-side session history, every
  * later message in the session replays the failure. Blocking these at attach
@@ -19,6 +20,12 @@ const OFFICE_MIME_BY_EXTENSION: Record<string, string> = {
 };
 
 const OFFICE_MIMES = new Set(Object.values(OFFICE_MIME_BY_EXTENSION));
+
+const WORKSPACE_DOCUMENT_EXTENSIONS = new Set(["doc", "docx", "pdf", "xls", "xlsx"]);
+const WORKSPACE_DOCUMENT_MIMES = new Set([
+  ...OFFICE_MIMES,
+  "application/pdf",
+]);
 
 function extensionFromName(fileName: string | undefined) {
   const match = fileName?.trim().toLowerCase().match(/\.([a-z0-9]+)$/);
@@ -38,5 +45,18 @@ export function resolveModelReadableAttachmentMime(mimeType: string, fileName?: 
 }
 
 export function isModelReadableAttachment(mimeType: string, fileName?: string) {
-  return resolveModelReadableAttachmentMime(mimeType, fileName) !== null;
+  return (
+    shouldStageAttachmentInWorkspace(mimeType, fileName) ||
+    resolveModelReadableAttachmentMime(mimeType, fileName) !== null
+  );
+}
+
+/**
+ * Documents are staged in the workspace instead of sent as raw model file
+ * parts. Provider support for Office files and PDFs varies by model; a
+ * workspace path lets the agent use the bundled document tools consistently.
+ */
+export function shouldStageAttachmentInWorkspace(mimeType: string, fileName?: string) {
+  const mime = mimeType.trim().toLowerCase();
+  return WORKSPACE_DOCUMENT_MIMES.has(mime) || WORKSPACE_DOCUMENT_EXTENSIONS.has(extensionFromName(fileName));
 }

@@ -83,7 +83,10 @@ import {
   readLegalworkWorkspaceConfig,
   writeLegalworkWorkspaceConfig,
 } from "./legalwork-workspace-config-store.js";
-import { buildLegalworkRuntimeConfigObject } from "./legalwork-runtime-config.js";
+import {
+  buildLegalworkRuntimeConfigObject,
+  writeLegalworkRuntimeConfigFile,
+} from "./legalwork-runtime-config.js";
 import pkg from "../package.json" with { type: "json" };
 import constants from "../../../constants.json" with { type: "json" };
 
@@ -1491,7 +1494,7 @@ function createRoutes(
     unwrapOpencodeResult,
   });
 
-  addRoute(routes, "POST", "/experimental/axleo/citations", "client", async (ctx) => {
+  const logComplianceCitations = async (ctx: RequestContext) => {
     const body = await readJsonBody(ctx.request);
     const recordBody = isRecord(body) ? body : {};
     const workspace = await resolveWorkspaceFromCitationContext(config, recordBody);
@@ -1505,7 +1508,7 @@ function createRoutes(
       id: shortId(),
       workspaceId: workspace.id,
       actor: ctx.actor ?? { type: "remote" },
-      action: "axleo.citations.log",
+      action: "compliance.citations.log",
       target: "assistant-answer",
       summary: `${answerSummary} (${citations.length} citation${citations.length === 1 ? "" : "s"})`,
       timestamp: Date.now(),
@@ -1513,7 +1516,11 @@ function createRoutes(
     });
 
     return jsonResponse({ ok: true, workspaceId: workspace.id, citations: citations.length });
-  });
+  };
+
+  addRoute(routes, "POST", "/experimental/compliance/citations", "client", logComplianceCitations);
+  // Compatibility route for older packaged agents that still call the Axleo-only endpoint.
+  addRoute(routes, "POST", "/experimental/axleo/citations", "client", logComplianceCitations);
 
   addRoute(routes, "GET", "/workspace/:id/config", "client", async (ctx) => {
     const workspace = await resolveWorkspace(config, ctx.params.id);
@@ -2017,6 +2024,7 @@ function createRoutes(
         ...current,
         ...legalwork,
       }));
+      await writeLegalworkRuntimeConfigFile(config, workspace.id);
     }
 
     await recordAudit(workspace.path, {
@@ -2029,7 +2037,7 @@ function createRoutes(
       timestamp: Date.now(),
     });
 
-    if (opencode) {
+    if (opencode || legalwork) {
       emitReloadEvent(ctx.reloadEvents, workspace, "config", buildConfigTrigger(legalworkConfigPath(workspace.path)));
     }
 

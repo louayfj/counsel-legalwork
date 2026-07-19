@@ -8,6 +8,7 @@ import {
   RefreshCcw,
   ShieldCheck,
   Sparkles,
+  Building2,
   Zap,
 } from "lucide-react";
 
@@ -23,6 +24,7 @@ export type GeneralSettingsViewProps = {
 type SettingsItem = { tab: SettingsTab; icon: typeof Sparkles; title: string; desc: string };
 
 const workspaceItems: SettingsItem[] = [
+  { tab: "organisation", icon: Building2, title: "Organisation", desc: "Who Leo works for in this workspace." },
   { tab: "permissions", icon: FolderLock, title: "Permissions", desc: "Authorized folders and file access." },
 ];
 
@@ -55,16 +57,16 @@ function SettingsRow(props: { icon: typeof Sparkles; title: string; desc: string
     <button
       type="button"
       onClick={props.onClick}
-      className="group flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-[rgba(35,82,222,0.055)]"
+      className="group flex w-full items-center gap-4 px-4 py-3.5 text-left transition-colors hover:bg-[rgba(var(--dls-accent-rgb),0.07)]"
     >
-      <props.icon size={21} strokeWidth={1.8} className="shrink-0 text-[#2352DE]" />
+      <props.icon size={21} strokeWidth={1.8} className="shrink-0 text-[var(--lw-teal)]" />
       <div className="min-w-0 flex-1">
         <div className="text-[13.5px] font-medium tracking-[-0.01em] text-foreground">{props.title}</div>
         <div className="text-[11.5px] leading-snug text-muted-foreground">{props.desc}</div>
       </div>
       <ArrowRight
         size={15}
-        className="shrink-0 text-muted-foreground/45 transition-all group-hover:translate-x-0.5 group-hover:text-[#2352DE]"
+        className="shrink-0 text-muted-foreground/45 transition-all group-hover:translate-x-0.5 group-hover:text-[var(--lw-teal)]"
       />
     </button>
   );

@@ -5,6 +5,7 @@ const NATIVE_MENU_OPEN_SETTINGS_EVENT = "legalwork:native-menu:open-settings";
 const NATIVE_MENU_TOGGLE_SIDEBAR_EVENT = "legalwork:native-menu:toggle-sidebar";
 const NATIVE_MENU_CHECK_UPDATES_EVENT = "legalwork:native-menu:check-updates";
 const NATIVE_MENU_ZOOM_EVENT = "legalwork:native-menu:zoom";
+const windowRole = process.argv.includes("--legalwork-window-role=settings") ? "settings" : "main";
 
 function normalizePlatform(value) {
   if (value === "darwin" || value === "linux") return value;
@@ -160,6 +161,7 @@ contextBridge.exposeInMainWorld("__LEGALWORK_ELECTRON__", {
     initialDeepLinks: [],
     platform: normalizePlatform(process.platform),
     version: process.versions.electron,
+    windowRole,
   },
 });
 

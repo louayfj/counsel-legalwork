@@ -12,13 +12,13 @@ import { cn } from "@/lib/utils"
 import { BoltIcon, DocumentTextIcon, ExclamationTriangleIcon, LockClosedIcon, ShieldCheckIcon, TableCellsIcon } from "@heroicons/react/24/solid"
 
 const CONTRACT_REVIEW_PROMPT =
-  "Review this Axleo contract or client terms document. Summarize the commercial/legal risk, flag clauses to accept/negotiate/reject, suggest fallback wording where appropriate, cite sources or internal reference files, and say what needs Axleo approval or solicitor review."
+  "Review this contract or client terms document for my organisation. Summarize the commercial/legal risk, flag clauses to accept/negotiate/reject, suggest fallback wording where appropriate, cite sources or authorised internal reference files, and say what needs organisation approval or solicitor review."
 
 const DPA_REVIEW_PROMPT =
-  "Review this DPA, privacy, or data-processing issue for Axleo. Identify controller/processor roles, data categories, GDPR/PECR risks, missing terms, suggested wording, citations, and any DPO/solicitor escalation needed."
+  "Review this DPA, privacy, or data-processing issue for my organisation. Identify controller/processor roles, data categories, GDPR/PECR risks, missing terms, suggested wording, citations, and any DPO/solicitor escalation needed."
 
 const COMMERCIAL_DRAFT_PROMPT =
-  "Draft client-facing legal/commercial wording for Axleo. Ask for any missing facts first if needed, then produce final-ready wording plus internal risk notes, citations, and an approval checklist."
+  "Draft client-facing legal/commercial wording for my organisation. Ask for any missing facts first if needed, then produce final-ready wording plus internal risk notes, citations, and an approval checklist."
 
 const DISCLOSURE_PROMPT =
   "Check this motor finance agreement and disclosure pack against FCA CONC pre-contract disclosure expectations. Cite each rule or source you rely on, flag gaps, and log the citations."
@@ -43,8 +43,8 @@ export function TaskSuggestions({ className }: TaskSuggestionsProps) {
   const noProviders = providerConnectedCount === 0
 
   return (
-    <div className={cn("@container flex flex-col gap-4 pt-1", className)}>
-      <p className="text-muted-foreground font-medium select-none">
+    <div className={cn("lw-task-home @container flex flex-col gap-4 pt-1", className)}>
+      <p className="lw-task-home-label text-muted-foreground font-medium select-none">
         {noProviders ? "Connect a model provider to get started:" : "What do you need Leo to help with?"}
       </p>
       <div className="grid min-w-0 gap-2 @lg:grid-cols-2 @2xl:grid-cols-3">

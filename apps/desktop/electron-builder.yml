@@ -23,6 +23,15 @@ extraResources:
     to: opencode-plugins
     filter:
       - "*.js"
+  - from: resources/officecli
+    to: officecli
+    filter:
+      - officecli
+      - officecli.exe
+      - version.json
+      - LICENSE
+      - NOTICE
+      - THIRD-PARTY-NOTICES.txt
 asar: true
 asarUnpack:
   - node_modules/.pnpm/@lydell+node-pty*/**

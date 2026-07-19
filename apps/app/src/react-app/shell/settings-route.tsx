@@ -63,7 +63,6 @@ import { useSettingsExtensionController } from "@/react-app/domains/settings/set
 import { buildExtensionItems } from "@/react-app/domains/settings/extension-items";
 import { isLegalWorkExtensionEnabled, LEGALWORK_EXTENSION_STATE_CHANGED, setLegalWorkExtensionEnabled } from "@/react-app/domains/settings/extension-state";
 import { PreferencesView } from "@/react-app/domains/settings/pages/preferences-view";
-import { GeneralSettingsView } from "@/react-app/domains/settings/pages/general-view";
 import { AuthorizedFoldersPanel } from "@/react-app/domains/settings/panels/authorized-folders-panel";
 import { ToolPermissionsPanel } from "@/react-app/domains/settings/panels/tool-permissions-panel";
 import { SettingsStack } from "@/react-app/domains/settings/settings-section";
@@ -78,6 +77,7 @@ import { OfficeAddinsView } from "@/react-app/domains/settings/pages/office-addi
 import { MessagingView } from "@/react-app/domains/settings/pages/messaging-view";
 import { SkillsView } from "@/react-app/domains/settings/pages/skills-view";
 import { UpdatesView } from "@/react-app/domains/settings/pages/updates-view";
+import { OrganisationView } from "@/react-app/domains/settings/pages/organisation-view";
 import { useDebugViewModel } from "@/react-app/domains/settings/state/debug-view-model";
 import { useMessagingViewProps } from "@/react-app/domains/settings/state/messaging-view-state";
 import { useElectronUpdaterState } from "@/react-app/domains/settings/state/electron-updater-state";
@@ -104,6 +104,7 @@ import {
 } from "@/app/lib/desktop";
 import {
   isDesktopRuntime,
+  isDesktopSettingsWindow,
   isElectronRuntime,
   isMacPlatform,
   normalizeDirectoryPath,
@@ -197,12 +198,14 @@ function parseSettingsPath(pathname: string): {
     .replace(/^\/settings\/?/, "")
     .replace(/^\/+|\/+$/g, "");
   if (!trimmed) {
-    return { tab: "general", redirectPath: "general" };
+    return { tab: "ai", redirectPath: "ai" };
   }
 
   const [head, tail] = trimmed.split("/");
   switch (head) {
     case "general":
+      return { tab: "ai", redirectPath: "ai" };
+    case "organisation":
     case "ai":
     case "preferences":
     case "permissions":
@@ -224,7 +227,7 @@ function parseSettingsPath(pathname: string): {
       if (tail === "plugins") return { tab: "extensions", redirectPath: null, extensionsSection: "plugins" };
       return { tab: "extensions", redirectPath: null, extensionsSection: "all" };
     default:
-      return { tab: "general", redirectPath: "general" };
+      return { tab: "ai", redirectPath: "ai" };
   }
 }
 
@@ -297,7 +300,7 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
   const local = useLocal();
   const platform = usePlatform();
   const reloadCoordinator = useReloadCoordinator();
-  const [embeddedPath, setEmbeddedPath] = useState(props.initialPath ?? "general");
+  const [embeddedPath, setEmbeddedPath] = useState(props.initialPath ?? "ai");
   const route = props.embedded ? parseSettingsPath(`/settings/${embeddedPath}`) : parseSettingsPath(location.pathname);
   const navigationWorkspaceId = readNavigationWorkspaceId(location.state);
   const navigationSessionId = readNavigationSessionId(location.state);
@@ -1751,11 +1754,16 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
 
   const settingsView = (() => {
     switch (route.tab) {
-      case "general":
+      case "organisation":
         return (
-          <GeneralSettingsView
-            onNavigateTab={(tab) => navigateSettingsPath(tab)}
-            developerMode={developerMode}
+          <OrganisationView
+            client={legalworkClient}
+            workspaceId={runtimeWorkspaceId || null}
+            workspaceName={selectedWorkspaceName}
+            onSaved={() => {
+              setConfigActionStatus("Organisation profile updated");
+              void refreshRouteState();
+            }}
           />
         );
       case "permissions":
@@ -2084,7 +2092,13 @@ function SettingsRouteContent(props: SettingsSurfaceProps = {}) {
           onSelectWorkspace={handleSelectSettingsWorkspace}
           headerStatus={routeLegalworkStatus}
           busyHint={loading ? t("session.loading_detail") : busyLabel}
-          onClose={props.onClose ?? (() => navigate(selectedWorkspaceId ? workspaceSessionRoute(selectedWorkspaceId) : "/session"))}
+          onClose={props.onClose ?? (() => {
+            if (isDesktopSettingsWindow()) {
+              window.close();
+              return;
+            }
+            navigate(selectedWorkspaceId ? workspaceSessionRoute(selectedWorkspaceId) : "/session");
+          })}
           compact={props.embedded}
         >
           {settingsView}

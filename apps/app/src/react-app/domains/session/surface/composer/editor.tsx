@@ -635,6 +635,45 @@ function SubmitPlugin(props: { onSubmit: (options: { queue: boolean }) => void |
 
 const PASTE_CHIP_LINE_THRESHOLD = 3;
 const PASTE_CHIP_CHAR_THRESHOLD = 200;
+const COMPOSER_SELECTION_HIGHLIGHT = "legalwork-composer-selection";
+
+/**
+ * Chromium hides a contenteditable selection when Electron loses focus (for
+ * example, while macOS is taking a screenshot). Mirror the active range into
+ * the CSS Highlight API so the selected text remains visibly marked.
+ */
+function SelectionHighlightPlugin() {
+  const [editor] = useLexicalComposerContext();
+
+  useEffect(() => {
+    const registry = CSS.highlights;
+    if (!registry) return;
+
+    const syncHighlight = () => {
+      const root = editor.getRootElement();
+      const selection = window.getSelection();
+      if (!root || !selection || selection.rangeCount === 0 || selection.isCollapsed) {
+        registry.delete(COMPOSER_SELECTION_HIGHLIGHT);
+        return;
+      }
+
+      const range = selection.getRangeAt(0);
+      if (!root.contains(range.commonAncestorContainer)) {
+        registry.delete(COMPOSER_SELECTION_HIGHLIGHT);
+        return;
+      }
+      registry.set(COMPOSER_SELECTION_HIGHLIGHT, new Highlight(range.cloneRange()));
+    };
+
+    document.addEventListener("selectionchange", syncHighlight);
+    return () => {
+      document.removeEventListener("selectionchange", syncHighlight);
+      registry.delete(COMPOSER_SELECTION_HIGHLIGHT);
+    };
+  }, [editor]);
+
+  return null;
+}
 
 function PasteChipPlugin(props: { onPasteText?: (text: string) => void }) {
   const [editor] = useLexicalComposerContext();
@@ -889,6 +928,7 @@ export const LexicalPromptEditor = forwardRef<LexicalPromptEditorHandle, EditorP
         />
         <OnChangePlugin onChange={syncPromptFromEditorState} />
         <HistoryPlugin />
+        <SelectionHighlightPlugin />
         <SyncPlugin value={props.value} mentions={props.mentions} pastedText={props.pastedText} disabled={props.disabled} />
         <SubmitPlugin onSubmit={props.onSubmit} disabled={props.disabled} />
         <PasteChipPlugin onPasteText={props.onPasteText} />

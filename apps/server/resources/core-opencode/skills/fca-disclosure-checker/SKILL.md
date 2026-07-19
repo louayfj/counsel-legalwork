@@ -11,13 +11,15 @@ Use this for UK automotive retail motor-finance disclosure checks.
 
 ## Required grounding
 
-1. Search Axleo's standing reference folder first:
-   `axleo_reference_search` for `CONC pre-contract disclosure motor finance`,
+1. Search the active organisation's authorised reference material first:
+   `organisation_reference_search` for `CONC pre-contract disclosure motor finance`,
    `CONC 4 disclosure`, and any product-specific term the user asks about.
-2. Use Legal Data Hunter MCP for live legislation/enforcement precedent where relevant.
+2. Use OpenLaw MCP for UK statute text, judgments, ICO material, and FCA Handbook
+   or notice deep links where relevant. Its FCA tools are link-only, so verify the
+   actual rule or notice text from the FCA or supplied reference material.
 3. Every finding must cite a source, preferably a specific CONC rule, FCA document
    paragraph, agreement clause, or file location.
-4. Before the final answer, call `axleo_citation_log` with every source relied on.
+4. Before the final answer, call `compliance_citation_log` with every source relied on.
 
 ## Workflow
 

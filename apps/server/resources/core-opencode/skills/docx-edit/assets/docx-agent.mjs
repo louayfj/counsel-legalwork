@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * docx-agent — headless Word reading + editing for the Axleo agent.
+ * docx-agent — headless Word reading + editing for the Counsel agent.
  *
  * Self-contained: it imports the vendored ./vendor/docx-engine.mjs (an esbuild
  * bundle of @eigenpal/docx-editor-agents, Apache-2.0 — the same engine behind the

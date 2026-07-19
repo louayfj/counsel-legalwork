@@ -1,14 +1,14 @@
 /** @jsxImportSource react */
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Agent } from "@opencode-ai/sdk/v2/client";
-import { AppWindowMac, ArrowUp, ChevronDown, ChevronRight, FileText, ListPlus, Paperclip, Plug, Settings, Sparkles, Square, Terminal, X, Zap } from "lucide-react";
+import { AppWindowMac, ArrowUp, ChevronDown, ChevronRight, FileText, ListPlus, Orbit, Paperclip, Plug, Settings, Square, Terminal, Zap } from "lucide-react";
 import fuzzysort from "fuzzysort";
 import { toast } from "@/components/ui/sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuShortcut, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { LEGALWORK_EXTENSION_CATALOG, type McpDirectoryInfo } from "@/app/constants";
 import type { ImportedPlugin, ImportedPluginFile } from "@/app/lib/extension-imports";
 import type { ComposerAttachment, McpServerEntry, McpStatusMap, ModelRef, SkillCard, SlashCommandOption } from "@/app/types";
-import { formatBytes, isMacPlatform } from "@/app/utils";
+import { isMacPlatform } from "@/app/utils";
 import { t } from "@/i18n";
 import { isLegalWorkExtensionEnabled, isLegalWorkExtensionHidden, LEGALWORK_EXTENSION_STATE_CHANGED } from "@/react-app/domains/settings/extension-state";
 import { FusionModelMultiSelect } from "@/components/fusion-model-multi-select";
@@ -18,6 +18,7 @@ import { LexicalPromptEditor, type LexicalPromptEditorHandle } from "./editor";
 import { listRunningAppsForMention } from "./app-mentions";
 import type { ComposerMentionKind } from "./mention-encoding";
 import { getSlashCommandQuery } from "./slash-command";
+import { AttachmentPreviewList } from "./attachment-preview-list";
 
 type MentionItem = {
   id: string;
@@ -63,7 +64,7 @@ type ComposerProps = {
   onModelChange: (model: ModelRef) => void;
   attachments: ComposerAttachment[];
   onAttachFiles: (files: File[]) => void;
-  onRemoveAttachment: (id: string) => void;
+  onRemoveAttachments: (ids: string[]) => void;
   attachmentsEnabled: boolean;
   attachmentsDisabledReason: string | null;
   modelVariantLabel: string;
@@ -159,10 +160,6 @@ function parseClipboardUriList(clipboard: DataTransfer) {
     links.push(normalized);
   }
   return links;
-}
-
-function isImageAttachment(attachment: ComposerAttachment) {
-  return attachment.kind === "image" || attachment.mimeType.startsWith("image/");
 }
 
 async function compressImageFile(file: File): Promise<File> {
@@ -1078,7 +1075,7 @@ export function ReactSessionComposer(props: ComposerProps) {
   return (
     <div
       ref={rootRef}
-      className={`sticky bottom-0 ${toolMenuOpen ? "z-50" : "z-20"} bg-gradient-to-t from-dls-surface via-dls-surface/95 to-transparent px-4 pb-2 md:px-8 ${props.compactTopSpacing ? "pt-0" : "pt-1"}`}
+      className={`lw-composer-dock sticky bottom-0 ${toolMenuOpen ? "z-50" : "z-20"} px-4 pb-2 md:px-8 ${props.compactTopSpacing ? "pt-0" : "pt-1"}`}
       style={{ contain: "layout style" }}
       onKeyDownCapture={handleKeyDownCapture}
       onCompositionStart={() => {
@@ -1091,7 +1088,7 @@ export function ReactSessionComposer(props: ComposerProps) {
       <div className="max-w-[800px] mx-auto">
         {/* Main composer panel */}
         <div
-          className={`relative overflow-visible rounded-[24px] border bg-dls-surface transition-all ${
+          className={`lw-composer-panel relative overflow-visible rounded-[24px] border bg-dls-surface transition-all ${
             props.fusionEnabled ? "fusion-rainbow-border border-transparent" : "border-dls-border"
           } ${panelRoundedClass}`}
         >
@@ -1101,35 +1098,17 @@ export function ReactSessionComposer(props: ComposerProps) {
           {renderSlashMenu()}
 
           {props.attachments.length > 0 ? (
-            <div className="mx-5 mt-5 flex flex-wrap gap-2 md:mx-6">
-              {props.attachments.map((attachment) => (
-                <div key={attachment.id} className="flex items-center gap-2 rounded-2xl border border-gray-6 bg-gray-2 px-3 py-2 text-xs text-gray-10">
-                  {isImageAttachment(attachment) && attachment.previewUrl ? (
-                    <div className="h-10 w-10 overflow-hidden rounded-xl border border-gray-6 bg-gray-1">
-                      <img src={attachment.previewUrl} alt={attachment.name} decoding="async" className="h-full w-full object-cover" />
-                    </div>
-                  ) : (
-                    <FileText size={14} className="text-gray-9" />
-                  )}
-                  <div className="max-w-[160px] min-w-0">
-                    <div className="truncate text-[12px] font-medium text-gray-11">{attachment.name}</div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-gray-10">
-                      <span>{isImageAttachment(attachment) ? t("composer.image_kind") : t("composer.file_kind")}</span>
-                      <span>·</span>
-                      <span>{formatBytes(attachment.size)}</span>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full text-gray-10 transition-colors hover:bg-gray-3 hover:text-gray-12"
-                    onClick={() => props.onRemoveAttachment(attachment.id)}
-                    title={t("action.remove")}
-                  >
-                    <X size={12} />
-                  </button>
-                </div>
-              ))}
-            </div>
+            <AttachmentPreviewList
+              className="mx-5 mt-5 md:mx-6"
+              items={props.attachments.map((attachment) => ({
+                id: attachment.id,
+                name: attachment.name,
+                mimeType: attachment.mimeType,
+                size: attachment.size,
+                previewUrl: attachment.previewUrl,
+              }))}
+              onRemove={props.onRemoveAttachments}
+            />
           ) : null}
 
           {/*
@@ -1263,6 +1242,7 @@ export function ReactSessionComposer(props: ComposerProps) {
                   }}
                   disabled={!props.attachmentsEnabled}
                   title={props.attachmentsDisabledReason ?? t("composer.attach_files")}
+                  aria-label={t("composer.attach_files")}
                 >
                   <Paperclip size={16} />
                 </button>
@@ -1509,7 +1489,7 @@ export function ReactSessionComposer(props: ComposerProps) {
                       }`}
                       title={props.fusionEnabled ? t("fusion.toggle_off") : t("fusion.toggle_on")}
                     >
-                      <Sparkles size={14} />
+                      <Orbit size={15} strokeWidth={1.7} />
                       <span>{t("fusion.toggle_label")}</span>
                     </button>
                     {fusionNewTooltipOpen ? (

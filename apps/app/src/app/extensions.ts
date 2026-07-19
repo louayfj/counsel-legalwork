@@ -43,7 +43,7 @@ export type LegalWorkExtensionResource = {
   packageName?: string;
   providerId?: string;
   mcpServerName?: string;
-  localCommandRef?: "legalwork.computerUseMcp" | "legalwork.uiMcp";
+  localCommandRef?: "legalwork.computerUseMcp" | "legalwork.officeCliMcp" | "legalwork.uiMcp";
   required?: boolean;
 };
 
@@ -150,6 +150,50 @@ export function isTrustedBuiltInExtension(manifest: LegalWorkExtensionManifest |
 }
 
 export const BUILT_IN_LEGALWORK_EXTENSION_MANIFESTS: LegalWorkExtensionManifest[] = [
+  {
+    schemaVersion: 1,
+    id: "officecli",
+    name: "Office Documents",
+    description: "Create, inspect, render, validate, and automate Word, Excel, and PowerPoint files without requiring Microsoft Office.",
+    source: { format: "legalwork-builtin", origin: "builtin", trusted: true },
+    composer: { prompt: "Use Office Documents to " },
+    setup: {
+      instructions: "Connect the bundled OfficeCLI MCP server. Counsel keeps OfficeCLI updates disabled, verifies the bundled binary at build time, and asks before each OfficeCLI tool call.",
+      primaryCta: "Connect Office Documents",
+    },
+    resources: [
+      {
+        type: "mcp",
+        id: "officecli-mcp",
+        label: "OfficeCLI MCP",
+        mcpServerName: "officecli",
+        command: ["officecli", "mcp"],
+        localCommandRef: "legalwork.officeCliMcp",
+        required: true,
+      },
+      {
+        type: "native-binary",
+        id: "officecli-native",
+        label: "OfficeCLI document runtime",
+        packageName: "iOfficeAI/OfficeCLI@v1.0.138",
+        required: true,
+      },
+      {
+        type: "skill",
+        id: "officecli-skill",
+        label: "Safe Office document workflow",
+        path: ".opencode/skills/officecli/SKILL.md",
+        required: true,
+      },
+    ],
+    contributions: [
+      { type: "setup-instructions", ref: "legalwork.officeCli.setup", location: "settings-detail" },
+      { type: "composer-prompt", prompt: "Use Office Documents to ", location: "composer" },
+    ],
+    enablement: [{ type: "mcp-connected", ref: "officecli", label: "OfficeCLI MCP connected" }],
+    lifecycle: { reload: ["mcp"], detection: ["mcp:officecli"] },
+    platform: ["darwin", "linux", "windows"],
+  },
   {
     schemaVersion: 1,
     id: "computer-use",

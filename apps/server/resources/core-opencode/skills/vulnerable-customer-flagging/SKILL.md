@@ -12,10 +12,10 @@ and propose proportionate support actions.
 
 ## Required grounding
 
-1. Search Axleo's reference folder for `vulnerable customer`, `Consumer Duty
+1. Search the active organisation's authorised reference material for `vulnerable customer`, `Consumer Duty
    support`, `PRIN 2A vulnerable`, and any product-specific issue.
 2. Cite source rules/guidance and exact conversation/document evidence.
-3. Call `axleo_citation_log` before final.
+3. Call `compliance_citation_log` before final.
 
 ## Workflow
 

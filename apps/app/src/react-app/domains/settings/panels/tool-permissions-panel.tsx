@@ -160,7 +160,7 @@ type PermissionRowProps = {
 
 function PermissionRow(props: PermissionRowProps) {
   return (
-    <div className="flex flex-row items-center justify-between gap-3 rounded-2xl border border-dls-border px-4 py-3">
+    <div className="lw-settings-control-row flex flex-row items-center justify-between gap-3 px-4 py-3">
       <div className="min-w-0 flex flex-col gap-1">
         <span className="text-sm font-medium text-dls-text">{props.title}</span>
         <span className="text-xs text-muted-foreground">{props.description}</span>
@@ -308,7 +308,7 @@ export function ToolPermissionsPanel(props: ToolPermissionsPanelProps) {
   const busy = state.loading || state.saving;
 
   return (
-    <LayoutSectionItem className="gap-6">
+    <LayoutSectionItem className="gap-5">
       <LayoutSectionItemHeader>
         <LayoutSectionItemTitle>
           {t("tool_permissions.title")}
@@ -383,7 +383,7 @@ export function ToolPermissionsPanel(props: ToolPermissionsPanelProps) {
             {state.model.bash.rules.map((rule) => (
               <div
                 key={rule.pattern}
-                className="flex flex-row items-center justify-between gap-3 rounded-2xl border border-dls-border px-4 py-3"
+                className="lw-settings-control-row flex flex-row items-center justify-between gap-3 px-4 py-3"
               >
                 <span className="min-w-0 truncate font-mono text-xs text-dls-text">
                   {rule.pattern}

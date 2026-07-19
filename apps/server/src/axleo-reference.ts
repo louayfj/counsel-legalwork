@@ -5,7 +5,11 @@ import { fileURLToPath } from "node:url";
 
 const BUNDLED_REFERENCE_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "resources", "axleo-legal-reference");
 
-export const AXLEO_REFERENCE_ENV_KEYS = ["AXLEO_LEGAL_REFERENCE_DIR", "LEGALWORK_AXLEO_REFERENCE_DIR"];
+export const ORGANISATION_REFERENCE_ENV_KEYS = [
+  "LEGALWORK_ORGANISATION_REFERENCE_DIR",
+  "AXLEO_LEGAL_REFERENCE_DIR",
+  "LEGALWORK_AXLEO_REFERENCE_DIR",
+];
 
 function splitEnvPaths(value: string | undefined): string[] {
   const trimmed = value?.trim();
@@ -34,19 +38,19 @@ function uniqueResolved(paths: string[]): string[] {
   return result;
 }
 
-export function resolveAxleoReferenceRoots(env: NodeJS.ProcessEnv = process.env): string[] {
-  const configured = AXLEO_REFERENCE_ENV_KEYS.flatMap((key) => splitEnvPaths(env[key]));
+export function resolveOrganisationReferenceRoots(env: NodeJS.ProcessEnv = process.env): string[] {
+  const configured = ORGANISATION_REFERENCE_ENV_KEYS.flatMap((key) => splitEnvPaths(env[key]));
   return uniqueResolved([
     ...configured,
-    "~/Documents/axleo-private-legal-reference",
-    "~/Documents/Axleo Private Legal Reference",
-    "~/Documents/Axleo Team Legal Reference",
-    "~/Documents/axleo-legal-reference",
-    "~/Documents/Axleo Legal Reference",
     BUNDLED_REFERENCE_DIR,
   ]);
 }
 
-export function axleoReferenceExternalDirectoryEntries(env: NodeJS.ProcessEnv = process.env): Record<string, "allow"> {
-  return Object.fromEntries(resolveAxleoReferenceRoots(env).map((root) => [`${root}/*`, "allow"]));
+export function organisationReferenceExternalDirectoryEntries(env: NodeJS.ProcessEnv = process.env): Record<string, "allow"> {
+  return Object.fromEntries(resolveOrganisationReferenceRoots(env).map((root) => [`${root}/*`, "allow"]));
 }
+
+// Compatibility exports for integrations compiled against the earlier Axleo-only names.
+export const AXLEO_REFERENCE_ENV_KEYS = ORGANISATION_REFERENCE_ENV_KEYS;
+export const resolveAxleoReferenceRoots = resolveOrganisationReferenceRoots;
+export const axleoReferenceExternalDirectoryEntries = organisationReferenceExternalDirectoryEntries;

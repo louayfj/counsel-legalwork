@@ -5,7 +5,7 @@ import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
-import { resolveAxleoReferenceRoots } from "../axleo-reference.js";
+import { resolveOrganisationReferenceRoots } from "../axleo-reference.js";
 
 type OpenCodeContext = {
   agent?: string;
@@ -42,15 +42,15 @@ type PdfTextItem = {
   hasEOL?: unknown;
 };
 
-const AXLEO_REFERENCE_INSTRUCTION = `## Axleo legal reference and citation discipline
-For Axleo internal legal/compliance answers, use axleo_reference_search before answering when the question turns on Axleo private templates/playbooks, SaaS contracts, DPAs, NDAs, privacy/GDPR/PECR, call recording/transcription, FCA rules, CONC, PRIN 2A Consumer Duty, Consumer Credit Act 1974, Consumer Rights Act 2015, ASA CAP Code, PS26/3, or Axleo reference-folder material.
+const ORGANISATION_REFERENCE_INSTRUCTION = `## Organisation reference and citation discipline
+Use organisation_reference_search before answering when the question turns on the active organisation's private templates/playbooks, contracts, DPAs, NDAs, privacy/GDPR/PECR, call recording/transcription, FCA rules, CONC, PRIN 2A Consumer Duty, Consumer Credit Act 1974, Consumer Rights Act 2015, ASA CAP Code, PS26/3, or authorised reference-folder material.
 
 Every legal or compliance claim must cite a source in the answer. Cite the most specific locator available: rule, section, paragraph, page, ruling, notice, or source-file location. If you cannot find authority, say that and do not invent it.
 
-Before your final response on a legal/compliance answer, call axleo_citation_log with the answer summary, risk level, escalation flag, and the citations you relied on. For real enforcement, liability, redress, regulatory notification, or customer-harm risk, flag human compliance/legal review.`;
+Before your final response on a legal/compliance answer, call compliance_citation_log with the answer summary, risk level, escalation flag, and the citations you relied on. For real enforcement, liability, redress, regulatory notification, or customer-harm risk, flag human compliance/legal review.`;
 
 const searchArgsSchema = z.object({
-  query: z.string().min(2).max(300).describe("Search query for the Axleo legal reference folder."),
+  query: z.string().min(2).max(300).describe("Search query for the active organisation's authorised reference material."),
   max_results: z.number().int().min(1).max(10).optional().describe("Maximum hits to return. Defaults to 5."),
 });
 
@@ -148,7 +148,7 @@ function requireLegalWorkServer(): { url: string; token: string } {
   const url = serverUrl();
   const token = serverToken();
   if (!url || !token) {
-    throw new Error("Axleo citation logging is only available when OpenCode is launched by LegalWork.");
+    throw new Error("Compliance citation logging is only available when OpenCode is launched by LegalWork.");
   }
   return { url, token };
 }
@@ -313,7 +313,17 @@ async function pdfHits(path: string, root: string, query: string, terms: string[
 
 async function searchReference(query: string, maxResults: number, context: OpenCodeContext) {
   const terms = termsFor(query);
-  const roots = resolveAxleoReferenceRoots();
+  const directory = context.directory?.trim();
+  const roots = Array.from(new Set([
+    ...(directory
+      ? [
+          join(directory, ".legalwork", "reference"),
+          join(directory, "reference"),
+          join(directory, "references"),
+        ]
+      : []),
+    ...resolveOrganisationReferenceRoots(),
+  ].map((root) => resolve(root))));
   const hits: SearchHit[] = [];
   for (const root of roots) {
     if (!existsSync(root)) continue;
@@ -338,12 +348,12 @@ async function searchReference(query: string, maxResults: number, context: OpenC
 
 export const LegalWorkAxleoReferenceTools = async () => ({
   "experimental.chat.system.transform": async (_input: unknown, output: { system: string[] }) => {
-    output.system.push(AXLEO_REFERENCE_INSTRUCTION);
+    output.system.push(ORGANISATION_REFERENCE_INSTRUCTION);
   },
   tool: {
-    axleo_reference_search: {
+    organisation_reference_search: {
       description:
-        "Search Axleo's standing legal reference folder for UK automotive retail compliance sources. Use before answering FCA Handbook, CONC, PRIN 2A, Consumer Duty, CCA, CRA, GDPR/DPA, ASA CAP Code, or PS26/3 questions.",
+        "Search the active organisation's authorised reference material and the shared UK automotive compliance pack. Use before answering FCA Handbook, CONC, PRIN 2A, Consumer Duty, CCA, CRA, GDPR/DPA, ASA CAP Code, or PS26/3 questions.",
       // ponytail: .shape passes Zod v4 internals; OpenCode reads _def.typeName which is undefined in v4 → u.split crash
       args: (searchArgsSchema.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
       async execute(rawArgs: unknown, context: OpenCodeContext) {
@@ -351,9 +361,9 @@ export const LegalWorkAxleoReferenceTools = async () => ({
         return searchReference(args.query, args.max_results ?? 5, context);
       },
     },
-    axleo_citation_log: {
+    compliance_citation_log: {
       description:
-        "Log citations for a legal/compliance answer into the LegalWork audit trail. Call this before the final response whenever you make Axleo UK automotive retail compliance claims.",
+        "Log citations for a legal/compliance answer into the LegalWork audit trail. Call this before the final response whenever you make UK automotive retail compliance claims.",
       args: (citationLogArgsSchema.toJSONSchema() as { properties?: Record<string, unknown> }).properties ?? {},
       async execute(rawArgs: unknown, context: OpenCodeContext) {
         const args = citationLogArgsSchema.parse(rawArgs);
@@ -362,7 +372,7 @@ export const LegalWorkAxleoReferenceTools = async () => ({
           ? undefined
           : "No valid citations were provided; logged an uncited compliance answer for audit follow-up.";
         const { url, token } = requireLegalWorkServer();
-        const response = await fetch(`${url}/experimental/axleo/citations`, {
+        const response = await fetch(`${url}/experimental/compliance/citations`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -378,7 +388,7 @@ export const LegalWorkAxleoReferenceTools = async () => ({
           }),
         });
         const payload = await parseResponse(response);
-        if (!response.ok) throw new Error(errorMessage(payload, "Axleo citation log failed"));
+        if (!response.ok) throw new Error(errorMessage(payload, "Compliance citation log failed"));
         return warning && typeof payload === "object" && payload !== null ? { ...payload, warning } : payload;
       },
     },

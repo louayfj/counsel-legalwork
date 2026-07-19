@@ -1,7 +1,7 @@
 ---
 name: tabular-review
 description: >-
-  Axleo tabular compliance document review. Extract a defined set of fields (columns) across a set of documents
+  UK automotive tabular compliance document review. Extract a defined set of fields (columns) across a set of documents
   (rows) and produce an interactive, source-cited review table. Use whenever the user
   wants to review/compare/extract across MANY documents at once: FCA disclosure checks,
   complaint packs, ad substantiation, vulnerable-customer reviews, "make a table of X
@@ -11,10 +11,10 @@ description: >-
 
 # Tabular Review
 
-This skill is how Axleo runs **tabular compliance document review**: documents are **rows**, the fields you care about are
+This skill is how Counsel runs **tabular compliance document review**: documents are **rows**, the fields you care about are
 **columns**, and every cell is an independent, source-cited extraction. Unlike the
 generic document-review SaaS, this runs on the user's chosen models and local infrastructure, the column logic
-lives in Axleo-owned **doctype skills**, and the output is a self-contained artifact Axleo keeps.
+lives in organisation-owned **doctype skills**, and the output is a self-contained artifact the organisation keeps.
 
 You are the **orchestrator**. You do not read the documents yourself. You define the
 grid, fan out one `document-extractor` subagent per document, then assemble the results
@@ -205,19 +205,19 @@ edit. Prefer a loaded `doctype-*` skill over this list when one exists.
 ## The doctype-skill convention
 
 A **doctype skill** is a normal skill named `doctype-<type>` whose job is to define the
-review columns (and where to look) for one kind of document. When Axleo reviews a new
+review columns (and where to look) for one kind of document. When an organisation reviews a new
 document type often, capture its column logic as a `doctype-*` skill so this orchestrator
 can load it automatically instead of asking every time. Each one should provide a
 `## Columns` section: a list of `key`, `label`, `question`, and a `where to look` hint.
 Example packs (`doctype-finance-disclosure`, `doctype-complaint-pack`, …) live in the **LegalWork
-Hub** — Axleo installs the ones it needs from Settings → Extensions → Skills. If none
+Hub** — the organisation installs the ones it needs from Settings → Extensions → Skills. If none
 is installed, the suggestion library above is the fallback.
 
 ## Notes & guardrails
 
-- **Open models, Axleo-owned logic.** Don't hardcode a model — extractors inherit the
+- **Open models, organisation-owned logic.** Don't hardcode a model — extractors inherit the
   configured model. The value here is that the column logic and corrections stay in
-  Axleo skills and artifacts.
+  organisation's skills and artifacts.
 - **Never fabricate a cell.** A blank, source-cited grid beats a confident wrong one.
   This is the one bar that matters; everything else is convenience.
 - **Account for every file.** Each input document is exactly one row, even on error.

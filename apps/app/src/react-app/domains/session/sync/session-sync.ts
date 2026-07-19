@@ -17,6 +17,7 @@ import { applyRevertCursor, reconcileTranscriptMessages } from "./transcript-rec
 import {
   useSessionActivityStore,
 } from "../status/session-activity-store";
+import { stagedWorkspaceAttachmentUIParts } from "./staged-attachments";
 
 type SyncOptions = {
   workspaceId: string;
@@ -423,6 +424,10 @@ function toUIPart(part: Part): UIMessage["parts"][number] | null {
 
 function toUIParts(part: Part): UIMessage["parts"] {
   if (part.type === "file") return toFileUIParts(part);
+  if (part.type === "text") {
+    const stagedAttachments = stagedWorkspaceAttachmentUIParts(part.text, part.id);
+    if (stagedAttachments) return stagedAttachments;
+  }
   const mapped = toUIPart(part);
   if (!mapped) return [];
   if (part.type === "tool" && part.tool === STRUCTURED_OUTPUT_TOOL) return [mapped];

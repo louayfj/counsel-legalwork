@@ -22,6 +22,10 @@ type WorkspaceLegalworkConfig = {
     createdAt?: number | null;
     preset?: string | null;
   } | null;
+  organisation?: {
+    name: string;
+    mode: "dealership" | "dealer-group" | "axleo-internal";
+  } | null;
   authorizedRoots: string[];
   reload?: {
     auto?: boolean;
@@ -50,6 +54,10 @@ async function ensureWorkspaceLegalworkConfig(workspaceRoot: string, preset: str
       name: basename(workspaceRoot) || "Workspace",
       createdAt: now,
       preset,
+    },
+    organisation: {
+      name: basename(workspaceRoot) || "My organisation",
+      mode: "dealership",
     },
     authorizedRoots: [workspaceRoot],
     reload: null,

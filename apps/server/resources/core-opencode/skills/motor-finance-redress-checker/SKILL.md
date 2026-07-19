@@ -11,12 +11,13 @@ Use this for motor-finance commission/DCA redress triage.
 
 ## Required grounding
 
-1. Search Axleo's reference folder for `PS26/3`, `motor finance commission`,
+1. Search the active organisation's authorised reference material for `PS26/3`, `motor finance commission`,
    `DCA`, `redress scheme`, and the agreement/product terms.
-2. Use Legal Data Hunter MCP for FCA final notices, related legislation, and
-   current enforcement context where relevant.
+2. Use OpenLaw MCP for related UK legislation, judgments, and FCA notice deep
+   links. OpenLaw does not fetch full FCA notice text, so verify the notice or
+   policy wording from the FCA or supplied reference material.
 3. Cite exact PS26/3 paragraphs/rules, agreement clauses, dates, and evidence.
-4. Call `axleo_citation_log` before final.
+4. Call `compliance_citation_log` before final.
 
 ## Workflow
 

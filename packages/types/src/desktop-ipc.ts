@@ -421,9 +421,22 @@ export type DesktopCommandMap = {
 
   // App / bridge info
   appBuildInfo: { args: []; result: AppBuildInfo };
+  settingsWindowOpen: { args: [route?: string]; result: boolean };
   getUiControlBridgeInfo: { args: []; result: UiControlBridgeInfo | null };
   getLegalworkUiMcpCommand: { args: []; result: string[] };
   getComputerUseMcpCommand: { args: []; result: string[] };
+  getOfficeCliMcpCommand: { args: []; result: string[] };
+  getOfficeCliMcpEnvironment: { args: []; result: Record<string, string> };
+  getOfficeCliStatus: {
+    args: [];
+    result: {
+      installed: boolean;
+      expectedVersion: string;
+      path: string | null;
+      version: string | null;
+      error?: string | null;
+    };
+  };
   getLegalworkUiMcpEnvironment: { args: []; result: Record<string, string> };
 
   // Computer use

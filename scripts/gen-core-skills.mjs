@@ -39,6 +39,8 @@ const FILES = [
   { source: "commands/annotate.md", path: ".opencode/commands/annotate.md" },
   { source: "commands/fill-form.md", path: ".opencode/commands/fill-form.md" },
   { source: "commands/sign.md", path: ".opencode/commands/sign.md" },
+  // officecli: safe operating guidance for the bundled OfficeCLI MCP runtime.
+  { source: "skills/officecli/SKILL.md", path: ".opencode/skills/officecli/SKILL.md" },
 ];
 
 const entries = FILES.map((file) => {

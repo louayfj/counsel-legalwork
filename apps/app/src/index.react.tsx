@@ -18,6 +18,7 @@ import { AppProviders } from "./react-app/shell/providers";
 import { AppRoot } from "./react-app/shell/app-root";
 import { startDeepLinkBridge } from "./react-app/shell/startup-deep-links";
 import "./app/index.css";
+import "./styles/legalwork-theme.css";
 
 bootstrapTheme();
 initLocale();

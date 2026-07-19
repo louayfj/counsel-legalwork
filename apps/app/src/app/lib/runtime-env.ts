@@ -9,6 +9,10 @@ export function isDesktopRuntime() {
   return isElectronRuntime();
 }
 
+export function isDesktopSettingsWindow() {
+  return isElectronRuntime() && window.__LEGALWORK_ELECTRON__?.meta?.windowRole === "settings";
+}
+
 export function isOfficeAddinRuntime() {
   return typeof document !== "undefined" && document.documentElement.classList.contains("lw-word-pane");
 }

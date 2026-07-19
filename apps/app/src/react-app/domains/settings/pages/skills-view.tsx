@@ -9,10 +9,14 @@ import {
   type SetStateAction,
 } from "react";
 import {
+  ArrowLeft,
+  Check,
   Download,
   Edit2,
   FileArchive,
+  Files,
   FolderOpen,
+  ListChecks,
   Loader2,
   Package,
   Plus,
@@ -546,7 +550,7 @@ export function SkillsView(props: SkillsViewProps) {
             ) : null}
             <p className={`max-w-xl text-[14px] leading-[1.65] text-dls-secondary ${props.showHeader !== false ? "mt-3" : ""}`}>
               {isWorkflowsView
-                ? "Reusable templates for Axleo's recurring compliance tasks. Assistant workflows run like a skill; tabular workflows drive a review grid through the tabular-review skill."
+                ? "Reusable templates for the active organisation's recurring compliance tasks. Assistant workflows run like a skill; tabular workflows drive a review grid through the tabular-review skill."
                 : t("skills.worker_profile_desc")}
             </p>
           </div>
@@ -1278,7 +1282,48 @@ function WorkflowCreatorButton(props: {
   };
 
   const inputClass =
-    "w-full rounded-xl border border-dls-border bg-dls-hover px-3 py-2 text-sm text-dls-text focus:outline-none focus:ring-2 focus:ring-[rgba(var(--dls-accent-rgb),0.25)]";
+    "w-full rounded-xl border border-dls-border bg-dls-surface px-3.5 py-2.5 text-sm text-dls-text outline-none transition-shadow placeholder:text-dls-secondary/70 focus:border-[rgba(var(--dls-accent-rgb),0.55)] focus:ring-2 focus:ring-[rgba(var(--dls-accent-rgb),0.15)]";
+
+  const workflowTypeOptions: Array<{
+    value: WorkflowType;
+    label: string;
+    eyebrow: string;
+    description: string;
+    example: string;
+    icon: typeof Files;
+  }> = [
+    {
+      value: "tabular",
+      label: "Review documents",
+      eyebrow: "Compare and extract",
+      description: "Turn a set of documents into a cited review table.",
+      example: "Best for contract terms, disclosures and policy checks.",
+      icon: Files,
+    },
+    {
+      value: "assistant",
+      label: "Guide a legal task",
+      eyebrow: "Repeat a process",
+      description: "Give Leo a reusable set of steps for one task.",
+      example: "Best for drafting, triage and approval workflows.",
+      icon: ListChecks,
+    },
+  ];
+
+  const tabularPresets = [
+    {
+      label: "Contract terms",
+      value: "Document name\nParties\nEffective date\nGoverning law\nTermination notice\nLiability cap",
+    },
+    {
+      label: "Finance disclosure",
+      value: "Document name\nCredit broker status\nCommission disclosure\nRepresentative APR\nTotal amount payable\nCompliance concern",
+    },
+    {
+      label: "Privacy review",
+      value: "Document name\nController and processor roles\nPurpose of processing\nLawful basis\nRetention period\nInternational transfers",
+    },
+  ];
 
   return (
     <>
@@ -1293,119 +1338,168 @@ function WorkflowCreatorButton(props: {
           if (!next) reset();
         }}
       >
-        <DialogContent className="flex max-h-[90vh] min-h-0 w-full max-w-2xl flex-col overflow-hidden sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{type ? `New ${type} workflow` : "New workflow"}</DialogTitle>
-            <DialogDescription>
-              {type === "tabular"
-                ? "A tabular workflow runs a review grid: it tells the agent to use the tabular-review skill with the columns you define."
-                : type === "assistant"
-                  ? "An assistant workflow is a normal skill — instructions the agent follows for a legal task."
-                  : "Choose how this workflow runs. Saved to your workspace as a SKILL.md."}
+        <DialogContent className="flex max-h-[88vh] min-h-0 w-full max-w-4xl flex-col gap-0 overflow-hidden bg-dls-surface p-0 sm:max-w-4xl">
+          <DialogHeader className="border-b border-dls-border px-6 pb-5 pt-6 pr-16">
+            <div className="mb-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-dls-secondary">
+              <span className={type ? "text-dls-accent" : "font-semibold text-dls-text"}>1 · Choose format</span>
+              <span className="h-px w-5 bg-dls-border" />
+              <span className={type ? "font-semibold text-dls-text" : ""}>2 · Describe the work</span>
+            </div>
+            <DialogTitle className="text-lg leading-tight tracking-[-0.01em]">Create a workflow</DialogTitle>
+            <DialogDescription className="max-w-2xl text-[13px] leading-relaxed">
+              {type
+                ? "Give Leo a clear trigger and a repeatable method. You can attach supporting examples before creating it."
+                : "Choose the result you want. We’ll shape the right workflow around it."}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-px py-1">
+          <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
             {error ? (
-              <div className="rounded-xl border border-red-7/20 bg-red-1/40 px-4 py-3 text-xs text-red-12">{error}</div>
+              <div className="mb-4 rounded-xl border border-red-7/20 bg-red-1/40 px-4 py-3 text-xs text-red-12">{error}</div>
             ) : null}
 
             {!type ? (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <button
-                  type="button"
-                  onClick={() => setType("tabular")}
-                  className="flex flex-col gap-2 rounded-2xl border border-dls-border bg-dls-hover p-4 text-left transition-colors hover:border-[rgba(var(--dls-accent-rgb),0.5)]"
-                >
-                  <Package size={20} className="text-dls-secondary" />
-                  <span className="text-sm font-semibold text-dls-text">Tabular</span>
-                  <span className="text-[12px] leading-relaxed text-dls-secondary">
-                    Review/extract a defined set of columns across many documents, via the tabular-review skill.
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setType("assistant")}
-                  className="flex flex-col gap-2 rounded-2xl border border-dls-border bg-dls-hover p-4 text-left transition-colors hover:border-[rgba(var(--dls-accent-rgb),0.5)]"
-                >
-                  <Sparkles size={20} className="text-dls-secondary" />
-                  <span className="text-sm font-semibold text-dls-text">Assistant</span>
-                  <span className="text-[12px] leading-relaxed text-dls-secondary">
-                    A normal skill — step-by-step instructions for a legal task.
-                  </span>
-                </button>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-3">
+                {workflowTypeOptions.map((option) => {
+                  const Icon = option.icon;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setType(option.value)}
+                      className="group min-h-[190px] rounded-[20px] border border-dls-border bg-dls-surface p-5 text-left outline-none transition-all hover:-translate-y-0.5 hover:border-[rgba(var(--dls-accent-rgb),0.45)] hover:shadow-[0_12px_30px_-22px_rgba(0,0,0,0.45)] focus-visible:ring-2 focus-visible:ring-[rgba(var(--dls-accent-rgb),0.22)]"
+                    >
+                      <div className="mb-7 flex items-start justify-between">
+                        <span className="flex size-10 items-center justify-center rounded-xl bg-[rgba(var(--dls-accent-rgb),0.09)] text-dls-accent">
+                          <Icon size={19} strokeWidth={1.8} />
+                        </span>
+                        <span className="font-mono text-[9px] uppercase tracking-[0.13em] text-dls-secondary">{option.eyebrow}</span>
+                      </div>
+                      <div className="text-[15px] font-semibold text-dls-text">{option.label}</div>
+                      <div className="mt-1.5 text-[12px] leading-relaxed text-dls-secondary">{option.description}</div>
+                      <div className="mt-4 flex items-center gap-2 border-t border-dls-border pt-3 text-[11px] leading-relaxed text-dls-secondary/80">
+                        <Check size={13} className="shrink-0 text-dls-accent" />
+                        {option.example}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-2 text-xs font-medium text-dls-text">
-                    {type === "tabular" ? <Package size={14} /> : <Sparkles size={14} />}
-                    {type === "tabular" ? "Tabular workflow" : "Assistant workflow"}
-                  </span>
-                  <button type="button" onClick={() => setType(null)} className="text-[11px] text-dls-secondary underline">
-                    Change type
+              <div className="space-y-5">
+                <div className="flex items-center justify-between rounded-xl border border-dls-border bg-dls-hover/35 px-3.5 py-3">
+                  <div className="flex items-center gap-3">
+                    <span className="flex size-8 items-center justify-center rounded-lg bg-[rgba(var(--dls-accent-rgb),0.10)] text-dls-accent">
+                      {type === "tabular" ? <Files size={16} /> : <ListChecks size={16} />}
+                    </span>
+                    <div>
+                      <div className="text-xs font-semibold text-dls-text">
+                        {type === "tabular" ? "Document review" : "Guided legal task"}
+                      </div>
+                      <div className="text-[11px] text-dls-secondary">
+                        {type === "tabular" ? "One row per document, with cited findings." : "A repeatable set of instructions for Leo."}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setType(null)}
+                    className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium text-dls-secondary transition-colors hover:bg-dls-hover hover:text-dls-text"
+                  >
+                    <ArrowLeft size={12} />
+                    Change
                   </button>
                 </div>
 
-                <label className="block space-y-1.5">
-                  <span className="text-xs font-medium text-dls-text">Name</span>
-                  <input
-                    value={name}
-                    onChange={(event) => setName(event.currentTarget.value)}
-                    placeholder="FCA Disclosure Review"
-                    className={inputClass}
-                  />
-                  <span className="text-[11px] text-dls-secondary">
-                    {slug.length === 0
-                      ? "A human name; saved as a kebab-case folder."
-                      : nameTaken
-                        ? "A workflow with this name already exists."
-                        : !nameValid
-                          ? "Use letters, numbers, and spaces."
-                          : `.opencode/skills/${fullName}/SKILL.md`}
-                  </span>
-                </label>
+                <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5">
+                  <div className="space-y-4">
+                    <label className="block space-y-1.5">
+                      <span className="text-xs font-medium text-dls-text">Workflow name</span>
+                      <input
+                        value={name}
+                        onChange={(event) => setName(event.currentTarget.value)}
+                        placeholder={type === "tabular" ? "FCA disclosure review" : "Draft complaint response"}
+                        className={inputClass}
+                      />
+                      <span className={`text-[11px] ${nameTaken || (slug.length > 0 && !nameValid) ? "text-red-11" : "text-dls-secondary"}`}>
+                        {slug.length === 0
+                          ? "Use a short name people will recognise."
+                          : nameTaken
+                            ? "A workflow with this name already exists."
+                            : !nameValid
+                              ? "Use letters, numbers and spaces."
+                              : "This is how it will appear in Workflows."}
+                      </span>
+                    </label>
 
-                <label className="block space-y-1.5">
-                  <span className="text-xs font-medium text-dls-text">Description (when to use it)</span>
-                  <textarea
-                    value={description}
-                    onChange={(event) => setDescription(event.currentTarget.value)}
-                    rows={2}
-                    placeholder="Use when reviewing dealer finance disclosures for compliance."
-                    className={`${inputClass} resize-none`}
-                  />
-                </label>
+                    <label className="block space-y-1.5">
+                      <span className="text-xs font-medium text-dls-text">When should Leo use it?</span>
+                      <textarea
+                        value={description}
+                        onChange={(event) => setDescription(event.currentTarget.value)}
+                        rows={4}
+                        placeholder={type === "tabular"
+                          ? "Use when comparing finance disclosures across dealer documents."
+                          : "Use when a customer complaint needs a grounded draft response."}
+                        className={`${inputClass} min-h-[104px] resize-y`}
+                      />
+                    </label>
 
-                <label className="block space-y-1.5">
-                  <span className="text-xs font-medium text-dls-text">
-                    {type === "assistant" ? "Instructions" : "Columns to extract"}
-                  </span>
-                  <textarea
-                    value={body}
-                    onChange={(event) => setBody(event.currentTarget.value)}
-                    rows={10}
-                    spellCheck={false}
-                    placeholder={
-                      type === "assistant"
-                        ? "Step-by-step instructions the agent follows.\n\n1. ...\n2. ..."
-                        : "Describe the columns to extract from each document — one per line.\n\nGoverning law\nTermination notice period\nLiability cap"
-                    }
-                    className={`${inputClass} min-h-[200px] font-mono text-xs`}
-                  />
-                  {type === "tabular" ? (
-                    <span className="text-[11px] text-dls-secondary">
-                      Each line becomes a column the tabular-review skill extracts across your documents.
-                    </span>
-                  ) : null}
-                </label>
+                    <StagedResourcesField staged={staged} onChange={setStaged} disabled={saving} />
+                  </div>
 
-                <StagedResourcesField staged={staged} onChange={setStaged} disabled={saving} />
-              </>
+                  <div className="space-y-2">
+                    <div className="flex items-end justify-between gap-3">
+                      <div>
+                        <div className="text-xs font-medium text-dls-text">
+                          {type === "assistant" ? "What should Leo do?" : "Fields to compare"}
+                        </div>
+                        <div className="mt-0.5 text-[11px] text-dls-secondary">
+                          {type === "assistant" ? "Write the steps in the order Leo should follow them." : "Add one field per line. Each document becomes a row."}
+                        </div>
+                      </div>
+                      {type === "tabular" && body.trim() ? (
+                        <span className="shrink-0 rounded-full bg-dls-hover px-2 py-1 font-mono text-[10px] text-dls-secondary">
+                          {body.split("\n").filter((line) => line.trim()).length} fields
+                        </span>
+                      ) : null}
+                    </div>
+
+                    {type === "tabular" && !body.trim() ? (
+                      <div className="flex flex-wrap gap-1.5 py-1">
+                        <span className="py-1 text-[10px] font-medium uppercase tracking-[0.08em] text-dls-secondary">Start with</span>
+                        {tabularPresets.map((preset) => (
+                          <button
+                            key={preset.label}
+                            type="button"
+                            onClick={() => setBody(preset.value)}
+                            className="rounded-full border border-dls-border bg-dls-surface px-2.5 py-1 text-[10px] font-medium text-dls-secondary transition-colors hover:border-[rgba(var(--dls-accent-rgb),0.45)] hover:text-dls-text"
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    <textarea
+                      value={body}
+                      onChange={(event) => setBody(event.currentTarget.value)}
+                      rows={type === "assistant" ? 13 : 11}
+                      spellCheck={type === "assistant"}
+                      placeholder={
+                        type === "assistant"
+                          ? "1. Read the complaint and supporting documents.\n2. Build a dated fact summary with citations.\n3. Identify legal and compliance risks.\n4. Draft the response for approval."
+                          : "Document name\nGoverning law\nTermination notice\nLiability cap\nCompliance concern"
+                      }
+                      className={`${inputClass} min-h-[230px] resize-y ${type === "tabular" ? "font-mono text-xs leading-6" : "text-[13px] leading-6"}`}
+                    />
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mx-0 mb-0 rounded-none border-t border-dls-border bg-dls-hover/25 px-6 py-4">
             <DialogClose render={<Button variant="outline" />}>{t("common.cancel")}</DialogClose>
             {type ? (
               <Button type="button" disabled={!canSubmit} onClick={() => void submit()}>
