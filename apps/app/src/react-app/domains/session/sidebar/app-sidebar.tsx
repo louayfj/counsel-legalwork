@@ -73,6 +73,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { resolveAppAssetSrc } from "@/react-app/design-system/extension-icon-src";
 
 import { SidebarContext, useSidebarContext } from "./app-sidebar-provider";
 import type { SidebarContextValue } from "./app-sidebar-provider";
@@ -573,7 +574,8 @@ export function AppSidebar(props: AppSidebarProps) {
 
   const customSidebarBrandName = shellConfig.sidebarBrandName.trim();
   const customSidebarBrandLogo = shellConfig.sidebarBrandLogoDataUrl.trim();
-  const sidebarBrandLogoSrc = customSidebarBrandLogo || "/brand/logo/counsel-by-axleo-black.svg";
+  const sidebarBrandLogoSrc = customSidebarBrandLogo
+    || resolveAppAssetSrc("/brand/logo/counsel-by-axleo-black.svg");
   const showSidebarBrandName = customSidebarBrandName.length > 0;
   const sidebarBrandName = showSidebarBrandName
     ? (customSidebarBrandName || DEFAULT_SHELL_CONFIG.sidebarBrandName)
