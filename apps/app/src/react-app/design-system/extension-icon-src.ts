@@ -1,8 +1,11 @@
-export function resolveExtensionIconSrc(iconSrc: string): string {
-  if (!iconSrc.startsWith("/")) {
-    return iconSrc;
+export function resolveAppAssetSrc(assetSrc: string, base = import.meta.env.BASE_URL): string {
+  if (!assetSrc.startsWith("/")) {
+    return assetSrc;
   }
 
-  const base = import.meta.env.BASE_URL || "/";
-  return `${base.replace(/\/?$/, "/")}${iconSrc.replace(/^\/+/, "")}`;
+  return `${base.replace(/\/?$/, "/")}${assetSrc.replace(/^\/+/, "")}`;
+}
+
+export function resolveExtensionIconSrc(iconSrc: string): string {
+  return resolveAppAssetSrc(iconSrc);
 }
